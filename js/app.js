@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FULLY INTEGRATED - WITH BARCODE SCANNER)
+// MAIN APP MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES)
 // ============================================================
 
 // ============================================================
@@ -69,6 +69,108 @@ function populateItemDropdowns() {
     if (currentBrand && [...brandSelect.options].some(o => o.value === currentBrand)) brandSelect.value = currentBrand;
 }
 window.populateItemDropdowns = populateItemDropdowns;
+
+// ============================================================
+// POPULATE DELIVERY DROPDOWNS (ENHANCED)
+// ============================================================
+function populateDeliveryDropdowns() {
+    const data = getAppData();
+    
+    // Customer dropdown with balance display
+    const customerSelect = document.getElementById('delCustomerSelect');
+    if (customerSelect) {
+        const currentVal = customerSelect.value;
+        customerSelect.innerHTML = '<option value="">-- Select Customer --</option>' + 
+            (data.customers || []).map(c => 
+                `<option value="${c.id}">${escapeHtml(c.name)} ${c.balance > 0 ? '⚠️' : ''}</option>`
+            ).join('');
+        if (currentVal && [...customerSelect.options].some(o => o.value === currentVal)) {
+            customerSelect.value = currentVal;
+        }
+        // Show customer balance on change
+        customerSelect.onchange = function() {
+            const customer = data.customers.find(c => c.id === this.value);
+            const balanceDisplay = document.getElementById('customerBalanceDisplay');
+            if (customer && balanceDisplay) {
+                balanceDisplay.textContent = customer.balance > 0 ? 
+                    `⚠️ Outstanding Balance: LKR ${formatCurrency(customer.balance)}` : 
+                    `✅ Balance: LKR ${formatCurrency(customer.balance || 0)}`;
+                balanceDisplay.style.color = customer.balance > 0 ? 'var(--danger)' : 'var(--success)';
+            } else if (balanceDisplay) {
+                balanceDisplay.textContent = '';
+            }
+        };
+        if (customerSelect.value) {
+            customerSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    // Item dropdown with stock display
+    const itemSelect = document.getElementById('delItemSelect');
+    if (itemSelect) {
+        const currentVal = itemSelect.value;
+        itemSelect.innerHTML = '<option value="">-- Select --</option>' + 
+            (data.items || []).filter(i => i.status !== 'inactive').map(i =>
+                `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0} available)</option>`
+            ).join('');
+        if (currentVal && [...itemSelect.options].some(o => o.value === currentVal)) {
+            itemSelect.value = currentVal;
+        }
+        itemSelect.onchange = function() {
+            const item = data.items.find(i => i.id === this.value);
+            const stockDisplay = document.getElementById('itemStockDisplay');
+            if (item && stockDisplay) {
+                const qty = item.qty || 0;
+                stockDisplay.textContent = qty <= 5 ? `⚠️ Low Stock: ${qty} left` : `✅ Available: ${qty} units`;
+                stockDisplay.style.color = qty <= 5 ? 'var(--danger)' : 'var(--success)';
+            } else if (stockDisplay) {
+                stockDisplay.textContent = '';
+            }
+        };
+        if (itemSelect.value) {
+            itemSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    // Driver dropdown (employees with Delivery department or all active)
+    const driverSelect = document.getElementById('delDriverSelect');
+    if (driverSelect) {
+        const currentVal = driverSelect.value;
+        const employees = data.employees || [];
+        const deliveryStaff = employees.filter(e => 
+            e.status === 'active' && 
+            (e.department === 'Delivery' || e.designation?.toLowerCase().includes('driver'))
+        );
+        const staffList = deliveryStaff.length > 0 ? deliveryStaff : employees.filter(e => e.status === 'active');
+        driverSelect.innerHTML = '<option value="">-- Select Driver --</option>' + 
+            staffList.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+        if (currentVal && [...driverSelect.options].some(o => o.value === currentVal)) {
+            driverSelect.value = currentVal;
+        }
+    }
+
+    // Vehicle dropdown
+    const vehicleSelect = document.getElementById('delVehicleSelect');
+    if (vehicleSelect) {
+        const currentVal = vehicleSelect.value;
+        vehicleSelect.innerHTML = '<option value="">-- Select Vehicle --</option>' + 
+            (data.vehicles || []).map(v => 
+                `<option value="${v.id}">${escapeHtml(v.vehicleNo)} (${escapeHtml(v.driver || 'No Driver')})</option>`
+            ).join('');
+        if (currentVal && [...vehicleSelect.options].some(o => o.value === currentVal)) {
+            vehicleSelect.value = currentVal;
+        }
+    }
+
+    // Set default scheduled date (1 hour from now)
+    const scheduledDate = document.getElementById('delScheduledDate');
+    if (scheduledDate && !scheduledDate.value) {
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        scheduledDate.value = now.toISOString().slice(0, 16);
+    }
+}
+window.populateDeliveryDropdowns = populateDeliveryDropdowns;
 
 // ============================================================
 // EVENT BINDINGS
@@ -214,14 +316,12 @@ function initEvents() {
 
             try {
                 if (id) {
-                    // Update existing employee (keep uid/email)
                     const idx = data.employees.findIndex(e => e.id === id);
                     if (idx > -1) {
                         const existing = data.employees[idx];
                         data.employees[idx] = { ...existing, ...empData };
                     }
                 } else {
-                    // NEW employee: create Firebase Auth user first
                     const userCredential = await auth.createUserWithEmailAndPassword(username, password);
                     const user = userCredential.user;
                     empData.uid = user.uid;
@@ -229,7 +329,6 @@ function initEvents() {
                     empData.id = generateId();
                     empData.createdAt = nowISO();
                     data.employees.push(empData);
-                    // Initialize leave balance
                     if (!data.leaveBalances) data.leaveBalances = {};
                     data.leaveBalances[empData.id] = { sick: 10, casual: 5, annual: 12 };
                     showToast(`✅ Employee added! They can login with ${username}`);
@@ -269,7 +368,6 @@ function initEvents() {
             document.getElementById('itemBatch').value = '';
             document.getElementById('itemStatus').value = 'active';
             populateItemDropdowns();
-            // Close scanner if open
             closeScanner();
             document.getElementById('itemModal').classList.add('open');
         });
@@ -339,6 +437,7 @@ function initEvents() {
         }
         if (container) container.style.display = 'none';
     }
+    window.closeScanner = closeScanner;
 
     document.getElementById('scanBarcodeBtn')?.addEventListener('click', async () => {
         const container = document.getElementById('scannerContainer');
@@ -347,13 +446,11 @@ function initEvents() {
         
         if (!container || !readerElement) return;
 
-        // Toggle scanner visibility
         if (container.style.display === 'block') {
             closeScanner();
             return;
         }
 
-        // Check if camera is available
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             stream.getTracks().forEach(track => track.stop());
@@ -367,12 +464,7 @@ function initEvents() {
 
         try {
             html5QrCode = new Html5Qrcode("scannerReader");
-
-            const config = {
-                fps: 10,
-                qrbox: { width: 250, height: 150 },
-                aspectRatio: 1.0
-            };
+            const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
 
             await html5QrCode.start(
                 { facingMode: "environment" },
@@ -382,9 +474,7 @@ function initEvents() {
                     showToast('✅ Barcode scanned: ' + decodedText, 'success');
                     closeScanner();
                 },
-                (error) => {
-                    // Ignore intermediate errors
-                }
+                (error) => {}
             );
         } catch (err) {
             console.error('Scanner error:', err);
@@ -393,7 +483,6 @@ function initEvents() {
         }
     });
 
-    // Close scanner button
     document.getElementById('closeScannerBtn')?.addEventListener('click', closeScanner);
 
     // ── Customer Modal ──
@@ -485,7 +574,17 @@ function initEvents() {
         window.print();
     });
 
-    // ── Deliveries ──
+    // ── ENHANCED DELIVERIES ──
+    // Quick Add Customer from deliveries
+    document.getElementById('quickAddCustomerBtn')?.addEventListener('click', () => {
+        if (!window.canManage('customers')) {
+            showToast('⛔ No permission.', 'error');
+            return;
+        }
+        document.getElementById('addCustomerBtn')?.click();
+    });
+
+    // Submit Delivery
     const deliverSubmit = document.getElementById('deliverSubmitBtn');
     if (deliverSubmit) {
         deliverSubmit.addEventListener('click', async () => {
@@ -493,60 +592,93 @@ function initEvents() {
                 showToast('⛔ No permission.', 'error');
                 return;
             }
-            const customer = document.getElementById('delCustomer').value.trim();
-            const itemId = document.getElementById('delItemSelect').value;
-            const qty = parseInt(document.getElementById('delQty').value);
-            const driver = document.getElementById('delDriver').value.trim();
-            const route = document.getElementById('delRoute').value.trim();
+            const customerId = document.getElementById('delCustomerSelect')?.value;
+            const itemId = document.getElementById('delItemSelect')?.value;
+            const qty = parseInt(document.getElementById('delQty')?.value);
+            const driverId = document.getElementById('delDriverSelect')?.value;
+            const vehicleId = document.getElementById('delVehicleSelect')?.value;
+            const status = document.getElementById('delStatusSelect')?.value || 'pending';
+            const route = document.getElementById('delRoute')?.value.trim() || '';
+            const scheduledDate = document.getElementById('delScheduledDate')?.value || '';
+            const notes = document.getElementById('delNotes')?.value.trim() || '';
 
-            if (!customer) { showToast('Enter customer name.', 'error'); return; }
+            if (!customerId) { showToast('Select a customer.', 'error'); return; }
             if (!itemId) { showToast('Select an item.', 'error'); return; }
             if (!qty || qty < 1) { showToast('Enter valid qty.', 'error'); return; }
 
             const data = getAppData();
+            const customer = data.customers.find(c => c.id === customerId);
             const item = data.items.find(i => i.id === itemId);
-            if (!item) { showToast('Item not found.', 'error'); return; }
-            if ((item.qty || 0) < qty) { showToast(`Insufficient stock! Available: ${item.qty}`, 'error'); return; }
+            const driver = data.employees.find(e => e.id === driverId);
+            const vehicle = data.vehicles.find(v => v.id === vehicleId);
 
-            item.qty = (item.qty || 0) - qty;
-            item.updatedAt = nowISO();
+            if (!item) { showToast('Item not found.', 'error'); return; }
+            if ((item.qty || 0) < qty) {
+                showToast(`Insufficient stock! Available: ${item.qty}`, 'error');
+                return;
+            }
+
+            // Deduct stock only if status is 'delivered'
+            if (status === 'delivered') {
+                item.qty = (item.qty || 0) - qty;
+                item.updatedAt = nowISO();
+            }
 
             const delivery = {
                 id: generateId(),
-                customer,
+                customerId: customerId,
+                customerName: customer ? customer.name : 'Unknown',
                 itemId: item.id,
                 itemName: item.name,
-                qty,
-                driver,
-                route,
-                status: 'delivered',
-                date: nowISO()
+                qty: qty,
+                driverId: driverId,
+                driverName: driver ? driver.name : (document.getElementById('delDriverSelect')?.options[document.getElementById('delDriverSelect')?.selectedIndex]?.text || '—'),
+                vehicleId: vehicleId,
+                vehicleNo: vehicle ? vehicle.vehicleNo : '—',
+                status: status,
+                route: route,
+                scheduledDate: scheduledDate || nowISO(),
+                notes: notes,
+                date: nowISO(),
+                updatedAt: nowISO()
             };
             data.deliveries.push(delivery);
 
-            data.salesData.push({
-                id: generateId(),
-                customer,
-                item: item.name,
-                qty,
-                total: qty * (item.price || 0),
-                date: nowISO()
-            });
+            // Add sales data only if delivered
+            if (status === 'delivered') {
+                data.salesData.push({
+                    id: generateId(),
+                    customer: customer ? customer.name : 'Unknown',
+                    item: item.name,
+                    qty: qty,
+                    total: qty * (item.price || 0),
+                    date: nowISO()
+                });
+            }
 
             setAppData(data);
             await saveAllData();
             renderDeliveries();
             renderDashboard();
-            document.getElementById('delCustomer').value = '';
+            renderReports();
+            
+            // Reset form
             document.getElementById('delQty').value = '';
-            document.getElementById('delDriver').value = '';
             document.getElementById('delRoute').value = '';
-            showToast(`✅ ${qty} ${item.name} delivered to ${customer}!`);
+            document.getElementById('delNotes').value = '';
+            document.getElementById('delStatusSelect').value = 'pending';
+            populateDeliveryDropdowns();
+            
+            showToast(`✅ Delivery ${status === 'delivered' ? 'completed' : 'created'} for ${customer ? customer.name : ''}!`);
         });
     }
 
+    // Delivery Filters
+    document.getElementById('delDateFilter')?.addEventListener('change', renderDeliveries);
+    document.getElementById('delStatusFilter')?.addEventListener('change', renderDeliveries);
     document.getElementById('clearDelFilter')?.addEventListener('click', () => {
         document.getElementById('delDateFilter').value = '';
+        document.getElementById('delStatusFilter').value = 'all';
         renderDeliveries();
     });
 
@@ -629,7 +761,6 @@ function initEvents() {
         if (!empId) { showToast('Select employee.', 'error'); return; }
         if (!from || !to) { showToast('Select dates.', 'error'); return; }
 
-        // --- Leave Balance Check ---
         const data = getAppData();
         if (!data.leaveBalances) data.leaveBalances = {};
         const empBalance = data.leaveBalances[empId] || { sick: 0, casual: 0, annual: 0 };
@@ -642,10 +773,8 @@ function initEvents() {
             showToast(`⚠️ Only ${empBalance[type]} ${type} days available.`, 'error');
             return;
         }
-        // Deduct balance
         empBalance[type] -= days;
         data.leaveBalances[empId] = empBalance;
-        // --- End Balance Check ---
 
         const emp = data.employees.find(e => e.id === empId);
         data.leaves.push({
@@ -716,13 +845,11 @@ function initEvents() {
         const emp = data.employees.find(e => e.id === empId);
         if (!emp) { showToast('Employee not found.', 'error'); return; }
 
-        // --- EPF & ETF Calculations ---
-        const epfRate = 0.08; // 8%
-        const etfRate = 0.03; // 3%
+        const epfRate = 0.08;
+        const etfRate = 0.03;
         const epf = basic * epfRate;
         const etf = basic * etfRate;
         const net = basic + allowances + ot - deductions - epf - etf;
-        // ---
 
         const existing = data.payroll.find(p => p.employeeId === empId && p.month === month);
         const payData = {
@@ -1072,13 +1199,11 @@ async function createDefaultAdmin() {
     const password = 'admin123';
     
     try {
-        // Check if admin already exists
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         console.log('✅ Admin account already exists:', userCredential.user.email);
         return;
     } catch (error) {
         if (error.code === 'auth/user-not-found') {
-            // Admin doesn't exist, create one
             try {
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 console.log('✅ Default admin account created:', userCredential.user.email);
@@ -1102,10 +1227,8 @@ async function init() {
         await loadAllData();
         console.log('✅ Data loaded from Firestore');
 
-        // Create default admin account
         await createDefaultAdmin();
 
-        // Set default dates
         const payrollMonth = document.getElementById('payrollMonth');
         if (payrollMonth) payrollMonth.value = new Date().toISOString().slice(0, 7);
         const leaveFrom = document.getElementById('leaveFrom');
