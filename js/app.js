@@ -1,9 +1,13 @@
 // ============================================================
-// MAIN APP MODULE
+// MAIN APP MODULE (FIXED)
 // ============================================================
 
+// ============================================================
+// TOAST
+// ============================================================
 function showToast(msg, type = 'success') {
     const el = document.getElementById('toast');
+    if (!el) return;
     el.textContent = msg;
     el.className = 'toast ' + type;
     void el.offsetWidth;
@@ -11,8 +15,13 @@ function showToast(msg, type = 'success') {
     clearTimeout(el._timer);
     el._timer = setTimeout(() => el.classList.remove('show'), 2500);
 }
+window.showToast = showToast;
 
+// ============================================================
+// RENDER ALL
+// ============================================================
 function renderAll() {
+    console.log('🔄 Rendering all panels...');
     renderDashboard();
     renderEmployees();
     renderInventory();
@@ -28,11 +37,17 @@ function renderAll() {
     renderSettings();
     renderSidebar();
 }
+window.renderAll = renderAll;
 
+// ============================================================
+// POPULATE ITEM DROPDOWNS
+// ============================================================
 function populateItemDropdowns() {
     const data = getAppData();
     const catSelect = document.getElementById('itemCategory');
     const brandSelect = document.getElementById('itemBrand');
+    if (!catSelect || !brandSelect) return;
+    
     const currentCat = catSelect.value;
     const currentBrand = brandSelect.value;
 
@@ -44,251 +59,287 @@ function populateItemDropdowns() {
         `<option value="${b}">${b}</option>`).join('');
     if (currentBrand && [...brandSelect.options].some(o => o.value === currentBrand)) brandSelect.value = currentBrand;
 }
+window.populateItemDropdowns = populateItemDropdowns;
 
 // ============================================================
 // EVENT BINDINGS
 // ============================================================
 function initEvents() {
-    // ── Sidebar toggle ──
-    document.getElementById('menuToggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('open');
-    });
+    console.log('🔧 Initializing events...');
 
-    document.getElementById('sidebarClose').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.remove('open');
-    });
+    // ── Sidebar toggle ──
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebarClose = document.getElementById('sidebarClose');
+    const sidebar = document.getElementById('sidebar');
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    }
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+    }
 
     // ── Dark Mode ──
     let isDark = false;
-    document.getElementById('darkModeToggle').addEventListener('click', () => {
-        isDark = !isDark;
-        document.body.classList.toggle('dark', isDark);
-        document.getElementById('darkModeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i>' :
-            '<i class="fas fa-moon"></i>';
-        localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-    });
-    if (localStorage.getItem('darkMode') === 'true') {
-        isDark = true;
-        document.body.classList.add('dark');
-        document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+    const darkToggle = document.getElementById('darkModeToggle');
+    if (darkToggle) {
+        darkToggle.addEventListener('click', () => {
+            isDark = !isDark;
+            document.body.classList.toggle('dark', isDark);
+            darkToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+        });
+        if (localStorage.getItem('darkMode') === 'true') {
+            isDark = true;
+            document.body.classList.add('dark');
+            darkToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
     }
 
     // ── Language Toggle ──
-    document.getElementById('langToggle').addEventListener('click', () => {
-        currentLang = currentLang === 'en' ? 'si' : 'en';
-        document.getElementById('langToggle').textContent = currentLang === 'en' ? '🇱🇰 SI' : '🇬🇧 EN';
-        renderSidebar();
-        const activePanel = document.querySelector('.panel.active');
-        if (activePanel) {
-            const id = activePanel.id.replace('panel-', '');
-            const navItem = ALL_NAV_ITEMS.find(n => n.id === id);
-            if (navItem) {
-                const label = currentLang === 'si' && navItem.labelSI ? navItem.labelSI : navItem.label;
-                document.getElementById('pageTitle').textContent = label;
+    const langToggle = document.getElementById('langToggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'si' : 'en';
+            langToggle.textContent = currentLang === 'en' ? '🇱🇰 SI' : '🇬🇧 EN';
+            renderSidebar();
+            const activePanel = document.querySelector('.panel.active');
+            if (activePanel) {
+                const id = activePanel.id.replace('panel-', '');
+                const navItem = ALL_NAV_ITEMS.find(n => n.id === id);
+                if (navItem) {
+                    const label = currentLang === 'si' && navItem.labelSI ? navItem.labelSI : navItem.label;
+                    document.getElementById('pageTitle').textContent = label;
+                }
             }
-        }
-        showToast(currentLang === 'en' ? '🌐 English' : '🌐 සිංහල');
-    });
+            showToast(currentLang === 'en' ? '🌐 English' : '🌐 සිංහල');
+        });
+    }
 
     // ── Employee Modal ──
-    document.getElementById('addEmployeeBtn').addEventListener('click', () => {
-        // ⛔ Permission check
-        if (!canManage('employees')) {
-            showToast('⛔ You don\'t have permission to add employees.', 'error');
-            return;
-        }
-        document.getElementById('empEditId').value = '';
-        document.getElementById('employeeModalTitle').textContent = '👤 Add Employee';
-        document.getElementById('empName').value = '';
-        document.getElementById('empNIC').value = '';
-        document.getElementById('empDept').value = 'Admin';
-        document.getElementById('empDesignation').value = '';
-        document.getElementById('empContact').value = '';
-        document.getElementById('empEmergency').value = '';
-        document.getElementById('empAddress').value = '';
-        document.getElementById('empJoined').value = '';
-        document.getElementById('empSalary').value = '';
-        document.getElementById('empEpf').value = '';
-        document.getElementById('empStatus').value = 'active';
-        document.getElementById('employeeModal').classList.add('open');
-    });
+    const addEmpBtn = document.getElementById('addEmployeeBtn');
+    if (addEmpBtn) {
+        addEmpBtn.addEventListener('click', () => {
+            if (!window.canManage('employees')) {
+                showToast('⛔ You don\'t have permission to add employees.', 'error');
+                return;
+            }
+            document.getElementById('empEditId').value = '';
+            document.getElementById('employeeModalTitle').textContent = '👤 Add Employee';
+            document.getElementById('empName').value = '';
+            document.getElementById('empNIC').value = '';
+            document.getElementById('empDept').value = 'Admin';
+            document.getElementById('empDesignation').value = '';
+            document.getElementById('empContact').value = '';
+            document.getElementById('empEmergency').value = '';
+            document.getElementById('empAddress').value = '';
+            document.getElementById('empJoined').value = '';
+            document.getElementById('empSalary').value = '';
+            document.getElementById('empEpf').value = '';
+            document.getElementById('empStatus').value = 'active';
+            document.getElementById('employeeModal').classList.add('open');
+        });
+    }
 
-    document.getElementById('empModalClose').addEventListener('click', () => {
-        document.getElementById('employeeModal').classList.remove('open');
-    });
+    const empModalClose = document.getElementById('empModalClose');
+    if (empModalClose) {
+        empModalClose.addEventListener('click', () => {
+            document.getElementById('employeeModal').classList.remove('open');
+        });
+    }
 
-    document.getElementById('empSaveBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('employees')) {
-            showToast('⛔ You don\'t have permission to manage employees.', 'error');
-            return;
-        }
-        const id = document.getElementById('empEditId').value;
-        const name = document.getElementById('empName').value.trim();
-        if (!name) { showToast('Enter employee name.', 'error'); return; }
-        const data = getAppData();
-        const empData = {
-            name,
-            nic: document.getElementById('empNIC').value.trim(),
-            department: document.getElementById('empDept').value,
-            designation: document.getElementById('empDesignation').value.trim(),
-            contact: document.getElementById('empContact').value.trim(),
-            emergency: document.getElementById('empEmergency').value.trim(),
-            address: document.getElementById('empAddress').value.trim(),
-            joinedDate: document.getElementById('empJoined').value,
-            salary: parseFloat(document.getElementById('empSalary').value) || 0,
-            epf: document.getElementById('empEpf').value.trim(),
-            status: document.getElementById('empStatus').value,
-            updatedAt: nowISO()
-        };
-        if (id) {
-            const idx = data.employees.findIndex(e => e.id === id);
-            if (idx > -1) { data.employees[idx] = { ...data.employees[idx], ...empData }; }
-        } else {
-            empData.id = generateId();
-            empData.createdAt = nowISO();
-            data.employees.push(empData);
-        }
-        setAppData(data);
-        await saveAllData();
-        document.getElementById('employeeModal').classList.remove('open');
-        renderEmployees();
-        showToast(id ? '✅ Employee updated!' : '✅ Employee added!');
-    });
+    const empSaveBtn = document.getElementById('empSaveBtn');
+    if (empSaveBtn) {
+        empSaveBtn.addEventListener('click', async () => {
+            if (!window.canManage('employees')) {
+                showToast('⛔ You don\'t have permission to manage employees.', 'error');
+                return;
+            }
+            const id = document.getElementById('empEditId').value;
+            const name = document.getElementById('empName').value.trim();
+            if (!name) { showToast('Enter employee name.', 'error'); return; }
+            const data = getAppData();
+            const empData = {
+                name,
+                nic: document.getElementById('empNIC').value.trim(),
+                department: document.getElementById('empDept').value,
+                designation: document.getElementById('empDesignation').value.trim(),
+                contact: document.getElementById('empContact').value.trim(),
+                emergency: document.getElementById('empEmergency').value.trim(),
+                address: document.getElementById('empAddress').value.trim(),
+                joinedDate: document.getElementById('empJoined').value,
+                salary: parseFloat(document.getElementById('empSalary').value) || 0,
+                epf: document.getElementById('empEpf').value.trim(),
+                status: document.getElementById('empStatus').value,
+                updatedAt: nowISO()
+            };
+            if (id) {
+                const idx = data.employees.findIndex(e => e.id === id);
+                if (idx > -1) { data.employees[idx] = { ...data.employees[idx], ...empData }; }
+            } else {
+                empData.id = generateId();
+                empData.createdAt = nowISO();
+                data.employees.push(empData);
+            }
+            setAppData(data);
+            await saveAllData();
+            document.getElementById('employeeModal').classList.remove('open');
+            renderEmployees();
+            showToast(id ? '✅ Employee updated!' : '✅ Employee added!');
+        });
+    }
 
     // ── Item Modal ──
-    document.getElementById('addItemBtn').addEventListener('click', () => {
-        // ⛔ Permission check
-        if (!canManage('inventory')) {
-            showToast('⛔ You don\'t have permission to add items.', 'error');
-            return;
-        }
-        document.getElementById('itemEditId').value = '';
-        document.getElementById('itemModalTitle').textContent = '📦 Add Item';
-        document.getElementById('itemBarcode').value = '';
-        document.getElementById('itemName').value = '';
-        document.getElementById('itemQty').value = '1';
-        document.getElementById('itemPrice').value = '0';
-        document.getElementById('itemCategory').value = '';
-        document.getElementById('itemBrand').value = '';
-        document.getElementById('itemDesc').value = '';
-        document.getElementById('itemExpiry').value = '';
-        document.getElementById('itemBatch').value = '';
-        document.getElementById('itemStatus').value = 'active';
-        populateItemDropdowns();
-        document.getElementById('itemModal').classList.add('open');
-    });
+    const addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', () => {
+            if (!window.canManage('inventory')) {
+                showToast('⛔ You don\'t have permission to add items.', 'error');
+                return;
+            }
+            document.getElementById('itemEditId').value = '';
+            document.getElementById('itemModalTitle').textContent = '📦 Add Item';
+            document.getElementById('itemBarcode').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQty').value = '1';
+            document.getElementById('itemPrice').value = '0';
+            document.getElementById('itemCategory').value = '';
+            document.getElementById('itemBrand').value = '';
+            document.getElementById('itemDesc').value = '';
+            document.getElementById('itemExpiry').value = '';
+            document.getElementById('itemBatch').value = '';
+            document.getElementById('itemStatus').value = 'active';
+            populateItemDropdowns();
+            document.getElementById('itemModal').classList.add('open');
+        });
+    }
 
-    document.getElementById('itemModalClose').addEventListener('click', () => {
-        document.getElementById('itemModal').classList.remove('open');
-    });
+    const itemModalClose = document.getElementById('itemModalClose');
+    if (itemModalClose) {
+        itemModalClose.addEventListener('click', () => {
+            document.getElementById('itemModal').classList.remove('open');
+        });
+    }
 
-    document.getElementById('itemSaveBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('inventory')) {
-            showToast('⛔ You don\'t have permission to manage inventory.', 'error');
-            return;
-        }
-        const id = document.getElementById('itemEditId').value;
-        const name = document.getElementById('itemName').value.trim();
-        if (!name) { showToast('Enter item name.', 'error'); return; }
-        const data = getAppData();
-        const itemData = {
-            barcode: document.getElementById('itemBarcode').value.trim(),
-            name,
-            qty: parseInt(document.getElementById('itemQty').value) || 0,
-            price: parseFloat(document.getElementById('itemPrice').value) || 0,
-            category: document.getElementById('itemCategory').value,
-            brand: document.getElementById('itemBrand').value,
-            desc: document.getElementById('itemDesc').value.trim(),
-            expiry: document.getElementById('itemExpiry').value,
-            batch: document.getElementById('itemBatch').value.trim(),
-            status: document.getElementById('itemStatus').value,
-            updatedAt: nowISO()
-        };
-        if (id) {
-            const idx = data.items.findIndex(i => i.id === id);
-            if (idx > -1) { data.items[idx] = { ...data.items[idx], ...itemData }; }
-        } else {
-            itemData.id = generateId();
-            itemData.createdAt = nowISO();
-            data.items.push(itemData);
-        }
-        setAppData(data);
-        await saveAllData();
-        document.getElementById('itemModal').classList.remove('open');
-        renderInventory();
-        renderDashboard();
-        showToast(id ? '✅ Item updated!' : '✅ Item added!');
-    });
+    const itemSaveBtn = document.getElementById('itemSaveBtn');
+    if (itemSaveBtn) {
+        itemSaveBtn.addEventListener('click', async () => {
+            if (!window.canManage('inventory')) {
+                showToast('⛔ You don\'t have permission to manage inventory.', 'error');
+                return;
+            }
+            const id = document.getElementById('itemEditId').value;
+            const name = document.getElementById('itemName').value.trim();
+            if (!name) { showToast('Enter item name.', 'error'); return; }
+            const data = getAppData();
+            const itemData = {
+                barcode: document.getElementById('itemBarcode').value.trim(),
+                name,
+                qty: parseInt(document.getElementById('itemQty').value) || 0,
+                price: parseFloat(document.getElementById('itemPrice').value) || 0,
+                category: document.getElementById('itemCategory').value,
+                brand: document.getElementById('itemBrand').value,
+                desc: document.getElementById('itemDesc').value.trim(),
+                expiry: document.getElementById('itemExpiry').value,
+                batch: document.getElementById('itemBatch').value.trim(),
+                status: document.getElementById('itemStatus').value,
+                updatedAt: nowISO()
+            };
+            if (id) {
+                const idx = data.items.findIndex(i => i.id === id);
+                if (idx > -1) { data.items[idx] = { ...data.items[idx], ...itemData }; }
+            } else {
+                itemData.id = generateId();
+                itemData.createdAt = nowISO();
+                data.items.push(itemData);
+            }
+            setAppData(data);
+            await saveAllData();
+            document.getElementById('itemModal').classList.remove('open');
+            renderInventory();
+            renderDashboard();
+            showToast(id ? '✅ Item updated!' : '✅ Item added!');
+        });
+    }
 
     // ── Customer Modal ──
-    document.getElementById('addCustomerBtn').addEventListener('click', () => {
-        // ⛔ Permission check
-        if (!canManage('customers')) {
-            showToast('⛔ You don\'t have permission to add customers.', 'error');
-            return;
-        }
-        document.getElementById('custEditId').value = '';
-        document.getElementById('customerModalTitle').textContent = '👤 Add Customer';
-        document.getElementById('custName').value = '';
-        document.getElementById('custContact').value = '';
-        document.getElementById('custCategory').value = 'Retail';
-        document.getElementById('custAddress').value = '';
-        document.getElementById('custCreditLimit').value = '0';
-        document.getElementById('custBalance').value = '0';
-        document.getElementById('customerModal').classList.add('open');
-    });
+    const addCustBtn = document.getElementById('addCustomerBtn');
+    if (addCustBtn) {
+        addCustBtn.addEventListener('click', () => {
+            if (!window.canManage('customers')) {
+                showToast('⛔ You don\'t have permission to add customers.', 'error');
+                return;
+            }
+            document.getElementById('custEditId').value = '';
+            document.getElementById('customerModalTitle').textContent = '👤 Add Customer';
+            document.getElementById('custName').value = '';
+            document.getElementById('custContact').value = '';
+            document.getElementById('custCategory').value = 'Retail';
+            document.getElementById('custAddress').value = '';
+            document.getElementById('custCreditLimit').value = '0';
+            document.getElementById('custBalance').value = '0';
+            document.getElementById('customerModal').classList.add('open');
+        });
+    }
 
-    document.getElementById('custModalClose').addEventListener('click', () => {
-        document.getElementById('customerModal').classList.remove('open');
-    });
+    const custModalClose = document.getElementById('custModalClose');
+    if (custModalClose) {
+        custModalClose.addEventListener('click', () => {
+            document.getElementById('customerModal').classList.remove('open');
+        });
+    }
 
-    document.getElementById('custSaveBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('customers')) {
-            showToast('⛔ You don\'t have permission to manage customers.', 'error');
-            return;
-        }
-        const id = document.getElementById('custEditId').value;
-        const name = document.getElementById('custName').value.trim();
-        if (!name) { showToast('Enter customer name.', 'error'); return; }
-        const data = getAppData();
-        const custData = {
-            name,
-            contact: document.getElementById('custContact').value.trim(),
-            category: document.getElementById('custCategory').value,
-            address: document.getElementById('custAddress').value.trim(),
-            creditLimit: parseFloat(document.getElementById('custCreditLimit').value) || 0,
-            balance: parseFloat(document.getElementById('custBalance').value) || 0,
-            updatedAt: nowISO()
-        };
-        if (id) {
-            const idx = data.customers.findIndex(c => c.id === id);
-            if (idx > -1) { data.customers[idx] = { ...data.customers[idx], ...custData }; }
-        } else {
-            custData.id = generateId();
-            custData.createdAt = nowISO();
-            data.customers.push(custData);
-        }
-        setAppData(data);
-        await saveAllData();
-        document.getElementById('customerModal').classList.remove('open');
-        renderCustomers();
-        showToast(id ? '✅ Customer updated!' : '✅ Customer added!');
-    });
+    const custSaveBtn = document.getElementById('custSaveBtn');
+    if (custSaveBtn) {
+        custSaveBtn.addEventListener('click', async () => {
+            if (!window.canManage('customers')) {
+                showToast('⛔ You don\'t have permission to manage customers.', 'error');
+                return;
+            }
+            const id = document.getElementById('custEditId').value;
+            const name = document.getElementById('custName').value.trim();
+            if (!name) { showToast('Enter customer name.', 'error'); return; }
+            const data = getAppData();
+            const custData = {
+                name,
+                contact: document.getElementById('custContact').value.trim(),
+                category: document.getElementById('custCategory').value,
+                address: document.getElementById('custAddress').value.trim(),
+                creditLimit: parseFloat(document.getElementById('custCreditLimit').value) || 0,
+                balance: parseFloat(document.getElementById('custBalance').value) || 0,
+                updatedAt: nowISO()
+            };
+            if (id) {
+                const idx = data.customers.findIndex(c => c.id === id);
+                if (idx > -1) { data.customers[idx] = { ...data.customers[idx], ...custData }; }
+            } else {
+                custData.id = generateId();
+                custData.createdAt = nowISO();
+                data.customers.push(custData);
+            }
+            setAppData(data);
+            await saveAllData();
+            document.getElementById('customerModal').classList.remove('open');
+            renderCustomers();
+            showToast(id ? '✅ Customer updated!' : '✅ Customer added!');
+        });
+    }
 
     // ── Quick Actions ──
     document.getElementById('quickAddItem')?.addEventListener('click', () => {
-        if (!canManage('inventory')) {
+        if (!window.canManage('inventory')) {
             showToast('⛔ You don\'t have permission to add items.', 'error');
             return;
         }
-        document.getElementById('addItemBtn').click();
+        document.getElementById('addItemBtn')?.click();
     });
 
     document.getElementById('quickNewDelivery')?.addEventListener('click', () => {
-        if (!canManage('deliveries') && !canView('deliveries')) {
+        if (!window.canManage('deliveries') && !window.canView('deliveries')) {
             showToast('⛔ You don\'t have permission to manage deliveries.', 'error');
             return;
         }
@@ -296,11 +347,11 @@ function initEvents() {
     });
 
     document.getElementById('quickAddEmployee')?.addEventListener('click', () => {
-        if (!canManage('employees')) {
+        if (!window.canManage('employees')) {
             showToast('⛔ You don\'t have permission to add employees.', 'error');
             return;
         }
-        document.getElementById('addEmployeeBtn').click();
+        document.getElementById('addEmployeeBtn')?.click();
     });
 
     document.getElementById('quickPrint')?.addEventListener('click', () => {
@@ -308,79 +359,82 @@ function initEvents() {
     });
 
     // ── Deliveries ──
-    document.getElementById('deliverSubmitBtn').addEventListener('click', async () => {
-        // ⛔ Permission check - only users with manage deliveries permission
-        if (!canManage('deliveries') && !canManage('sales')) {
-            showToast('⛔ You don\'t have permission to create deliveries.', 'error');
-            return;
-        }
-        const customer = document.getElementById('delCustomer').value.trim();
-        const itemId = document.getElementById('delItemSelect').value;
-        const qty = parseInt(document.getElementById('delQty').value);
-        const driver = document.getElementById('delDriver').value.trim();
-        const route = document.getElementById('delRoute').value.trim();
+    const deliverSubmit = document.getElementById('deliverSubmitBtn');
+    if (deliverSubmit) {
+        deliverSubmit.addEventListener('click', async () => {
+            if (!window.canManage('deliveries') && !window.canManage('sales')) {
+                showToast('⛔ You don\'t have permission to create deliveries.', 'error');
+                return;
+            }
+            const customer = document.getElementById('delCustomer').value.trim();
+            const itemId = document.getElementById('delItemSelect').value;
+            const qty = parseInt(document.getElementById('delQty').value);
+            const driver = document.getElementById('delDriver').value.trim();
+            const route = document.getElementById('delRoute').value.trim();
 
-        if (!customer) { showToast('Enter customer name.', 'error'); return; }
-        if (!itemId) { showToast('Select an item.', 'error'); return; }
-        if (!qty || qty < 1) { showToast('Enter valid qty.', 'error'); return; }
+            if (!customer) { showToast('Enter customer name.', 'error'); return; }
+            if (!itemId) { showToast('Select an item.', 'error'); return; }
+            if (!qty || qty < 1) { showToast('Enter valid qty.', 'error'); return; }
 
-        const data = getAppData();
-        const item = data.items.find(i => i.id === itemId);
-        if (!item) { showToast('Item not found.', 'error'); return; }
-        if ((item.qty || 0) < qty) { showToast(`Insufficient stock! Available: ${item.qty}`, 'error'); return; }
+            const data = getAppData();
+            const item = data.items.find(i => i.id === itemId);
+            if (!item) { showToast('Item not found.', 'error'); return; }
+            if ((item.qty || 0) < qty) { showToast(`Insufficient stock! Available: ${item.qty}`, 'error'); return; }
 
-        item.qty = (item.qty || 0) - qty;
-        item.updatedAt = nowISO();
+            item.qty = (item.qty || 0) - qty;
+            item.updatedAt = nowISO();
 
-        const delivery = {
-            id: generateId(),
-            customer,
-            itemId: item.id,
-            itemName: item.name,
-            qty,
-            driver,
-            route,
-            status: 'delivered',
-            date: nowISO()
-        };
-        data.deliveries.push(delivery);
+            const delivery = {
+                id: generateId(),
+                customer,
+                itemId: item.id,
+                itemName: item.name,
+                qty,
+                driver,
+                route,
+                status: 'delivered',
+                date: nowISO()
+            };
+            data.deliveries.push(delivery);
 
-        data.salesData.push({
-            id: generateId(),
-            customer,
-            item: item.name,
-            qty,
-            total: qty * (item.price || 0),
-            date: nowISO()
+            data.salesData.push({
+                id: generateId(),
+                customer,
+                item: item.name,
+                qty,
+                total: qty * (item.price || 0),
+                date: nowISO()
+            });
+
+            setAppData(data);
+            await saveAllData();
+            renderDeliveries();
+            renderDashboard();
+            document.getElementById('delCustomer').value = '';
+            document.getElementById('delQty').value = '';
+            document.getElementById('delDriver').value = '';
+            document.getElementById('delRoute').value = '';
+            showToast(`✅ ${qty} ${item.name} delivered to ${customer}!`);
         });
+    }
 
-        setAppData(data);
-        await saveAllData();
-        renderDeliveries();
-        renderDashboard();
-        document.getElementById('delCustomer').value = '';
-        document.getElementById('delQty').value = '';
-        document.getElementById('delDriver').value = '';
-        document.getElementById('delRoute').value = '';
-        showToast(`✅ ${qty} ${item.name} delivered to ${customer}!`);
-    });
-
-    document.getElementById('clearDelFilter').addEventListener('click', () => {
+    document.getElementById('clearDelFilter')?.addEventListener('click', () => {
         document.getElementById('delDateFilter').value = '';
         renderDeliveries();
     });
 
     // ── Attendance ──
-    document.getElementById('checkInBtn').addEventListener('click', async () => {
-        if (!currentUser) { showToast('Login first.', 'error'); return; }
+    document.getElementById('checkInBtn')?.addEventListener('click', async () => {
+        const user = window.getCurrentUser();
+        if (!user) { showToast('Login first.', 'error'); return; }
         const data = getAppData();
         const today = todayStr();
-        const existing = data.attendance.find(a => a.employeeId === currentUser.uid && a.date.slice(0, 10) === today);
+        const existing = data.attendance.find(a => a.employeeId === user.uid && a.date.slice(0, 10) === today);
         if (existing && existing.checkIn) { showToast('Already checked in today.', 'warning'); return; }
         const record = {
             id: generateId(),
-            employeeId: currentUser.uid,
-            employeeName: currentUser.name,
+            employeeId: user.uid,
+            employeeName: user.name,
             date: nowISO(),
             checkIn: nowISO(),
             checkOut: null,
@@ -398,11 +452,12 @@ function initEvents() {
         showToast('✅ Checked in at ' + new Date().toLocaleTimeString());
     });
 
-    document.getElementById('checkOutBtn').addEventListener('click', async () => {
-        if (!currentUser) { showToast('Login first.', 'error'); return; }
+    document.getElementById('checkOutBtn')?.addEventListener('click', async () => {
+        const user = window.getCurrentUser();
+        if (!user) { showToast('Login first.', 'error'); return; }
         const data = getAppData();
         const today = todayStr();
-        const existing = data.attendance.find(a => a.employeeId === currentUser.uid && a.date.slice(0, 10) === today);
+        const existing = data.attendance.find(a => a.employeeId === user.uid && a.date.slice(0, 10) === today);
         if (!existing) { showToast('No check-in found today.', 'error'); return; }
         if (existing.checkOut) { showToast('Already checked out.', 'warning'); return; }
         existing.checkOut = nowISO();
@@ -412,7 +467,7 @@ function initEvents() {
         showToast('✅ Checked out at ' + new Date().toLocaleTimeString());
     });
 
-    document.getElementById('attendanceRefreshBtn').addEventListener('click', () => {
+    document.getElementById('attendanceRefreshBtn')?.addEventListener('click', () => {
         renderAttendance();
         showToast('🔄 Refreshed.');
     });
@@ -428,34 +483,33 @@ function initEvents() {
     }
 
     // ── Leave ──
-    document.getElementById('applyLeaveBtn').addEventListener('click', async () => {
-        // ⛔ Permission check - anyone with view_leave can apply (employees too)
-        if (!canView('leave')) {
+    document.getElementById('applyLeaveBtn')?.addEventListener('click', async () => {
+        if (!window.canView('leave')) {
             showToast('⛔ You don\'t have permission to apply for leave.', 'error');
             return;
         }
-        const empId = document.getElementById('leaveEmployeeSelect').value;
+        const user = window.getCurrentUser();
+        let empId = document.getElementById('leaveEmployeeSelect').value;
         const type = document.getElementById('leaveType').value;
         const from = document.getElementById('leaveFrom').value;
         const to = document.getElementById('leaveTo').value;
         const reason = document.getElementById('leaveReason').value.trim();
 
         // If employee, force their own ID
-        let selectedEmpId = empId;
-        if (currentUser?.role === 'employee') {
+        if (user?.role === 'employee') {
             const data = getAppData();
-            const emp = data.employees.find(e => e.id === currentUser.uid);
-            selectedEmpId = emp ? emp.id : currentUser.uid;
+            const emp = data.employees.find(e => e.id === user.uid);
+            empId = emp ? emp.id : user.uid;
         }
 
-        if (!selectedEmpId) { showToast('Select employee.', 'error'); return; }
+        if (!empId) { showToast('Select employee.', 'error'); return; }
         if (!from || !to) { showToast('Select dates.', 'error'); return; }
         const data = getAppData();
-        const emp = data.employees.find(e => e.id === selectedEmpId);
+        const emp = data.employees.find(e => e.id === empId);
         data.leaves.push({
             id: generateId(),
-            employeeId: selectedEmpId,
-            employeeName: emp ? emp.name : (currentUser?.name || 'Unknown'),
+            employeeId: empId,
+            employeeName: emp ? emp.name : (user?.name || 'Unknown'),
             type,
             from,
             to,
@@ -470,9 +524,8 @@ function initEvents() {
         document.getElementById('leaveReason').value = '';
     });
 
-    document.getElementById('approveLeaveBtn').addEventListener('click', async () => {
-        // ⛔ Permission check - only managers/admin can approve
-        if (!canManage('leave') && !canManage('employees')) {
+    document.getElementById('approveLeaveBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('leave') && !window.canManage('employees')) {
             showToast('⛔ You don\'t have permission to approve leave.', 'error');
             return;
         }
@@ -486,9 +539,8 @@ function initEvents() {
         showToast('✅ Leave approved.');
     });
 
-    document.getElementById('rejectLeaveBtn').addEventListener('click', async () => {
-        // ⛔ Permission check - only managers/admin can reject
-        if (!canManage('leave') && !canManage('employees')) {
+    document.getElementById('rejectLeaveBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('leave') && !window.canManage('employees')) {
             showToast('⛔ You don\'t have permission to reject leave.', 'error');
             return;
         }
@@ -503,9 +555,8 @@ function initEvents() {
     });
 
     // ── Payroll ──
-    document.getElementById('calculatePayrollBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('payroll')) {
+    document.getElementById('calculatePayrollBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('payroll')) {
             showToast('⛔ You don\'t have permission to manage payroll.', 'error');
             return;
         }
@@ -546,9 +597,8 @@ function initEvents() {
         showToast('✅ Payroll calculated!');
     });
 
-    document.getElementById('generatePayslipBtn').addEventListener('click', () => {
-        // ⛔ Permission check
-        if (!canView('payroll')) {
+    document.getElementById('generatePayslipBtn')?.addEventListener('click', () => {
+        if (!window.canView('payroll')) {
             showToast('⛔ You don\'t have permission to view payslips.', 'error');
             return;
         }
@@ -556,9 +606,8 @@ function initEvents() {
     });
 
     // ── Finance ──
-    document.getElementById('addFinanceBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('finance')) {
+    document.getElementById('addFinanceBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('finance')) {
             showToast('⛔ You don\'t have permission to manage finance.', 'error');
             return;
         }
@@ -586,24 +635,24 @@ function initEvents() {
     });
 
     // ── Reports ──
-    document.getElementById('generateReportBtn').addEventListener('click', () => {
-        if (!canView('reports')) {
+    document.getElementById('generateReportBtn')?.addEventListener('click', () => {
+        if (!window.canView('reports')) {
             showToast('⛔ You don\'t have permission to view reports.', 'error');
             return;
         }
         renderReports();
     });
 
-    document.getElementById('reportType').addEventListener('change', () => {
-        if (!canView('reports')) {
+    document.getElementById('reportType')?.addEventListener('change', () => {
+        if (!window.canView('reports')) {
             showToast('⛔ You don\'t have permission to view reports.', 'error');
             return;
         }
         renderReports();
     });
 
-    document.getElementById('exportReportBtn').addEventListener('click', () => {
-        if (!canView('reports')) {
+    document.getElementById('exportReportBtn')?.addEventListener('click', () => {
+        if (!window.canView('reports')) {
             showToast('⛔ You don\'t have permission to export reports.', 'error');
             return;
         }
@@ -611,21 +660,11 @@ function initEvents() {
         const data = getAppData();
         let exportData = [];
         switch (type) {
-            case 'stock':
-                exportData = data.items || [];
-                break;
-            case 'sales':
-                exportData = data.salesData || [];
-                break;
-            case 'attendance':
-                exportData = data.attendance || [];
-                break;
-            case 'payroll':
-                exportData = data.payroll || [];
-                break;
-            case 'customers':
-                exportData = data.customers || [];
-                break;
+            case 'stock': exportData = data.items || []; break;
+            case 'sales': exportData = data.salesData || []; break;
+            case 'attendance': exportData = data.attendance || []; break;
+            case 'payroll': exportData = data.payroll || []; break;
+            case 'customers': exportData = data.customers || []; break;
         }
         if (!exportData || exportData.length === 0) { showToast('No data to export.', 'error'); return; }
         let csv = Object.keys(exportData[0]).join(',') + '\n';
@@ -642,8 +681,8 @@ function initEvents() {
         showToast('📥 CSV exported!');
     });
 
-    document.getElementById('printReportBtn').addEventListener('click', () => {
-        if (!canView('reports')) {
+    document.getElementById('printReportBtn')?.addEventListener('click', () => {
+        if (!window.canView('reports')) {
             showToast('⛔ You don\'t have permission to print reports.', 'error');
             return;
         }
@@ -651,9 +690,8 @@ function initEvents() {
     });
 
     // ── Products (Categories & Brands) ──
-    document.getElementById('addCategoryBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('inventory')) {
+    document.getElementById('addCategoryBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('inventory')) {
             showToast('⛔ You don\'t have permission to manage categories.', 'error');
             return;
         }
@@ -669,9 +707,8 @@ function initEvents() {
         showToast(`✅ "${val}" added.`);
     });
 
-    document.getElementById('addBrandBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('inventory')) {
+    document.getElementById('addBrandBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('inventory')) {
             showToast('⛔ You don\'t have permission to manage brands.', 'error');
             return;
         }
@@ -688,9 +725,8 @@ function initEvents() {
     });
 
     // ── Vehicles ──
-    document.getElementById('addVehicleBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('vehicles')) {
+    document.getElementById('addVehicleBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('vehicles')) {
             showToast('⛔ You don\'t have permission to manage vehicles.', 'error');
             return;
         }
@@ -710,8 +746,7 @@ function initEvents() {
             document.getElementById('addVehicleBtn').dataset.editId = '';
             document.getElementById('addVehicleBtn').textContent = '🚗 Add Vehicle';
         } else {
-            data.vehicles.push({ id: generateId(), vehicleNo, driver, fuel, status: 'active', createdAt: nowISO(),
-                updatedAt: nowISO() });
+            data.vehicles.push({ id: generateId(), vehicleNo, driver, fuel, status: 'active', createdAt: nowISO(), updatedAt: nowISO() });
         }
         setAppData(data);
         await saveAllData();
@@ -723,9 +758,8 @@ function initEvents() {
     });
 
     // ── Settings ──
-    document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-        // ⛔ Permission check
-        if (!canManage('settings') && currentUser?.role !== 'admin') {
+    document.getElementById('saveSettingsBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
             showToast('⛔ You don\'t have permission to change settings.', 'error');
             return;
         }
@@ -741,9 +775,8 @@ function initEvents() {
         showToast('✅ Settings saved!');
     });
 
-    document.getElementById('backupDataBtn').addEventListener('click', () => {
-        // ⛔ Permission check
-        if (!canManage('settings') && currentUser?.role !== 'admin') {
+    document.getElementById('backupDataBtn')?.addEventListener('click', () => {
+        if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
             showToast('⛔ You don\'t have permission to backup data.', 'error');
             return;
         }
@@ -758,9 +791,8 @@ function initEvents() {
         showToast('💾 Backup downloaded!');
     });
 
-    document.getElementById('restoreDataBtn').addEventListener('click', () => {
-        // ⛔ Permission check
-        if (!canManage('settings') && currentUser?.role !== 'admin') {
+    document.getElementById('restoreDataBtn')?.addEventListener('click', () => {
+        if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
             showToast('⛔ You don\'t have permission to restore data.', 'error');
             return;
         }
@@ -786,9 +818,8 @@ function initEvents() {
         input.click();
     });
 
-    document.getElementById('clearDataBtn').addEventListener('click', async () => {
-        // ⛔ Permission check - only admin can clear all data
-        if (currentUser?.role !== 'admin') {
+    document.getElementById('clearDataBtn')?.addEventListener('click', async () => {
+        if (window.getCurrentUser()?.role !== 'admin') {
             showToast('⛔ Only Admin can clear all data.', 'error');
             return;
         }
@@ -808,8 +839,7 @@ function initEvents() {
             vehicles: [],
             notifications: [],
             salesData: [],
-            settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567',
-                email: 'info@jayasinghe.lk' }
+            settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' }
         };
         setAppData(emptyData);
         await saveAllData();
@@ -818,7 +848,7 @@ function initEvents() {
     });
 
     // ── Notifications ──
-    document.getElementById('notifBell').addEventListener('click', () => {
+    document.getElementById('notifBell')?.addEventListener('click', () => {
         const data = getAppData();
         const list = document.getElementById('notifList');
         const notifs = data.notifications || [];
@@ -836,20 +866,20 @@ function initEvents() {
         document.getElementById('notifDot').style.display = 'none';
     });
 
-    document.getElementById('notifModalClose').addEventListener('click', () => {
+    document.getElementById('notifModalClose')?.addEventListener('click', () => {
         document.getElementById('notifModal').classList.remove('open');
     });
 
     // ── Search / Filter events ──
-    document.getElementById('empSearch').addEventListener('input', renderEmployees);
-    document.getElementById('empDeptFilter').addEventListener('change', renderEmployees);
-    document.getElementById('empStatusFilter').addEventListener('change', renderEmployees);
+    document.getElementById('empSearch')?.addEventListener('input', renderEmployees);
+    document.getElementById('empDeptFilter')?.addEventListener('change', renderEmployees);
+    document.getElementById('empStatusFilter')?.addEventListener('change', renderEmployees);
 
-    document.getElementById('invSearch').addEventListener('input', renderInventory);
-    document.getElementById('invCatFilter').addEventListener('change', renderInventory);
-    document.getElementById('invSort').addEventListener('change', renderInventory);
+    document.getElementById('invSearch')?.addEventListener('input', renderInventory);
+    document.getElementById('invCatFilter')?.addEventListener('change', renderInventory);
+    document.getElementById('invSort')?.addEventListener('change', renderInventory);
 
-    document.getElementById('custSearch').addEventListener('input', renderCustomers);
+    document.getElementById('custSearch')?.addEventListener('input', renderCustomers);
 
     // ── Modal close on overlay click ──
     document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -857,43 +887,62 @@ function initEvents() {
             if (e.target === this) this.classList.remove('open');
         });
     });
+
+    console.log('✅ Events initialized!');
 }
 
 // ============================================================
 // INIT
 // ============================================================
 async function init() {
-    // Load data from Firestore
-    await loadAllData();
+    console.log('🚀 Initializing app...');
 
-    // Set default dates
-    document.getElementById('payrollMonth').value = new Date().toISOString().slice(0, 7);
-    document.getElementById('leaveFrom').value = todayStr();
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    document.getElementById('leaveTo').value = nextWeek.toISOString().slice(0, 10);
-    document.getElementById('delDateFilter').value = todayStr();
+    try {
+        // Load data from Firestore
+        await loadAllData();
+        console.log('✅ Data loaded from Firestore');
 
-    // Init events
-    initEvents();
+        // Set default dates
+        const payrollMonth = document.getElementById('payrollMonth');
+        if (payrollMonth) payrollMonth.value = new Date().toISOString().slice(0, 7);
+        
+        const leaveFrom = document.getElementById('leaveFrom');
+        if (leaveFrom) leaveFrom.value = todayStr();
+        
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const leaveTo = document.getElementById('leaveTo');
+        if (leaveTo) leaveTo.value = nextWeek.toISOString().slice(0, 10);
+        
+        const delDateFilter = document.getElementById('delDateFilter');
+        if (delDateFilter) delDateFilter.value = todayStr();
 
-    // Render all
-    renderAll();
+        // Init events
+        initEvents();
 
-    // Add welcome notification if empty
-    const data = getAppData();
-    if (!data.notifications || data.notifications.length === 0) {
-        data.notifications = [{
-            id: generateId(),
-            title: 'Welcome to ERP System',
-            message: 'Jayasinghe Distributors · All modules ready.',
-            date: nowISO()
-        }];
-        setAppData(data);
-        await saveAllData();
+        // Render all
+        renderAll();
+
+        // Add welcome notification if empty
+        const data = getAppData();
+        if (!data.notifications || data.notifications.length === 0) {
+            data.notifications = [{
+                id: generateId(),
+                title: 'Welcome to ERP System',
+                message: 'Jayasinghe Distributors · All modules ready.',
+                date: nowISO()
+            }];
+            setAppData(data);
+            await saveAllData();
+        }
+
+        showToast('🔥 Firebase connected! ERP ready.', 'success');
+        console.log('✅ App initialized successfully!');
+
+    } catch (error) {
+        console.error('❌ Init error:', error);
+        showToast('❌ Failed to initialize app. Check console.', 'error');
     }
-
-    showToast('🔥 Firebase connected! ERP ready.', 'success');
 }
 
 // Start the app when DOM is ready
