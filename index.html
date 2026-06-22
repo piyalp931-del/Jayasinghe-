@@ -397,35 +397,63 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: REPORTS (with Date Filters)
-        ========================================================== -->
-        <section class="panel" id="panel-reports">
-            <div class="card">
-                <div class="card-title">📈 Reports & Analytics</div>
-                <div class="toolbar">
-                    <select id="reportType">
-                        <option value="stock">Stock Report</option>
-                        <option value="sales">Sales Report</option>
-                        <option value="attendance">Attendance Report</option>
-                        <option value="payroll">Payroll Report</option>
-                        <option value="customers">Customer Report</option>
-                    </select>
-                    <div class="search-bar" style="flex:2;">
-                        <label style="font-size:12px; display:flex; align-items:center; gap:4px;">
-                            From: <input type="date" id="reportFrom" />
-                        </label>
-                        <label style="font-size:12px; display:flex; align-items:center; gap:4px;">
-                            To: <input type="date" id="reportTo" />
-                        </label>
-                        <button class="btn btn-sm btn-primary" id="applyReportFilters"><i class="fas fa-filter"></i> Apply</button>
-                    </div>
-                    <button class="btn btn-primary" id="generateReportBtn"><i class="fas fa-chart-bar"></i> Generate</button>
-                    <button class="btn btn-outline" id="exportReportBtn"><i class="fas fa-file-csv"></i> CSV</button>
-                    <button class="btn btn-outline" id="printReportBtn"><i class="fas fa-print"></i> Print</button>
-                </div>
-                <div id="reportContent" class="table-wrap"></div>
+PANEL: REPORTS (with Date Filters - FIXED UI)
+========================================================== -->
+<section class="panel" id="panel-reports">
+    <div class="card">
+        <div class="card-title">📈 Reports & Analytics</div>
+
+        <!-- Report Type Dropdown -->
+        <div class="form-group" style="margin-bottom:12px;">
+            <select id="reportType" style="max-width:250px;">
+                <option value="stock">📦 Stock Report</option>
+                <option value="sales">💰 Sales Report</option>
+                <option value="attendance">⏱️ Attendance Report</option>
+                <option value="payroll">🧾 Payroll Report</option>
+                <option value="customers">👥 Customer Report</option>
+            </select>
+        </div>
+
+        <!-- Date Filters + Buttons in 2 rows -->
+        <div class="report-filters">
+            <!-- Row 1: Date inputs + Apply button -->
+            <div class="search-bar" style="flex:1; flex-wrap:nowrap;">
+                <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+                    From:
+                    <input type="date" id="reportFrom" style="max-width:150px;" />
+                </label>
+                <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+                    To:
+                    <input type="date" id="reportTo" style="max-width:150px;" />
+                </label>
+                <button class="btn btn-sm btn-primary" id="applyReportFilters">
+                    <i class="fas fa-filter"></i> Apply
+                </button>
             </div>
-        </section>
+        </div>
+
+        <!-- Row 2: Action buttons -->
+        <div class="toolbar" style="margin-top:8px;">
+            <button class="btn btn-primary" id="generateReportBtn">
+                <i class="fas fa-chart-bar"></i> Generate
+            </button>
+            <button class="btn btn-outline" id="exportReportBtn">
+                <i class="fas fa-file-csv"></i> CSV
+            </button>
+            <button class="btn btn-outline" id="printReportBtn">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+
+        <!-- Report Content -->
+        <div id="reportContent" class="table-wrap" style="margin-top:12px;">
+            <div class="text-muted text-center" style="padding:30px;">
+                <span style="font-size:40px; display:block; margin-bottom:8px;">📊</span>
+                Select a report type and click <strong>Generate</strong>
+            </div>
+        </div>
+    </div>
+</section>
 
         <!-- ==========================================================
         PANEL: VEHICLES
