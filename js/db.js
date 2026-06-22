@@ -18,7 +18,10 @@ let appData = {
     notifications: [],
     salesData: [],
     settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567',
-        email: 'info@jayasinghe.lk' }
+        email: 'info@jayasinghe.lk' },
+    // NEW: leave balances & budget
+    leaveBalances: {},
+    budget: { monthly: 0, category: {} }
 };
 
 const COLLECTIONS = {
@@ -35,7 +38,9 @@ const COLLECTIONS = {
     vehicles: 'vehicles',
     notifications: 'notifications',
     salesData: 'salesData',
-    settings: 'settings'
+    settings: 'settings',
+    leaveBalances: 'leaveBalances',
+    budget: 'budget'
 };
 
 // ============================================================
@@ -46,19 +51,27 @@ async function loadAllData() {
         const promises = Object.keys(COLLECTIONS).map(async (key) => {
             const collectionName = COLLECTIONS[key];
             
-            // categories සහ brands සඳහා විශේෂ ක්‍රමය (තනි ලේඛනයක්)
-            if (key === 'categories' || key === 'brands') {
-                const docRef = db.collection(collectionName).doc(key); // doc id = "categories" හෝ "brands"
+            // categories, brands, leaveBalances, budget - single document
+            if (['categories', 'brands', 'leaveBalances', 'budget'].includes(key)) {
+                const docRef = db.collection(collectionName).doc(key);
                 const doc = await docRef.get();
                 if (doc.exists) {
-                    appData[key] = doc.data().list || [];
+                    if (key === 'categories' || key === 'brands') {
+                        appData[key] = doc.data().list || [];
+                    } else {
+                        appData[key] = doc.data() || {};
+                    }
                 } else {
-                    appData[key] = [];
+                    if (key === 'categories' || key === 'brands') {
+                        appData[key] = [];
+                    } else {
+                        appData[key] = {};
+                    }
                 }
                 return;
             }
 
-            // අනෙකුත් සියලුම collections (එක් එක් ලේඛනයට තමන්ගේ id ඇත)
+            // Other collections
             const snapshot = await db.collection(collectionName).get();
             const docs = [];
             snapshot.forEach(doc => {
@@ -69,11 +82,13 @@ async function loadAllData() {
 
         await Promise.all(promises);
         console.log('✅ Data loaded from Firestore');
+        // Auto-migrate leave balances if needed
+        await migrateLeaveBalancesIfNeeded();
         return true;
     } catch (error) {
         console.warn('⚠️ Error loading data from Firestore, using local cache:', error);
-        // Load from localStorage as fallback
         loadFromLocalStorage();
+        await migrateLeaveBalancesIfNeeded();
         return false;
     }
 }
@@ -87,41 +102,39 @@ async function saveAllData() {
             const collectionName = COLLECTIONS[key];
             const data = appData[key];
 
-            // categories සහ brands සඳහා විශේෂ ක්‍රමය (තනි ලේඛනයක් ලෙස)
-            if (key === 'categories' || key === 'brands') {
+            // Single-document collections
+            if (['categories', 'brands', 'leaveBalances', 'budget'].includes(key)) {
                 const docRef = db.collection(collectionName).doc(key);
-                await docRef.set({ list: data });
+                if (key === 'categories' || key === 'brands') {
+                    await docRef.set({ list: data });
+                } else {
+                    await docRef.set(data);
+                }
                 return;
             }
 
-            // අනෙකුත් collections: පැරණි ලේඛන මකා දමා එක් එක් ලේඛනය එහි id සමඟින් නැවත එකතු කරන්න
+            // Normal collections
             const snapshot = await db.collection(collectionName).get();
             const batch = db.batch();
-
-            // Delete all existing docs
             snapshot.forEach(doc => {
                 batch.delete(doc.ref);
             });
-
-            // Add new docs using their own id as document ID
             data.forEach(item => {
-                // item එකට id නැත්නම් එකක් හදන්න
                 const docId = item.id || generateId();
                 if (!item.id) item.id = docId;
                 const docRef = db.collection(collectionName).doc(docId);
                 batch.set(docRef, item);
             });
-
             await batch.commit();
         });
 
         await Promise.all(promises);
         console.log('✅ Data saved to Firestore');
-        saveToLocalStorage(); // Cache locally
+        saveToLocalStorage();
         return true;
     } catch (error) {
         console.error('❌ Error saving to Firestore:', error);
-        saveToLocalStorage(); // Save locally as fallback
+        saveToLocalStorage();
         return false;
     }
 }
@@ -148,6 +161,25 @@ function saveToLocalStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
     } catch (e) {
         console.warn('Error saving to localStorage:', e);
+    }
+}
+
+// ============================================================
+// MIGRATION: Leave Balances for existing employees
+// ============================================================
+async function migrateLeaveBalancesIfNeeded() {
+    const employees = appData.employees || [];
+    if (!appData.leaveBalances) appData.leaveBalances = {};
+    let changed = false;
+    employees.forEach(emp => {
+        if (!appData.leaveBalances[emp.id]) {
+            appData.leaveBalances[emp.id] = { sick: 10, casual: 5, annual: 12 };
+            changed = true;
+        }
+    });
+    if (changed) {
+        console.log('🔄 Migrated leave balances for employees');
+        await saveAllData();
     }
 }
 
