@@ -21,24 +21,35 @@ window.showToast = showToast;
 // RENDER ALL
 // ============================================================
 function renderAll() {
-    console.log('🔄 Rendering all panels...');
-    renderDashboard();
-    renderEmployees();
-    renderInventory();
-    renderProducts();
-    renderDeliveries();
-    renderAttendance();
-    renderLeave();
-    renderPayroll();
-    renderCustomers();
-    renderFinance();
-    renderReports();
-    renderVehicles();
-    renderSettings();
-    renderSidebar();
+    console.log('🔄 Rendering active panel...');
+    // Find the active panel and render it
+    const activePanel = document.querySelector('.panel.active');
+    if (activePanel) {
+        const id = activePanel.id.replace('panel-', '');
+        // Only render if it's a valid panel
+        switch (id) {
+            case 'dashboard': renderDashboard(); break;
+            case 'employees': renderEmployees(); break;
+            case 'inventory': renderInventory(); break;
+            case 'products': renderProducts(); break;
+            case 'deliveries': renderDeliveries(); break;
+            case 'attendance': renderAttendance(); break;
+            case 'leave': renderLeave(); break;
+            case 'payroll': renderPayroll(); break;
+            case 'customers': renderCustomers(); break;
+            case 'finance': renderFinance(); break;
+            case 'reports': renderReports(); break;
+            case 'vehicles': renderVehicles(); break;
+            case 'settings': renderSettings(); break;
+            default: break;
+        }
+    } else {
+        // If no active panel, default to dashboard
+        renderDashboard();
+    }
+    renderSidebar(); // always render sidebar
 }
 window.renderAll = renderAll;
-
 // ============================================================
 // POPULATE ITEM DROPDOWNS
 // ============================================================
