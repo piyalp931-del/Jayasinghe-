@@ -30,10 +30,7 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-    <!-- ============================================================
-    LOGIN PAGE
-    ============================================================ -->
+    <!-- ===== LOGIN PAGE ===== -->
     <div id="loginPage">
         <div class="login-card">
             <div class="logo">
@@ -59,16 +56,11 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    SIDEBAR OVERLAY (mobile)
-    ============================================================ -->
+    <!-- ===== SIDEBAR OVERLAY ===== -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <!-- ============================================================
-    APP SHELL
-    ============================================================ -->
+    <!-- ===== APP SHELL ===== -->
     <div id="app">
-
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="brand">
@@ -96,9 +88,8 @@
             </div>
         </aside>
 
-        <!-- Main -->
+        <!-- Main Content -->
         <div class="main-content">
-
             <!-- Header -->
             <header class="header">
                 <div class="left">
@@ -123,14 +114,11 @@
 
             <!-- Page Content -->
             <div class="page-content" id="pageContent">
-
-                <!-- ========== DASHBOARD ========== -->
+                <!-- Dashboard -->
                 <div class="page active" id="page-dashboard">
-                    <!-- Dashboard content rendered by JS -->
                     <div id="dashboardContent"></div>
                 </div>
-
-                <!-- ========== PRODUCTS ========== -->
+                <!-- Products -->
                 <div class="page" id="page-products">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="productSearch" placeholder="Search products..." oninput="renderProducts()" /></div>
@@ -146,8 +134,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== STOCK ========== -->
+                <!-- Stock -->
                 <div class="page" id="page-stock">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="stockSearch" placeholder="Search stock..." oninput="renderStock()" /></div>
@@ -161,8 +148,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== CUSTOMERS ========== -->
+                <!-- Customers -->
                 <div class="page" id="page-customers">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="customerSearch" placeholder="Search customers..." oninput="renderCustomers()" /></div>
@@ -178,8 +164,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== SUPPLIERS ========== -->
+                <!-- Suppliers -->
                 <div class="page" id="page-suppliers">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="supplierSearch" placeholder="Search suppliers..." oninput="renderSuppliers()" /></div>
@@ -195,8 +180,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== PURCHASES ========== -->
+                <!-- Purchases -->
                 <div class="page" id="page-purchases">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="purchaseSearch" placeholder="Search purchases..." oninput="renderPurchases()" /></div>
@@ -209,8 +193,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== SALES ========== -->
+                <!-- Sales -->
                 <div class="page" id="page-sales">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="salesSearch" placeholder="Search sales..." oninput="renderSales()" /></div>
@@ -223,8 +206,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== DISTRIBUTION ========== -->
+                <!-- Distribution -->
                 <div class="page" id="page-distribution">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="distSearch" placeholder="Search deliveries..." oninput="renderDistribution()" /></div>
@@ -237,8 +219,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== ACCOUNTS ========== -->
+                <!-- Accounts -->
                 <div class="page" id="page-accounts">
                     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
                         <div class="stat-card success"><div class="label">Total Income</div><div class="value" id="accIncome">LKR 0</div></div>
@@ -253,8 +234,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== REPORTS ========== -->
+                <!-- Reports -->
                 <div class="page" id="page-reports">
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;">
                         <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('daily')"><i class="fas fa-calendar-day"></i> Daily</button>
@@ -273,8 +253,7 @@
                         <button class="btn-add" style="background:var(--info);color:#fff;" onclick="exportExcelReport()"><i class="fas fa-file-excel"></i> Export Excel</button>
                     </div>
                 </div>
-
-                <!-- ========== EMPLOYEES ========== -->
+                <!-- Employees -->
                 <div class="page" id="page-employees">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="employeeSearch" placeholder="Search employees..." oninput="renderEmployees()" /></div>
@@ -287,8 +266,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== ATTENDANCE ========== -->
+                <!-- Attendance -->
                 <div class="page" id="page-attendance">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="attendanceSearch" placeholder="Search attendance..." oninput="renderAttendance()" /></div>
@@ -302,8 +280,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== VOUCHERS ========== -->
+                <!-- Vouchers -->
                 <div class="page" id="page-vouchers">
                     <div class="toolbar">
                         <div class="search-box"><i class="fas fa-search"></i><input type="text" id="voucherSearch" placeholder="Search vouchers..." oninput="renderVouchers()" /></div>
@@ -316,8 +293,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- ========== SETTINGS ========== -->
+                <!-- Settings -->
                 <div class="page" id="page-settings">
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
                         <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
@@ -341,14 +317,11 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-            </div><!-- /page-content -->
-        </div><!-- /main-content -->
-    </div><!-- /app -->
-
-    <!-- ============================================================
-    MOBILE BOTTOM NAV
-    ============================================================ -->
+    <!-- Mobile Bottom Nav -->
     <nav class="mobile-bottom-nav" id="bottomNav">
         <a href="#" data-page="dashboard" class="active"><i class="fas fa-chart-pie"></i><span>Home</span></a>
         <a href="#" data-page="products"><i class="fas fa-cube"></i><span>Products</span></a>
@@ -357,9 +330,7 @@
         <a href="#" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
     </nav>
 
-    <!-- ============================================================
-    MODAL
-    ============================================================ -->
+    <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="modalContent">
             <div class="modal-header">
@@ -370,9 +341,6 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    JavaScript
-    ============================================================ -->
     <script src="app.js"></script>
 </body>
 </html>
