@@ -45,6 +45,20 @@ async function loadAllData() {
     try {
         const promises = Object.keys(COLLECTIONS).map(async (key) => {
             const collectionName = COLLECTIONS[key];
+            
+            // categories සහ brands සඳහා විශේෂ ක්‍රමය (තනි ලේඛනයක්)
+            if (key === 'categories' || key === 'brands') {
+                const docRef = db.collection(collectionName).doc(key); // doc id = "categories" හෝ "brands"
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    appData[key] = doc.data().list || [];
+                } else {
+                    appData[key] = [];
+                }
+                return;
+            }
+
+            // අනෙකුත් සියලුම collections (එක් එක් ලේඛනයට තමන්ගේ id ඇත)
             const snapshot = await db.collection(collectionName).get();
             const docs = [];
             snapshot.forEach(doc => {
@@ -73,8 +87,14 @@ async function saveAllData() {
             const collectionName = COLLECTIONS[key];
             const data = appData[key];
 
-            // For simplicity, we'll sync by deleting and re-adding
-            // In production, you should use individual doc updates
+            // categories සහ brands සඳහා විශේෂ ක්‍රමය (තනි ලේඛනයක් ලෙස)
+            if (key === 'categories' || key === 'brands') {
+                const docRef = db.collection(collectionName).doc(key);
+                await docRef.set({ list: data });
+                return;
+            }
+
+            // අනෙකුත් collections: පැරණි ලේඛන මකා දමා එක් එක් ලේඛනය එහි id සමඟින් නැවත එකතු කරන්න
             const snapshot = await db.collection(collectionName).get();
             const batch = db.batch();
 
@@ -83,9 +103,12 @@ async function saveAllData() {
                 batch.delete(doc.ref);
             });
 
-            // Add new docs
+            // Add new docs using their own id as document ID
             data.forEach(item => {
-                const docRef = db.collection(collectionName).doc();
+                // item එකට id නැත්නම් එකක් හදන්න
+                const docId = item.id || generateId();
+                if (!item.id) item.id = docId;
+                const docRef = db.collection(collectionName).doc(docId);
                 batch.set(docRef, item);
             });
 
