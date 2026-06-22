@@ -28,7 +28,6 @@ function renderSidebar() {
     const container = document.getElementById('sidebarNav');
     const user = window.getCurrentUser();
     const role = user?.role || 'admin';
-    // Use window.ROLES directly (no local const)
     const roleConfig = window.ROLES?.[role] || window.ROLES?.admin || { nav: ['dashboard'] };
 
     let html = '';
@@ -577,7 +576,7 @@ function renderAttendance() {
 }
 
 // ============================================================
-// LEAVE
+// LEAVE (FIXED - NULL CHECK ADDED)
 // ============================================================
 function renderLeave() {
     if (!window.canView('leave')) {
@@ -591,6 +590,12 @@ function renderLeave() {
     const user = window.getCurrentUser();
 
     const select = document.getElementById('leaveEmployeeSelect');
+    // ✅ NULL CHECK - if element not found, exit
+    if (!select) {
+        console.warn('leaveEmployeeSelect not found in DOM');
+        return;
+    }
+
     const canManageLeave = window.canManage('leave') || window.canManage('employees');
     if (canManageLeave) {
         const currentVal = select.value;
@@ -611,6 +616,11 @@ function renderLeave() {
     }
 
     const tbody = document.getElementById('leaveTableBody');
+    if (!tbody) {
+        console.warn('leaveTableBody not found');
+        return;
+    }
+
     let filtered = leaves;
     if (!canManageLeave) {
         filtered = leaves.filter(l => l.employeeId === user?.uid);
@@ -634,7 +644,7 @@ function renderLeave() {
 }
 
 // ============================================================
-// PAYROLL
+// PAYROLL (FIXED - NULL CHECK ADDED)
 // ============================================================
 function renderPayroll() {
     if (!window.canView('payroll')) {
@@ -649,6 +659,11 @@ function renderPayroll() {
 
     const canManagePayroll = window.canManage('payroll');
     const select = document.getElementById('payrollEmployeeSelect');
+    // ✅ NULL CHECK
+    if (!select) {
+        console.warn('payrollEmployeeSelect not found in DOM');
+        return;
+    }
 
     if (canManagePayroll) {
         const currentVal = select.value;
@@ -669,6 +684,11 @@ function renderPayroll() {
     }
 
     const tbody = document.getElementById('payrollTableBody');
+    if (!tbody) {
+        console.warn('payrollTableBody not found');
+        return;
+    }
+
     let filtered = payroll;
     if (!canManagePayroll) {
         filtered = payroll.filter(p => p.employeeId === user?.uid);
