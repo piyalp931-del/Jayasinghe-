@@ -4,6 +4,59 @@
 
 let currentUser = null;
 
+// Role-based permissions
+const ROLES = {
+    admin: {
+        label: 'Administrator',
+        icon: '👑',
+        permissions: ['all'],
+        dashboard: ['stats_all', 'sales_chart', 'low_stock', 'quick_actions_all'],
+        nav: ['dashboard', 'employees', 'inventory', 'products', 'deliveries', 'attendance', 'leave', 'payroll', 'customers', 'finance', 'reports', 'vehicles', 'settings']
+    },
+    manager: {
+        label: 'Manager',
+        icon: '📊',
+        permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory'],
+        dashboard: ['stats_employees', 'stats_deliveries', 'stats_low_stock', 'sales_chart', 'quick_actions_ops'],
+        nav: ['dashboard', 'employees', 'inventory', 'deliveries', 'attendance', 'leave', 'reports']
+    },
+    sales: {
+        label: 'Sales Representative',
+        icon: '🛒',
+        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'create_deliveries', 'view_reports'],
+        dashboard: ['stats_inventory', 'stats_customers', 'stats_deliveries', 'sales_chart', 'quick_actions_sales'],
+        nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports']
+    },
+    delivery: {
+        label: 'Delivery Staff',
+        icon: '🚚',
+        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance'],
+        dashboard: ['stats_deliveries', 'stats_attendance', 'delivery_map', 'quick_actions_delivery'],
+        nav: ['dashboard', 'deliveries', 'attendance', 'vehicles']
+    },
+    store: {
+        label: 'Store Keeper',
+        icon: '🏪',
+        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports'],
+        dashboard: ['stats_inventory', 'stats_low_stock', 'inventory_chart', 'quick_actions_store'],
+        nav: ['dashboard', 'inventory', 'products', 'reports']
+    },
+    accountant: {
+        label: 'Accountant',
+        icon: '💰',
+        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll'],
+        dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
+        nav: ['dashboard', 'finance', 'payroll', 'reports']
+    },
+    employee: {
+        label: 'Employee',
+        icon: '👤',
+        permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll'],
+        dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
+        nav: ['dashboard', 'attendance', 'leave', 'payroll']
+    }
+};
+
 // DOM references
 const loginScreen = document.getElementById('loginScreen');
 const loginBtn = document.getElementById('loginBtn');
@@ -45,28 +98,33 @@ async function handleLogin() {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // Check if role matches (you can store role in Firestore or custom claims)
-        // For demo, we just use the selected role
+        // Check if role exists
+        if (!ROLES[selectedRole]) {
+            throw new Error('Invalid role selected.');
+        }
+
         currentUser = {
             uid: user.uid,
             email: user.email,
             name: user.displayName || email.split('@')[0],
-            role: selectedRole
+            role: selectedRole,
+            permissions: ROLES[selectedRole].permissions || []
         };
 
         // Update UI
         loginScreen.classList.add('hidden');
         userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
         userName.textContent = currentUser.name;
-        userRole.textContent = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
+        userRole.textContent = ROLES[selectedRole].label || selectedRole;
 
         // Load data from Firestore
         await loadAllData();
 
+        // Render sidebar and dashboard based on role
         renderSidebar();
         switchPanel('dashboard');
 
-        showToast(`👋 Welcome, ${currentUser.name}!`, 'success');
+        showToast(`👋 Welcome, ${currentUser.name}! (${ROLES[selectedRole].label})`, 'success');
 
     } catch (error) {
         loginError.textContent = error.message || 'Invalid credentials.';
@@ -111,15 +169,29 @@ async function handleResetPassword() {
     }
 
     try {
-        // In a real app, you would send a reset email
-        // For demo, we just update the user's password if they exist in Firestore
-        // Or you can use auth.sendPasswordResetEmail()
         await auth.sendPasswordResetEmail(username);
         showToast('✅ Password reset email sent!');
         forgotModal.classList.remove('open');
     } catch (error) {
         showToast('❌ Error: ' + error.message, 'error');
     }
+}
+
+// ============================================================
+// CHECK PERMISSION HELPER
+// ============================================================
+function hasPermission(permission) {
+    if (!currentUser) return false;
+    const perms = currentUser.permissions || [];
+    return perms.includes('all') || perms.includes(permission);
+}
+
+function canView(module) {
+    return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
+}
+
+function canManage(module) {
+    return hasPermission('manage_' + module) || hasPermission('all');
 }
 
 // ============================================================
@@ -159,8 +231,18 @@ auth.onAuthStateChanged((user) => {
         // User is already logged in
         // You can load user data from Firestore here
         console.log('User already logged in:', user.email);
+        // Optionally auto-login with stored role
+        // For now, show login screen to allow role selection
+        loginScreen.classList.remove('hidden');
     } else {
         // Show login screen
         loginScreen.classList.remove('hidden');
     }
 });
+
+// Export for use in other files
+window.hasPermission = hasPermission;
+window.canView = canView;
+window.canManage = canManage;
+window.currentUser = () => currentUser;
+window.ROLES = ROLES;
