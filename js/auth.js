@@ -1,5 +1,5 @@
 // ============================================================
-// AUTHENTICATION MODULE (FIXED - Employee permissions added)
+// AUTHENTICATION MODULE (FIXED - onAuthStateChanged & permissions)
 // ============================================================
 
 // Global currentUser variable
@@ -49,7 +49,6 @@ const ROLES = {
         dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
         nav: ['dashboard', 'finance', 'payroll', 'reports']
     },
-    // ✅ FIXED: Employee permissions with view_attendance, view_leave, view_payroll
     employee: {
         label: 'Employee',
         icon: '👤',
@@ -95,6 +94,7 @@ function hasPermission(permission) {
 }
 
 function canView(module) {
+    // Admin always has access
     if (currentUser && currentUser.role === 'admin') return true;
     return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
 }
@@ -237,11 +237,23 @@ forgotModalClose.addEventListener('click', () => {
 
 resetPasswordBtn.addEventListener('click', handleResetPassword);
 
+// ============================================================
+// ✅ FIXED onAuthStateChanged – no longer hides login screen after login
+// ============================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
-        console.log('User already logged in:', user.email);
-        loginScreen.classList.remove('hidden');
+        // User is signed in, but we only hide login screen if we have a currentUser
+        // (which means we already processed login via the button)
+        if (!currentUser) {
+            // If we don't have currentUser, it means page was refreshed or user signed in elsewhere.
+            // We keep login screen visible to let user select role and login again.
+            // This avoids automatically logging in without role selection.
+            console.log('User signed in but no currentUser. Showing login screen.');
+            loginScreen.classList.remove('hidden');
+        }
+        // else: currentUser exists, login screen already hidden.
     } else {
+        // User signed out, show login screen
         loginScreen.classList.remove('hidden');
     }
 });
