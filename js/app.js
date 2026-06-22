@@ -627,4 +627,130 @@ function initEvents() {
     document.getElementById('restoreDataBtn').addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.
+        input.accept = '.json';
+        input.onchange = async function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!confirm('Replace ALL current data?')) return;
+                    setAppData(data);
+                    await saveAllData();
+                    renderAll();
+                    showToast('✅ Restored!');
+                } catch (_) { showToast('Failed to restore.', 'error'); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    });
+
+    document.getElementById('clearDataBtn').addEventListener('click', async () => {
+        if (!confirm('⚠️ Delete ALL data? This cannot be undone!')) return;
+        if (!confirm('Are you sure?')) return;
+        const emptyData = {
+            items: [],
+            categories: ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'],
+            brands: ['Nike', 'Apple', 'Samsung', 'Adidas', 'Pepsi'],
+            employees: [],
+            deliveries: [],
+            attendance: [],
+            leaves: [],
+            payroll: [],
+            customers: [],
+            finance: [],
+            vehicles: [],
+            notifications: [],
+            salesData: [],
+            settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567',
+                email: 'info@jayasinghe.lk' }
+        };
+        setAppData(emptyData);
+        await saveAllData();
+        renderAll();
+        showToast('🗑️ All data cleared.');
+    });
+
+    // ── Notifications ──
+    document.getElementById('notifBell').addEventListener('click', () => {
+        const data = getAppData();
+        const list = document.getElementById('notifList');
+        const notifs = data.notifications || [];
+        if (notifs.length === 0) {
+            list.innerHTML = '<div class="text-muted text-center" style="padding:20px;">No notifications.</div>';
+        } else {
+            list.innerHTML = notifs.slice().reverse().map(n =>
+                `<div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+                            <div><strong>${escapeHtml(n.title || '')}</strong></div>
+                            <div class="text-muted">${escapeHtml(n.message || '')} · ${formatDateTime(n.date)}</div>
+                        </div>`
+            ).join('');
+        }
+        document.getElementById('notifModal').classList.add('open');
+        document.getElementById('notifDot').style.display = 'none';
+    });
+
+    document.getElementById('notifModalClose').addEventListener('click', () => {
+        document.getElementById('notifModal').classList.remove('open');
+    });
+
+    // ── Search / Filter events ──
+    document.getElementById('empSearch').addEventListener('input', renderEmployees);
+    document.getElementById('empDeptFilter').addEventListener('change', renderEmployees);
+    document.getElementById('empStatusFilter').addEventListener('change', renderEmployees);
+
+    document.getElementById('invSearch').addEventListener('input', renderInventory);
+    document.getElementById('invCatFilter').addEventListener('change', renderInventory);
+    document.getElementById('invSort').addEventListener('change', renderInventory);
+
+    document.getElementById('custSearch').addEventListener('input', renderCustomers);
+
+    // ── Modal close on overlay click ──
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+    });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+    // Load data from Firestore
+    await loadAllData();
+
+    // Set default dates
+    document.getElementById('payrollMonth').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('leaveFrom').value = todayStr();
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    document.getElementById('leaveTo').value = nextWeek.toISOString().slice(0, 10);
+    document.getElementById('delDateFilter').value = todayStr();
+
+    // Init events
+    initEvents();
+
+    // Render all
+    renderAll();
+
+    // Add welcome notification if empty
+    const data = getAppData();
+    if (!data.notifications || data.notifications.length === 0) {
+        data.notifications = [{
+            id: generateId(),
+            title: 'Welcome to ERP System',
+            message: 'Jayasinghe Distributors · All modules ready.',
+            date: nowISO()
+        }];
+        setAppData(data);
+        await saveAllData();
+    }
+
+    showToast('🔥 Firebase connected! ERP ready.', 'success');
+}
+
+// Start the app when DOM is ready
+document.addEventListener('DOMContentLoaded', init);
