@@ -2,345 +2,3467 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Jayasinghe Distributors</title>
-    <!-- Font Awesome -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Jayasinghe Distributors - ERP System</title>
+
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <!-- Chart.js -->
+    <!-- Chart.js for charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
     </script>
-    <!-- QRCode.js -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
-    </script>
-    <!-- JsBarcode -->
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js">
-    </script>
-    <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
-    </script>
-    <!-- SheetJS (XLSX) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
-    </script>
-    <!-- Papa Parse (CSV) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js">
-    </script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css" />
+
+    <style>
+        /* ============================================================
+               RESET & BASE
+               ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --teal: #14b8a6;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --radius: 14px;
+            --transition: 0.25s ease;
+            --sidebar-width: 240px;
+        }
+
+        body.dark {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        /* ============================================================
+               SIDEBAR
+               ============================================================ */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            padding: 16px 12px;
+            overflow-y: auto;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 4px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-brand .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -1px;
+        }
+
+        .sidebar-brand .logo span {
+            color: var(--text);
+        }
+
+        .sidebar-brand .sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            display: block;
+            margin-top: -2px;
+        }
+
+        .sidebar .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .sidebar .user-badge .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .sidebar .user-badge .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar .user-badge .info .name {
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar .user-badge .info .role {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .sidebar .user-badge .logout-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-nav .nav-section {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            padding: 12px 8px 4px;
+            font-weight: 600;
+        }
+
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sidebar-nav .nav-item:hover {
+            background: var(--bg);
+        }
+
+        .sidebar-nav .nav-item.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .sidebar-nav .nav-item .icon {
+            width: 22px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .sidebar-nav .nav-item .badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+               MAIN CONTENT
+               ============================================================ */
+        .main {
+            margin-left: 0;
+            padding: 12px 12px 80px;
+            transition: margin-left 0.3s ease;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .main.shifted {
+            margin-left: var(--sidebar-width);
+        }
+
+        /* ============================================================
+               TOP BAR
+               ============================================================ */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 16px;
+            gap: 10px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 100;
+            padding-top: 8px;
+            padding-bottom: 12px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar-left .menu-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text);
+            transition: 0.15s;
+        }
+
+        .topbar-left .menu-btn:active {
+            transform: scale(0.92);
+        }
+
+        .topbar-left .page-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .topbar-right .btn-icon {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            color: var(--text);
+            transition: 0.15s;
+            position: relative;
+        }
+
+        .topbar-right .btn-icon:active {
+            transform: scale(0.92);
+        }
+
+        .topbar-right .btn-icon .dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid var(--card);
+        }
+
+        .topbar-right .lang-toggle {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        /* ============================================================
+               PANELS
+               ============================================================ */
+        .panel {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================================
+               CARDS
+               ============================================================ */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: background var(--transition), border var(--transition);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title .sub {
+            font-weight: 400;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        /* ============================================================
+               STAT GRID
+               ============================================================ */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .stat-box {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: background var(--transition), border var(--transition);
+        }
+
+        .stat-box .num {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .stat-box.blue .num {
+            color: var(--primary);
+        }
+        .stat-box.green .num {
+            color: var(--success);
+        }
+        .stat-box.red .num {
+            color: var(--danger);
+        }
+        .stat-box.orange .num {
+            color: var(--warning);
+        }
+        .stat-box.purple .num {
+            color: var(--purple);
+        }
+        .stat-box.teal .num {
+            color: var(--teal);
+        }
+
+        /* ============================================================
+               FORMS
+               ============================================================ */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--bg);
+            color: var(--text);
+            transition: 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            background: var(--card);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input[readonly] {
+            background: var(--border);
+            color: var(--text);
+            font-weight: 500;
+            cursor: default;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* ============================================================
+               BUTTONS
+               ============================================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #fff;
+            background: var(--primary);
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn-primary {
+            background: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        .btn-success {
+            background: var(--success);
+        }
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        .btn-danger {
+            background: var(--danger);
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-warning {
+            background: var(--warning);
+        }
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: var(--bg);
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+        .btn-block {
+            width: 100%;
+        }
+        .btn-xs {
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 6px;
+        }
+
+        /* ============================================================
+               TABLES
+               ============================================================ */
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-wrap table {
+            width: 100%;
+            font-size: 13px;
+            border-collapse: collapse;
+        }
+
+        .table-wrap th {
+            text-align: left;
+            padding: 8px 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .table-wrap td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .table-wrap .text-right {
+            text-align: right;
+        }
+        .table-wrap .text-center {
+            text-align: center;
+        }
+
+        .table-scroll {
+            max-height: 320px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .table-scroll::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 8px;
+        }
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 8px;
+        }
+
+        /* ============================================================
+               BADGES & CHIPS
+               ============================================================ */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .badge-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .badge-warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .badge-info {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        body.dark .badge-success {
+            background: #14532d;
+            color: #86efac;
+        }
+        body.dark .badge-danger {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        body.dark .badge-warning {
+            background: #78350f;
+            color: #fcd34d;
+        }
+        body.dark .badge-info {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        /* ============================================================
+               SEARCH BAR
+               ============================================================ */
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input,
+        .search-bar select {
+            padding: 9px 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .search-bar input:focus,
+        .search-bar select:focus {
+            border-color: var(--primary);
+            background: var(--card);
+        }
+
+        /* ============================================================
+               TOAST
+               ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: var(--bg);
+            padding: 10px 22px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            z-index: 9999;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            background: var(--success);
+            color: #fff;
+        }
+        .toast.error {
+            background: var(--danger);
+            color: #fff;
+        }
+        .toast.warning {
+            background: var(--warning);
+            color: #fff;
+        }
+
+        /* ============================================================
+               MODAL
+               ============================================================ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 16px;
+            animation: fadeIn 0.2s;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: var(--card);
+            border-radius: 18px;
+            max-width: 520px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            animation: slideUp 0.25s ease;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes slideUp {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-content .modal-header h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .modal-content .modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 8px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 8px;
+        }
+
+        /* ============================================================
+               LOGIN SCREEN
+               ============================================================ */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            padding: 20px;
+        }
+
+        .login-screen.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px 28px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border);
+        }
+
+        .login-box .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .login-box .logo span {
+            color: var(--text);
+        }
+
+        .login-box .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .login-box .form-group {
+            margin-bottom: 16px;
+        }
+
+        .login-box .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .login-box .form-group input {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 12px 14px;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .login-box .form-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .login-box .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .login-box .role-selector .role-option {
+            padding: 10px 6px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            background: var(--bg);
+            transition: 0.15s;
+        }
+
+        .login-box .role-selector .role-option.active {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.08);
+            color: var(--primary);
+        }
+
+        .login-box .role-selector .role-option .icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .login-box .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            margin-top: 4px;
+        }
+
+        .login-box .error-msg {
+            color: var(--danger);
+            font-size: 13px;
+            text-align: center;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .login-box .forgot-link {
+            text-align: center;
+            font-size: 13px;
+            margin-top: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .login-box .forgot-link:hover {
+            color: var(--primary);
+        }
+
+        /* ============================================================
+               EMPTY STATE
+               ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ============================================================
+               MISC
+               ============================================================ */
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .text-muted {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .text-sm {
+            font-size: 13px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .mt-2 {
+            margin-top: 12px;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+        .flex {
+            display: flex;
+        }
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+        .items-center {
+            align-items: center;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        .color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        /* ============================================================
+               RESPONSIVE
+               ============================================================ */
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .login-box .role-selector {
+                grid-template-columns: 1fr 1fr;
+            }
+            .sidebar {
+                width: 280px;
+            }
+            .main.shifted {
+                margin-left: 0;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .topbar-left .page-title {
+                font-size: 15px;
+                max-width: 120px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            .main {
+                margin-left: var(--sidebar-width);
+                padding: 16px 20px 100px;
+            }
+            .topbar-left .menu-btn {
+                display: none;
+            }
+            .stat-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stat-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .login-box {
+                padding: 24px 16px;
+            }
+            .topbar-right .btn-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 14px;
+            }
+            .topbar-right .lang-toggle {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+        }
+
+        /* ============================================================
+               PRINT
+               ============================================================ */
+        @media print {
+            .sidebar,
+            .topbar,
+            .btn,
+            .search-bar {
+                display: none !important;
+            }
+            .main {
+                margin-left: 0 !important;
+                padding: 10px !important;
+            }
+            .panel {
+                display: block !important;
+            }
+            .panel:not(#panel-reports) {
+                display: none !important;
+            }
+            #panel-reports {
+                display: block !important;
+            }
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                break-inside: avoid;
+            }
+            body {
+                background: #fff !important;
+            }
+            .table-scroll {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- ===== LOGIN PAGE ===== -->
-    <div id="loginPage">
-        <div class="login-card">
-            <div class="logo">
-                <i class="fas fa-boxes"></i>
-                <h1>Jayasinghe Distributors</h1>
-                <p>Management System</p>
+
+    <!-- ============================================================
+    LOGIN SCREEN
+    ============================================================ -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="logo">📦 <span>Stock</span>Pro</div>
+            <div class="subtitle">Jayasinghe Distributors · ERP System</div>
+
+            <div class="role-selector" id="roleSelector">
+                <div class="role-option active" data-role="admin"><span class="icon">👑</span>Admin</div>
+                <div class="role-option" data-role="manager"><span class="icon">📊</span>Manager</div>
+                <div class="role-option" data-role="sales"><span class="icon">🛒</span>Sales Rep</div>
+                <div class="role-option" data-role="delivery"><span class="icon">🚚</span>Delivery</div>
+                <div class="role-option" data-role="store"><span class="icon">🏪</span>Store Keeper</div>
+                <div class="role-option" data-role="accountant"><span class="icon">💰</span>Accountant</div>
+                <div class="role-option" data-role="employee"><span class="icon">👤</span>Employee</div>
+            </div>
+
+            <div class="form-group">
+                <label>👤 Username</label>
+                <input type="text" id="loginUsername" placeholder="Enter username" value="admin" />
             </div>
             <div class="form-group">
-                <label><i class="fas fa-user"></i> Username</label>
-                <input type="text" id="loginUser" value="admin" placeholder="Enter username" />
+                <label>🔒 Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" value="admin123" />
             </div>
-            <div class="form-group">
-                <label><i class="fas fa-lock"></i> Password</label>
-                <input type="password" id="loginPass" value="admin123" placeholder="Enter password" />
-            </div>
-            <button class="btn-login" onclick="handleLogin()">
-                <i class="fas fa-sign-in-alt"></i> Sign In
-            </button>
-            <div class="error-msg" id="loginError">Invalid credentials. Try again.</div>
-            <div style="margin-top:14px;font-size:12px;color:var(--gray-500);text-align:center;">
-                Default: admin / admin123
-            </div>
+
+            <button class="btn btn-primary" id="loginBtn">🔑 Login</button>
+            <div class="error-msg" id="loginError">Invalid credentials</div>
+            <div class="forgot-link" id="forgotPasswordLink">🔐 Forgot Password?</div>
         </div>
     </div>
 
-    <!-- ===== SIDEBAR OVERLAY ===== -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <!-- ============================================================
+    TOAST
+    ============================================================ -->
+    <div class="toast" id="toast"></div>
 
-    <!-- ===== APP SHELL ===== -->
-    <div id="app">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="brand">
-                <i class="fas fa-boxes"></i>
-                <span>Jayasinghe</span>
+    <!-- ============================================================
+    SIDEBAR
+    ============================================================ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div>
+                <div class="logo">📦 <span>Pro</span></div>
+                <span class="sub">Jayasinghe Distributors</span>
             </div>
-            <nav class="nav-items" id="navItems">
-                <a href="#" data-page="dashboard" class="active"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
-                <a href="#" data-page="products"><i class="fas fa-cube"></i><span>Products</span><span class="badge">12</span></a>
-                <a href="#" data-page="stock"><i class="fas fa-warehouse"></i><span>Stock</span></a>
-                <a href="#" data-page="customers"><i class="fas fa-users"></i><span>Customers</span></a>
-                <a href="#" data-page="suppliers"><i class="fas fa-truck"></i><span>Suppliers</span></a>
-                <a href="#" data-page="purchases"><i class="fas fa-shopping-cart"></i><span>Purchases</span></a>
-                <a href="#" data-page="sales"><i class="fas fa-cash-register"></i><span>Sales</span></a>
-                <a href="#" data-page="distribution"><i class="fas fa-route"></i><span>Distribution</span></a>
-                <a href="#" data-page="accounts"><i class="fas fa-coins"></i><span>Accounts</span></a>
-                <a href="#" data-page="reports"><i class="fas fa-file-alt"></i><span>Reports</span></a>
-                <a href="#" data-page="employees"><i class="fas fa-users-cog"></i><span>Employees</span></a>
-                <a href="#" data-page="attendance"><i class="fas fa-clock"></i><span>Attendance</span></a>
-                <a href="#" data-page="vouchers"><i class="fas fa-receipt"></i><span>Vouchers</span></a>
-                <a href="#" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
-            </nav>
-            <div class="sidebar-footer">
-                <a href="#" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+        </div>
+
+        <div class="user-badge">
+            <div class="avatar" id="userAvatar">A</div>
+            <div class="info">
+                <div class="name" id="userName">Admin</div>
+                <div class="role" id="userRole">Administrator</div>
             </div>
-        </aside>
+            <button class="logout-btn" id="logoutBtn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="left">
-                    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                    <h2 id="pageTitle">Dashboard <span class="page-sub" id="pageSub">Overview</span></h2>
-                </div>
-                <div class="right">
-                    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></button>
-                    <button class="notif-btn" onclick="showNotification('🔔 You have 3 new notifications')">
-                        <i class="fas fa-bell"></i>
-                        <span class="dot"></span>
-                    </button>
-                    <div class="user-info" onclick="handleLogout()">
-                        <div class="avatar" id="userAvatar">A</div>
-                        <div>
-                            <div class="name" id="userName">Admin</div>
-                            <div class="role" id="userRole">Administrator</div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+        <nav class="sidebar-nav" id="sidebarNav">
+            <!-- Populated by JS -->
+        </nav>
+    </aside>
 
-            <!-- Page Content -->
-            <div class="page-content" id="pageContent">
-                <!-- Dashboard -->
-                <div class="page active" id="page-dashboard">
-                    <div id="dashboardContent"></div>
-                </div>
-                <!-- Products -->
-                <div class="page" id="page-products">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="productSearch" placeholder="Search products..." oninput="renderProducts()" /></div>
-                        <button class="btn-add" onclick="openProductModal()"><i class="fas fa-plus"></i> Add Product</button>
-                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportCSV('products')"><i class="fas fa-file-csv"></i> Export CSV</button>
-                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="document.getElementById('importProductsCSV').click()"><i class="fas fa-upload"></i> Import CSV</button>
-                        <input type="file" id="importProductsCSV" style="display:none" accept=".csv" onchange="importCSV('products', event)" />
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>#</th><th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
-                            <tbody id="productTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Stock -->
-                <div class="page" id="page-stock">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="stockSearch" placeholder="Search stock..." oninput="renderStock()" /></div>
-                        <button class="btn-add" onclick="openStockModal()"><i class="fas fa-plus"></i> Stock In</button>
-                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="openStockOutModal()"><i class="fas fa-arrow-right"></i> Stock Out</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Product</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="stockTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Customers -->
-                <div class="page" id="page-customers">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="customerSearch" placeholder="Search customers..." oninput="renderCustomers()" /></div>
-                        <button class="btn-add" onclick="openCustomerModal()"><i class="fas fa-user-plus"></i> Add Customer</button>
-                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportCSV('customers')"><i class="fas fa-file-csv"></i> Export CSV</button>
-                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="document.getElementById('importCustomersCSV').click()"><i class="fas fa-upload"></i> Import CSV</button>
-                        <input type="file" id="importCustomersCSV" style="display:none" accept=".csv" onchange="importCSV('customers', event)" />
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Balance</th><th>Actions</th></tr></thead>
-                            <tbody id="customerTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Suppliers -->
-                <div class="page" id="page-suppliers">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="supplierSearch" placeholder="Search suppliers..." oninput="renderSuppliers()" /></div>
-                        <button class="btn-add" onclick="openSupplierModal()"><i class="fas fa-truck"></i> Add Supplier</button>
-                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportCSV('suppliers')"><i class="fas fa-file-csv"></i> Export CSV</button>
-                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="document.getElementById('importSuppliersCSV').click()"><i class="fas fa-upload"></i> Import CSV</button>
-                        <input type="file" id="importSuppliersCSV" style="display:none" accept=".csv" onchange="importCSV('suppliers', event)" />
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Name</th><th>Contact</th><th>Phone</th><th>Balance</th><th>Actions</th></tr></thead>
-                            <tbody id="supplierTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Purchases -->
-                <div class="page" id="page-purchases">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="purchaseSearch" placeholder="Search purchases..." oninput="renderPurchases()" /></div>
-                        <button class="btn-add" onclick="openPurchaseModal()"><i class="fas fa-shopping-cart"></i> New Purchase</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Invoice</th><th>Supplier</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="purchaseTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Sales -->
-                <div class="page" id="page-sales">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="salesSearch" placeholder="Search sales..." oninput="renderSales()" /></div>
-                        <button class="btn-add" onclick="openSaleModal()"><i class="fas fa-cash-register"></i> New Sale</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Invoice</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="salesTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Distribution -->
-                <div class="page" id="page-distribution">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="distSearch" placeholder="Search deliveries..." oninput="renderDistribution()" /></div>
-                        <button class="btn-add" onclick="openDistModal()"><i class="fas fa-route"></i> New Delivery</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Delivery #</th><th>Driver</th><th>Vehicle</th><th>Route</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="distTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Accounts -->
-                <div class="page" id="page-accounts">
-                    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
-                        <div class="stat-card success"><div class="label">Total Income</div><div class="value" id="accIncome">LKR 0</div></div>
-                        <div class="stat-card danger"><div class="label">Total Expenses</div><div class="value" id="accExpenses">LKR 0</div></div>
-                        <div class="stat-card info"><div class="label">Profit</div><div class="value" id="accProfit">LKR 0</div></div>
-                        <div class="stat-card"><div class="label">Cash Balance</div><div class="value" id="accCash">LKR 0</div></div>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead>
-                            <tbody id="accountTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Reports -->
-                <div class="page" id="page-reports">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;">
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('daily')"><i class="fas fa-calendar-day"></i> Daily</button>
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('monthly')"><i class="fas fa-calendar-alt"></i> Monthly</button>
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('yearly')"><i class="fas fa-calendar-year"></i> Yearly</button>
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('stock')"><i class="fas fa-warehouse"></i> Stock</button>
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('customers')"><i class="fas fa-users"></i> Customers</button>
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('suppliers')"><i class="fas fa-truck"></i> Suppliers</button>
-                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('profit')"><i class="fas fa-chart-line"></i> Profit</button>
-                    </div>
-                    <div id="reportOutput" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);min-height:120px;">
-                        <p style="color:var(--gray-500);text-align:center;">Select a report to generate</p>
-                    </div>
-                    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
-                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportPDFReport()"><i class="fas fa-file-pdf"></i> Export PDF</button>
-                        <button class="btn-add" style="background:var(--info);color:#fff;" onclick="exportExcelReport()"><i class="fas fa-file-excel"></i> Export Excel</button>
-                    </div>
-                </div>
-                <!-- Employees -->
-                <div class="page" id="page-employees">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="employeeSearch" placeholder="Search employees..." oninput="renderEmployees()" /></div>
-                        <button class="btn-add" onclick="openEmployeeModal()"><i class="fas fa-user-plus"></i> Add Employee</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Salary</th><th>Actions</th></tr></thead>
-                            <tbody id="employeeTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Attendance -->
-                <div class="page" id="page-attendance">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="attendanceSearch" placeholder="Search attendance..." oninput="renderAttendance()" /></div>
-                        <button class="btn-add" onclick="openAttendanceModal()"><i class="fas fa-clock"></i> Check In/Out</button>
-                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="openLeaveModal()"><i class="fas fa-calendar-alt"></i> Request Leave</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Employee</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="attendanceTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Vouchers -->
-                <div class="page" id="page-vouchers">
-                    <div class="toolbar">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="voucherSearch" placeholder="Search vouchers..." oninput="renderVouchers()" /></div>
-                        <button class="btn-add" onclick="openVoucherModal()"><i class="fas fa-plus"></i> New Voucher</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>#</th><th>Type</th><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr></thead>
-                            <tbody id="voucherTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- Settings -->
-                <div class="page" id="page-settings">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-                        <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
-                            <h4 style="margin-bottom:12px;"><i class="fas fa-building"></i> Company Details</h4>
-                            <div class="form-group"><label>Company Name</label><input type="text" id="companyName" value="Jayasinghe Distributors" /></div>
-                            <div class="form-group"><label>Currency</label><select id="currencySelect"><option value="LKR">LKR</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
-                            <button class="btn-add" style="width:100%;justify-content:center;margin-top:8px;" onclick="saveSettings()"><i class="fas fa-save"></i> Save</button>
-                        </div>
-                        <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
-                            <h4 style="margin-bottom:12px;"><i class="fas fa-palette"></i> Theme</h4>
-                            <button class="btn-add" style="width:100%;justify-content:center;" onclick="toggleTheme()"><i class="fas fa-moon"></i> Toggle Dark Mode</button>
-                            <hr style="margin:16px 0;border-color:var(--gray-200);" />
-                            <h4 style="margin-bottom:12px;"><i class="fas fa-database"></i> Backup</h4>
-                            <button class="btn-add" style="width:100%;justify-content:center;background:var(--secondary);color:#fff;" onclick="backupData()"><i class="fas fa-download"></i> Export Backup</button>
-                            <button class="btn-add" style="width:100%;justify-content:center;background:var(--warning);color:#fff;margin-top:8px;" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> Restore Backup</button>
-                            <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreData(event)" />
-                        </div>
-                        <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
-                            <h4 style="margin-bottom:12px;"><i class="fas fa-trash"></i> Data Management</h4>
-                            <button class="btn-add" style="width:100%;justify-content:center;background:var(--danger);color:#fff;" onclick="clearAllData()"><i class="fas fa-trash-alt"></i> Clear All Data</button>
-                        </div>
-                    </div>
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <div class="main" id="mainContent">
+
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="menu-btn" id="menuToggle"><i class="fas fa-bars"></i></button>
+                <span class="page-title" id="pageTitle">Dashboard</span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-icon" id="darkModeToggle" title="Dark Mode"><i class="fas fa-moon"></i></button>
+                <button class="btn-icon" id="notifBell" title="Notifications"><i class="fas fa-bell"></i><span class="dot"></span></button>
+                <button class="lang-toggle" id="langToggle">🇱🇰 SI</button>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: DASHBOARD
+        ========================================================== -->
+        <div class="panel active" id="panel-dashboard">
+            <div class="stat-grid" id="dashStats">
+                <div class="stat-box blue"><div class="num" id="dashTotalItems">0</div><div class="label">Total Items</div></div>
+                <div class="stat-box green"><div class="num" id="dashTotalQty">0</div><div class="label">Total Stock</div></div>
+                <div class="stat-box red"><div class="num" id="dashLowStock">0</div><div class="label">Low Stock</div></div>
+                <div class="stat-box purple"><div class="num" id="dashTotalEmployees">0</div><div class="label">Employees</div></div>
+                <div class="stat-box teal"><div class="num" id="dashTodayDeliveries">0</div><div class="label">Today Deliveries</div></div>
+                <div class="stat-box orange"><div class="num" id="dashTotalValue">LKR 0</div><div class="label">Inventory Value</div></div>
+                <div class="stat-box blue"><div class="num" id="dashTodaySales">LKR 0</div><div class="label">Today Sales</div></div>
+                <div class="stat-box red"><div class="num" id="dashPendingDeliveries">0</div><div class="label">Pending Deliveries</div></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 Sales Overview <span class="sub">Last 7 days</span></div>
+                <canvas id="salesChart" height="180"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="card-title">⚠️ Low Stock Alerts</div>
+                <div id="dashLowStockList"><div class="text-muted text-center" style="padding:12px;">✅ All items well-stocked.</div></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📌 Quick Actions</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" id="quickAddItem">➕ Add Item</button>
+                    <button class="btn btn-success btn-sm" id="quickNewDelivery">📦 New Delivery</button>
+                    <button class="btn btn-warning btn-sm" id="quickAddEmployee">👤 Add Employee</button>
+                    <button class="btn btn-outline btn-sm" id="quickPrint">🖨️ Print Report</button>
                 </div>
             </div>
         </div>
+
+        <!-- ==========================================================
+        PANEL: EMPLOYEES
+        ========================================================== -->
+        <div class="panel" id="panel-employees">
+            <div class="card">
+                <div class="card-title">👤 Employee Management <span class="sub"><span id="empCount">0</span> total</span></div>
+                <div class="search-bar">
+                    <input type="text" id="empSearch" placeholder="🔍 Search employees..." />
+                    <select id="empDeptFilter"><option value="all">All Depts</option></select>
+                    <select id="empStatusFilter"><option value="all">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+                    <button class="btn btn-primary btn-sm" id="addEmployeeBtn">➕ Add</button>
+                </div>
+                <div class="table-scroll">
+                    <table id="employeeTable">
+                        <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Designation</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="employeeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: INVENTORY
+        ========================================================== -->
+        <div class="panel" id="panel-inventory">
+            <div class="card">
+                <div class="card-title">📋 Inventory <span class="sub"><span id="invCount">0</span> items</span></div>
+                <div class="search-bar">
+                    <input type="text" id="invSearch" placeholder="🔍 Search..." />
+                    <select id="invCatFilter"><option value="all">All Categories</option></select>
+                    <select id="invSort"><option value="name">Name</option><option value="qty">Qty</option><option value="price">Price</option></select>
+                    <button class="btn btn-primary btn-sm" id="addItemBtn">➕ Add</button>
+                </div>
+                <div class="table-scroll">
+                    <table id="inventoryTable">
+                        <thead><tr><th>Barcode</th><th>Name</th><th>Category</th><th>Qty</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: PRODUCTS (detailed)
+        ========================================================== -->
+        <div class="panel" id="panel-products">
+            <div class="card">
+                <div class="card-title">🏷️ Product Management <span class="sub">Categories & Brands</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><input type="text" id="newCategoryInput" placeholder="New category..." /></div>
+                    <div class="form-group"><label>Brand</label><input type="text" id="newBrandInput" placeholder="New brand..." /></div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                    <button class="btn btn-primary btn-sm" id="addCategoryBtn">➕ Add Category</button>
+                    <button class="btn btn-success btn-sm" id="addBrandBtn">➕ Add Brand</button>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <div><strong>Categories:</strong> <span id="categoryChips"></span></div>
+                    <div><strong>Brands:</strong> <span id="brandChips"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: DELIVERIES
+        ========================================================== -->
+        <div class="panel" id="panel-deliveries">
+            <div class="card">
+                <div class="card-title">🚚 Deliveries <span class="sub">Manage & track</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>👤 Customer *</label><input type="text" id="delCustomer" placeholder="Customer name" /></div>
+                    <div class="form-group"><label>📦 Item *</label><select id="delItemSelect"><option value="">-- Select --</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>📤 Qty *</label><input type="number" id="delQty" min="1" placeholder="1" /></div>
+                    <div class="form-group"><label>🚚 Driver</label><input type="text" id="delDriver" placeholder="Driver name" /></div>
+                </div>
+                <div class="form-group"><label>📍 Delivery Route</label><input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" /></div>
+                <button class="btn btn-success btn-block" id="deliverSubmitBtn">✅ Confirm Delivery</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📋 Delivery History</div>
+                <div class="search-bar">
+                    <input type="date" id="delDateFilter" />
+                    <button class="btn btn-outline btn-sm" id="clearDelFilter">Clear</button>
+                </div>
+                <div class="table-scroll">
+                    <table><thead><tr><th>Date</th><th>Customer</th><th>Item</th><th>Qty</th><th>Driver</th><th>Route</th></tr></thead>
+                        <tbody id="deliveryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: ATTENDANCE
+        ========================================================== -->
+        <div class="panel" id="panel-attendance">
+            <div class="card">
+                <div class="card-title">⏱️ Attendance <span class="sub">Check-in / Check-out</span></div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                    <button class="btn btn-success" id="checkInBtn">✅ Check In</button>
+                    <button class="btn btn-danger" id="checkOutBtn">❌ Check Out</button>
+                    <button class="btn btn-outline" id="attendanceRefreshBtn">🔄 Refresh</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>📍 GPS Location</label><input type="text" id="attendanceLocation" readonly placeholder="Fetching..." /></div>
+                    <div class="form-group"><label>📸 Selfie</label><input type="file" id="attendanceSelfie" accept="image/*" /></div>
+                </div>
+                <div class="table-scroll">
+                    <table><thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
+                        <tbody id="attendanceTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: LEAVE
+        ========================================================== -->
+        <div class="panel" id="panel-leave">
+            <div class="card">
+                <div class="card-title">🏖️ Leave Management</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Employee</label><select id="leaveEmployeeSelect"><option value="">-- Select --</option></select></div>
+                    <div class="form-group"><label>Type</label><select id="leaveType"><option value="sick">Sick</option><option value="casual">Casual</option><option value="annual">Annual</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>From</label><input type="date" id="leaveFrom" /></div>
+                    <div class="form-group"><label>To</label><input type="date" id="leaveTo" /></div>
+                </div>
+                <div class="form-group"><label>Reason</label><textarea id="leaveReason" rows="2"></textarea></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-primary" id="applyLeaveBtn">📤 Apply</button>
+                    <button class="btn btn-success" id="approveLeaveBtn">✅ Approve</button>
+                    <button class="btn btn-danger" id="rejectLeaveBtn">❌ Reject</button>
+                </div>
+                <div class="table-scroll mt-2">
+                    <table><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Status</th></tr></thead>
+                        <tbody id="leaveTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: PAYROLL
+        ========================================================== -->
+        <div class="panel" id="panel-payroll">
+            <div class="card">
+                <div class="card-title">💰 Payroll <span class="sub">Salary & deductions</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Employee</label><select id="payrollEmployeeSelect"><option value="">-- Select --</option></select></div>
+                    <div class="form-group"><label>Month</label><input type="month" id="payrollMonth" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Basic Salary</label><input type="number" id="payrollBasic" placeholder="0" /></div>
+                    <div class="form-group"><label>Allowances</label><input type="number" id="payrollAllowances" placeholder="0" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Deductions</label><input type="number" id="payrollDeductions" placeholder="0" /></div>
+                    <div class="form-group"><label>OT Hours</label><input type="number" id="payrollOT" placeholder="0" /></div>
+                </div>
+                <button class="btn btn-primary" id="calculatePayrollBtn">🧮 Calculate</button>
+                <button class="btn btn-success" id="generatePayslipBtn">📄 Generate Payslip</button>
+                <div class="table-scroll mt-2">
+                    <table><thead><tr><th>Employee</th><th>Month</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net</th></tr></thead>
+                        <tbody id="payrollTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: CUSTOMERS
+        ========================================================== -->
+        <div class="panel" id="panel-customers">
+            <div class="card">
+                <div class="card-title">👥 Customers <span class="sub"><span id="custCount">0</span> registered</span></div>
+                <div class="search-bar">
+                    <input type="text" id="custSearch" placeholder="🔍 Search..." />
+                    <button class="btn btn-primary btn-sm" id="addCustomerBtn">➕ Add</button>
+                </div>
+                <div class="table-scroll">
+                    <table><thead><tr><th>Name</th><th>Contact</th><th>Credit Limit</th><th>Balance</th><th>Actions</th></tr></thead>
+                        <tbody id="customerTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: FINANCE
+        ========================================================== -->
+        <div class="panel" id="panel-finance">
+            <div class="card">
+                <div class="card-title">💰 Finance <span class="sub">Cash book & transactions</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Type</label><select id="financeType"><option value="income">Income</option><option value="expense">Expense</option></select></div>
+                    <div class="form-group"><label>Amount</label><input type="number" id="financeAmount" placeholder="0" /></div>
+                </div>
+                <div class="form-group"><label>Description</label><input type="text" id="financeDesc" placeholder="Description" /></div>
+                <button class="btn btn-primary" id="addFinanceBtn">💾 Add Entry</button>
+                <div class="table-scroll mt-2">
+                    <table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th></tr></thead>
+                        <tbody id="financeTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="flex-between mt-2">
+                    <span class="text-muted">Total Income: <strong id="financeTotalIncome">LKR 0</strong></span>
+                    <span class="text-muted">Total Expense: <strong id="financeTotalExpense">LKR 0</strong></span>
+                    <span class="text-muted">Balance: <strong id="financeBalance">LKR 0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: REPORTS
+        ========================================================== -->
+        <div class="panel" id="panel-reports">
+            <div class="card">
+                <div class="card-title">📈 Reports & Analytics</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                    <select id="reportType" style="padding:8px 12px; border:2px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text);">
+                        <option value="stock">Stock Report</option>
+                        <option value="sales">Sales Report</option>
+                        <option value="attendance">Attendance Report</option>
+                        <option value="payroll">Payroll Report</option>
+                        <option value="customers">Customer Report</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" id="generateReportBtn">📊 Generate</button>
+                    <button class="btn btn-outline btn-sm" id="exportReportBtn">📥 Export CSV</button>
+                    <button class="btn btn-outline btn-sm" id="printReportBtn">🖨️ Print</button>
+                </div>
+                <div id="reportContent" class="table-scroll"></div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: VEHICLES
+        ========================================================== -->
+        <div class="panel" id="panel-vehicles">
+            <div class="card">
+                <div class="card-title">🚗 Vehicle Management</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Vehicle No</label><input type="text" id="vehicleNo" placeholder="ABC-1234" /></div>
+                    <div class="form-group"><label>Driver</label><input type="text" id="vehicleDriver" placeholder="Driver name" /></div>
+                </div>
+                <div class="form-group"><label>Fuel Records</label><input type="text" id="vehicleFuel" placeholder="Fuel L / km" /></div>
+                <button class="btn btn-primary" id="addVehicleBtn">🚗 Add Vehicle</button>
+                <div class="table-scroll mt-2">
+                    <table><thead><tr><th>Vehicle No</th><th>Driver</th><th>Fuel</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="vehicleTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL: SETTINGS
+        ========================================================== -->
+        <div class="panel" id="panel-settings">
+            <div class="card">
+                <div class="card-title">⚙️ Settings</div>
+                <div class="form-group"><label>Company Name</label><input type="text" id="settingsCompany" value="Jayasinghe Distributors" /></div>
+                <div class="form-group"><label>Address</label><input type="text" id="settingsAddress" value="Colombo, Sri Lanka" /></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="settingsPhone" value="+94 77 123 4567" /></div>
+                <div class="form-group"><label>Email</label><input type="text" id="settingsEmail" value="info@jayasinghe.lk" /></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-primary" id="saveSettingsBtn">💾 Save Settings</button>
+                    <button class="btn btn-outline" id="backupDataBtn">💾 Backup</button>
+                    <button class="btn btn-outline" id="restoreDataBtn">📂 Restore</button>
+                    <button class="btn btn-danger" id="clearDataBtn">🗑️ Clear All Data</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="mobile-bottom-nav" id="bottomNav">
-        <a href="#" data-page="dashboard" class="active"><i class="fas fa-chart-pie"></i><span>Home</span></a>
-        <a href="#" data-page="products"><i class="fas fa-cube"></i><span>Products</span></a>
-        <a href="#" data-page="sales"><i class="fas fa-cash-register"></i><span>Sales</span></a>
-        <a href="#" data-page="employees"><i class="fas fa-users-cog"></i><span>Staff</span></a>
-        <a href="#" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
-    </nav>
-
-    <!-- Modal -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal" id="modalContent">
-            <div class="modal-header">
-                <h3 id="modalTitle">Modal</h3>
-                <button class="close-modal" onclick="closeModal()">&times;</button>
+    <!-- ============================================================
+    MODALS
+    ============================================================ -->
+    <!-- Employee Modal -->
+    <div class="modal-overlay" id="employeeModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="employeeModalTitle">👤 Add Employee</h3><button class="modal-close" id="empModalClose">✕</button></div>
+            <input type="hidden" id="empEditId" />
+            <div class="form-row">
+                <div class="form-group"><label>Full Name *</label><input type="text" id="empName" /></div>
+                <div class="form-group"><label>NIC</label><input type="text" id="empNIC" /></div>
             </div>
-            <div id="modalBody"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Department</label><select id="empDept"><option value="Admin">Admin</option><option value="Sales">Sales</option><option value="Delivery">Delivery</option><option value="Store">Store</option><option value="Finance">Finance</option><option value="HR">HR</option></select></div>
+                <div class="form-group"><label>Designation</label><input type="text" id="empDesignation" placeholder="e.g. Manager" /></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Contact</label><input type="text" id="empContact" /></div>
+                <div class="form-group"><label>Emergency</label><input type="text" id="empEmergency" /></div>
+            </div>
+            <div class="form-group"><label>Address</label><textarea id="empAddress" rows="2"></textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>Joined Date</label><input type="date" id="empJoined" /></div>
+                <div class="form-group"><label>Salary</label><input type="number" id="empSalary" placeholder="0" /></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>EPF/ETF</label><input type="text" id="empEpf" placeholder="EPF number" /></div>
+                <div class="form-group"><label>Status</label><select id="empStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+            </div>
+            <button class="btn btn-primary btn-block" id="empSaveBtn">💾 Save Employee</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Item Modal -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="itemModalTitle">📦 Add Item</h3><button class="modal-close" id="itemModalClose">✕</button></div>
+            <input type="hidden" id="itemEditId" />
+            <div class="form-group"><label>🔢 Barcode</label><input type="text" id="itemBarcode" placeholder="Scan or enter" /></div>
+            <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" /></div>
+            <div class="form-row">
+                <div class="form-group"><label>Qty *</label><input type="number" id="itemQty" min="0" /></div>
+                <div class="form-group"><label>Price (LKR)</label><input type="number" id="itemPrice" min="0" step="0.01" /></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Category</label><select id="itemCategory"><option value="">Select...</option></select></div>
+                <div class="form-group"><label>Brand</label><select id="itemBrand"><option value="">Select...</option></select></div>
+            </div>
+            <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2"></textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>Expiry Date</label><input type="date" id="itemExpiry" /></div>
+                <div class="form-group"><label>Batch No</label><input type="text" id="itemBatch" placeholder="Batch number" /></div>
+            </div>
+            <div class="form-group"><label>Status</label><select id="itemStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+            <button class="btn btn-primary btn-block" id="itemSaveBtn">💾 Save Item</button>
+        </div>
+    </div>
+
+    <!-- Customer Modal -->
+    <div class="modal-overlay" id="customerModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="customerModalTitle">👤 Add Customer</h3><button class="modal-close" id="custModalClose">✕</button></div>
+            <input type="hidden" id="custEditId" />
+            <div class="form-group"><label>Customer Name *</label><input type="text" id="custName" /></div>
+            <div class="form-row">
+                <div class="form-group"><label>Contact</label><input type="text" id="custContact" /></div>
+                <div class="form-group"><label>Category</label><select id="custCategory"><option value="Retail">Retail</option><option value="Wholesale">Wholesale</option><option value="Corporate">Corporate</option></select></div>
+            </div>
+            <div class="form-group"><label>Address</label><textarea id="custAddress" rows="2"></textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>Credit Limit</label><input type="number" id="custCreditLimit" placeholder="0" /></div>
+                <div class="form-group"><label>Outstanding Balance</label><input type="number" id="custBalance" placeholder="0" /></div>
+            </div>
+            <button class="btn btn-primary btn-block" id="custSaveBtn">💾 Save Customer</button>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal-overlay" id="forgotModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>🔐 Reset Password</h3><button class="modal-close" id="forgotModalClose">✕</button></div>
+            <div class="form-group"><label>Username</label><input type="text" id="forgotUsername" placeholder="Enter username" /></div>
+            <div class="form-group"><label>New Password</label><input type="password" id="forgotNewPassword" placeholder="New password" /></div>
+            <button class="btn btn-primary btn-block" id="resetPasswordBtn">🔑 Reset Password</button>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="modal-overlay" id="notifModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>🔔 Notifications</h3><button class="modal-close" id="notifModalClose">✕</button></div>
+            <div id="notifList"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // DATA LAYER
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const STORAGE_KEY = 'jayasinghe_erp_data';
+
+        let appData = {
+            items: [],
+            categories: [],
+            brands: [],
+            employees: [],
+            deliveries: [],
+            attendance: [],
+            leaves: [],
+            payroll: [],
+            customers: [],
+            finance: [],
+            vehicles: [],
+            users: [],
+            notifications: [],
+            settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567',
+                email: 'info@jayasinghe.lk' },
+            salesData: []
+        };
+
+        let currentUser = null;
+        let salesChartInstance = null;
+        let isDark = false;
+        let lang = 'en';
+
+        const ROLES = {
+            admin: { label: 'Administrator', icon: '👑', permissions: ['all'] },
+            manager: { label: 'Manager', icon: '📊', permissions: ['view_dashboard', 'view_employees', 'view_inventory',
+                    'view_deliveries', 'view_reports', 'manage_employees', 'manage_inventory'
+                ] },
+            sales: { label: 'Sales Representative', icon: '🛒', permissions: ['view_dashboard', 'view_inventory',
+                    'view_customers', 'create_deliveries', 'view_reports'
+                ] },
+            delivery: { label: 'Delivery Staff', icon: '🚚', permissions: ['view_dashboard', 'view_deliveries',
+                    'update_deliveries', 'view_attendance'
+                ] },
+            store: { label: 'Store Keeper', icon: '🏪', permissions: ['view_dashboard', 'view_inventory',
+                    'manage_inventory', 'view_reports'
+                ] },
+            accountant: { label: 'Accountant', icon: '💰', permissions: ['view_dashboard', 'view_finance',
+                    'manage_finance', 'view_reports', 'view_payroll'
+                ] },
+            employee: { label: 'Employee', icon: '👤', permissions: ['view_dashboard', 'view_attendance', 'view_leave',
+                    'view_payroll'
+                ] }
+        };
+
+        const DEFAULT_USERS = [
+            { username: 'admin', password: 'admin123', role: 'admin', name: 'Admin User' },
+            { username: 'manager', password: 'manager123', role: 'manager', name: 'Manager' },
+            { username: 'sales', password: 'sales123', role: 'sales', name: 'Sales Rep' },
+            { username: 'delivery', password: 'delivery123', role: 'delivery', name: 'Delivery Staff' },
+            { username: 'store', password: 'store123', role: 'store', name: 'Store Keeper' },
+            { username: 'accountant', password: 'account123', role: 'accountant', name: 'Accountant' },
+            { username: 'employee', password: 'employee123', role: 'employee', name: 'Employee' }
+        ];
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    appData = { ...appData, ...parsed };
+                }
+                // Ensure default users if none exist
+                if (!appData.users || appData.users.length === 0) {
+                    appData.users = DEFAULT_USERS.map(u => ({ ...u, id: Date.now() + Math.random() * 1000 }));
+                }
+                // Ensure categories and brands arrays
+                if (!appData.categories) appData.categories = ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'];
+                if (!appData.brands) appData.brands = ['Nike', 'Apple', 'Samsung', 'Adidas', 'Pepsi'];
+                if (!appData.items) appData.items = [];
+                if (!appData.employees) appData.employees = [];
+                if (!appData.deliveries) appData.deliveries = [];
+                if (!appData.attendance) appData.attendance = [];
+                if (!appData.leaves) appData.leaves = [];
+                if (!appData.payroll) appData.payroll = [];
+                if (!appData.customers) appData.customers = [];
+                if (!appData.finance) appData.finance = [];
+                if (!appData.vehicles) appData.vehicles = [];
+                if (!appData.notifications) appData.notifications = [];
+                if (!appData.salesData) appData.salesData = [];
+                if (!appData.settings) appData.settings = { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka',
+                    phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' };
+                saveData();
+            } catch (_) {
+                appData.users = DEFAULT_USERS.map(u => ({ ...u, id: Date.now() + Math.random() * 1000 }));
+                appData.categories = ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'];
+                appData.brands = ['Nike', 'Apple', 'Samsung', 'Adidas', 'Pepsi'];
+                appData.items = [];
+                appData.employees = [];
+                appData.deliveries = [];
+                appData.attendance = [];
+                appData.leaves = [];
+                appData.payroll = [];
+                appData.customers = [];
+                appData.finance = [];
+                appData.vehicles = [];
+                appData.notifications = [];
+                appData.salesData = [];
+                appData.settings = { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka',
+                phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' };
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
+
+        function generateId() { return Date.now() + Math.floor(Math.random() * 100000); }
+
+        function formatCurrency(val) { return Number(val).toLocaleString('en-LK', { minimumFractionDigits: 0,
+                maximumFractionDigits: 0 }); }
+
+        function escapeHtml(str) { if (!str) return ''; const d = document.createElement('div');
+            d.textContent = str; return d.innerHTML; }
+
+        function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+        function nowISO() { return new Date().toISOString(); }
+
+        function formatDate(d) { return new Date(d).toLocaleDateString('en-LK', { year: 'numeric', month: 'short',
+                day: 'numeric' }); }
+
+        function formatDateTime(d) { return new Date(d).toLocaleString('en-LK', { year: 'numeric', month: 'short',
+                day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // TOAST
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function showToast(msg, type = 'success') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast ' + type;
+            void el.offsetWidth;
+            el.classList.add('show');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => el.classList.remove('show'), 2500);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // NAVIGATION
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const navItems = [{
+            id: 'dashboard',
+            icon: '📊',
+            label: 'Dashboard',
+            labelSI: 'උපකරණ පුවරුව',
+            perm: 'all'
+        }, {
+            id: 'employees',
+            icon: '👤',
+            label: 'Employees',
+            labelSI: 'සේවකයින්',
+            perm: 'all'
+        }, {
+            id: 'inventory',
+            icon: '📋',
+            label: 'Inventory',
+            labelSI: 'ඉන්වෙන්ටරි',
+            perm: 'all'
+        }, {
+            id: 'products',
+            icon: '🏷️',
+            label: 'Products',
+            labelSI: 'නිෂ්පාදන',
+            perm: 'all'
+        }, {
+            id: 'deliveries',
+            icon: '🚚',
+            label: 'Deliveries',
+            labelSI: 'බෙදාහැරීම්',
+            perm: 'all'
+        }, {
+            id: 'attendance',
+            icon: '⏱️',
+            label: 'Attendance',
+            labelSI: 'පැමිණීම',
+            perm: 'all'
+        }, {
+            id: 'leave',
+            icon: '🏖️',
+            label: 'Leave',
+            labelSI: 'නිවාඩු',
+            perm: 'all'
+        }, {
+            id: 'payroll',
+            icon: '💰',
+            label: 'Payroll',
+            labelSI: 'වැටුප්',
+            perm: 'all'
+        }, {
+            id: 'customers',
+            icon: '👥',
+            label: 'Customers',
+            labelSI: 'පාරිභෝගිකයින්',
+            perm: 'all'
+        }, {
+            id: 'finance',
+            icon: '💳',
+            label: 'Finance',
+            labelSI: 'මුල්‍ය',
+            perm: 'all'
+        }, {
+            id: 'reports',
+            icon: '📈',
+            label: 'Reports',
+            labelSI: 'වාර්තා',
+            perm: 'all'
+        }, {
+            id: 'vehicles',
+            icon: '🚗',
+            label: 'Vehicles',
+            labelSI: 'වාහන',
+            perm: 'all'
+        }, {
+            id: 'settings',
+            icon: '⚙️',
+            label: 'Settings',
+            labelSI: 'සැකසුම්',
+            perm: 'all'
+        }];
+
+        function renderSidebar() {
+            const container = document.getElementById('sidebarNav');
+            const role = currentUser ? currentUser.role : 'admin';
+            const perms = ROLES[role]?.permissions || ['all'];
+            const isAdmin = role === 'admin';
+
+            let html = '';
+            let currentSection = '';
+
+            navItems.forEach(item => {
+                const hasPerm = isAdmin || perms.includes('all') || perms.includes(item.perm) || perms.includes(
+                'manage_' + item.id) || perms.includes('view_' + item.id);
+                if (!hasPerm) return;
+
+                const label = lang === 'si' && item.labelSI ? item.labelSI : item.label;
+                html += `<button class="nav-item" data-panel="${item.id}"><span class="icon">${item.icon}</span>${label}</button>`;
+            });
+
+            container.innerHTML = html;
+
+            // Set active
+            const activePanel = document.querySelector('.panel.active');
+            if (activePanel) {
+                const id = activePanel.id.replace('panel-', '');
+                container.querySelectorAll('.nav-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.panel === id);
+                });
+            }
+
+            // Click handlers
+            container.querySelectorAll('.nav-item').forEach(b => {
+                b.addEventListener('click', () => {
+                    switchPanel(b.dataset.panel);
+                });
+            });
+        }
+
+        function switchPanel(id) {
+            // Hide all panels
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById('panel-' + id);
+            if (panel) panel.classList.add('active');
+
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(b => {
+                b.classList.toggle('active', b.dataset.panel === id);
+            });
+
+            // Update title
+            const navItem = navItems.find(n => n.id === id);
+            if (navItem) {
+                const label = lang === 'si' && navItem.labelSI ? navItem.labelSI : navItem.label;
+                document.getElementById('pageTitle').textContent = label;
+            }
+
+            // Refresh panel content
+            switch (id) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'employees':
+                    renderEmployees();
+                    break;
+                case 'inventory':
+                    renderInventory();
+                    break;
+                case 'products':
+                    renderProducts();
+                    break;
+                case 'deliveries':
+                    renderDeliveries();
+                    break;
+                case 'attendance':
+                    renderAttendance();
+                    break;
+                case 'leave':
+                    renderLeave();
+                    break;
+                case 'payroll':
+                    renderPayroll();
+                    break;
+                case 'customers':
+                    renderCustomers();
+                    break;
+                case 'finance':
+                    renderFinance();
+                    break;
+                case 'reports':
+                    renderReports();
+                    break;
+                case 'vehicles':
+                    renderVehicles();
+                    break;
+                case 'settings':
+                    renderSettings();
+                    break;
+            }
+
+            // Close sidebar on mobile
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // LOGIN
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function initLogin() {
+            const roleOptions = document.querySelectorAll('.role-option');
+            let selectedRole = 'admin';
+
+            roleOptions.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    roleOptions.forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    selectedRole = opt.dataset.role;
+                });
+            });
+
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter')
+                handleLogin(); });
+            document.getElementById('loginUsername').addEventListener('keydown', e => { if (e.key === 'Enter')
+                handleLogin(); });
+
+            document.getElementById('forgotPasswordLink').addEventListener('click', () => {
+                document.getElementById('forgotModal').classList.add('open');
+            });
+
+            document.getElementById('forgotModalClose').addEventListener('click', () => {
+                document.getElementById('forgotModal').classList.remove('open');
+            });
+
+            document.getElementById('resetPasswordBtn').addEventListener('click', () => {
+                const uname = document.getElementById('forgotUsername').value.trim();
+                const newPass = document.getElementById('forgotNewPassword').value.trim();
+                if (!uname || !newPass) { showToast('Fill all fields.', 'error'); return; }
+                const user = appData.users.find(u => u.username === uname);
+                if (!user) { showToast('User not found.', 'error'); return; }
+                user.password = newPass;
+                saveData();
+                showToast('✅ Password reset!');
+                document.getElementById('forgotModal').classList.remove('open');
+            });
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const roleEl = document.querySelector('.role-option.active');
+            const selectedRole = roleEl ? roleEl.dataset.role : 'admin';
+
+            const user = appData.users.find(u => u.username === username && u.password === password);
+            if (!user) {
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+            document.getElementById('loginError').style.display = 'none';
+
+            // Verify role matches
+            if (user.role !== selectedRole) {
+                document.getElementById('loginError').textContent = '⚠️ Role mismatch. Please select correct role.';
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+
+            currentUser = { ...user };
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+            document.getElementById('userName').textContent = user.name;
+            const roleInfo = ROLES[user.role];
+            document.getElementById('userRole').textContent = roleInfo ? roleInfo.label : user.role;
+
+            renderSidebar();
+            switchPanel('dashboard');
+            showToast(`👋 Welcome, ${user.name}!`);
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginUsername').value = 'admin';
+            document.getElementById('loginError').style.display = 'none';
+            document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
+            document.querySelector('.role-option[data-role="admin"]')?.classList.add('active');
+            showToast('👋 Logged out.');
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // DASHBOARD
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderDashboard() {
+            const items = appData.items;
+            const totalItems = items.length;
+            const totalQty = items.reduce((s, i) => s + (i.qty || 0), 0);
+            const lowItems = items.filter(i => (i.qty || 0) <= 5 && i.status !== 'inactive');
+            const totalValue = items.reduce((s, i) => s + ((i.qty || 0) * (i.price || 0)), 0);
+            const employees = appData.employees;
+            const today = todayStr();
+            const todayDeliveries = appData.deliveries.filter(d => d.date && d.date.slice(0, 10) === today);
+            const todaySales = appData.salesData.filter(s => s.date && s.date.slice(0, 10) === today);
+            const salesTotal = todaySales.reduce((s, d) => s + (d.total || 0), 0);
+            const pendingDeliveries = appData.deliveries.filter(d => d.status !== 'delivered');
+
+            document.getElementById('dashTotalItems').textContent = totalItems;
+            document.getElementById('dashTotalQty').textContent = totalQty;
+            document.getElementById('dashLowStock').textContent = lowItems.length;
+            document.getElementById('dashTotalEmployees').textContent = employees.length;
+            document.getElementById('dashTodayDeliveries').textContent = todayDeliveries.length;
+            document.getElementById('dashTotalValue').textContent = 'LKR ' + formatCurrency(totalValue);
+            document.getElementById('dashTodaySales').textContent = 'LKR ' + formatCurrency(salesTotal);
+            document.getElementById('dashPendingDeliveries').textContent = pendingDeliveries.length;
+
+            // Low stock list
+            const container = document.getElementById('dashLowStockList');
+            if (lowItems.length === 0) {
+                container.innerHTML =
+                `<div class="text-muted text-center" style="padding:8px;">✅ All items well-stocked.</div>`;
+            } else {
+                container.innerHTML = lowItems.map(i =>
+                    `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;">
+                        <span>⚠️ ${escapeHtml(i.name)}</span>
+                        <span style="color:var(--danger); font-weight:600;">${i.qty} left</span>
+                    </div>`
+                ).join('');
+            }
+
+            // Sales chart
+            renderSalesChart();
+        }
+
+        function renderSalesChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const last7 = [];
+            const labels = [];
+            const values = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().slice(0, 10);
+                labels.push(d.toLocaleDateString('en', { weekday: 'short' }));
+                const daySales = appData.salesData.filter(s => s.date && s.date.slice(0, 10) === key);
+                const total = daySales.reduce((s, item) => s + (item.total || 0), 0);
+                values.push(total);
+            }
+
+            if (salesChartInstance) salesChartInstance.destroy();
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sales (LKR)',
+                        data: values,
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                        x: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // EMPLOYEES
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderEmployees() {
+            const search = document.getElementById('empSearch').value.toLowerCase().trim();
+            const deptFilter = document.getElementById('empDeptFilter').value;
+            const statusFilter = document.getElementById('empStatusFilter').value;
+
+            // Populate dept filter
+            const depts = [...new Set(appData.employees.map(e => e.department || 'Other'))];
+            const deptSelect = document.getElementById('empDeptFilter');
+            const currentDept = deptSelect.value;
+            deptSelect.innerHTML = '<option value="all">All Depts</option>' + depts.map(d =>
+                `<option value="${d}">${d}</option>`).join('');
+            if (currentDept && [...deptSelect.options].some(o => o.value === currentDept)) deptSelect.value = currentDept;
+
+            let filtered = appData.employees.filter(e => {
+                const matchName = e.name.toLowerCase().includes(search);
+                const matchDept = deptFilter === 'all' || e.department === deptFilter;
+                const matchStatus = statusFilter === 'all' || e.status === statusFilter;
+                return matchName && matchDept && matchStatus;
+            });
+
+            document.getElementById('empCount').textContent = filtered.length;
+
+            const tbody = document.getElementById('employeeTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No employees found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(e =>
+                `<tr>
+                    <td>${e.id || '—'}</td>
+                    <td><strong>${escapeHtml(e.name)}</strong></td>
+                    <td>${escapeHtml(e.department || '—')}</td>
+                    <td>${escapeHtml(e.designation || '—')}</td>
+                    <td><span class="badge ${e.status === 'active' ? 'badge-success' : 'badge-danger'}">${e.status || 'active'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editEmployee('${e.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${e.id}')">🗑️</button>
+                    </td>
+                </tr>`
+            ).join('');
+        }
+
+        function editEmployee(id) {
+            const emp = appData.employees.find(e => e.id === id);
+            if (!emp) return;
+            document.getElementById('empEditId').value = emp.id;
+            document.getElementById('empName').value = emp.name || '';
+            document.getElementById('empNIC').value = emp.nic || '';
+            document.getElementById('empDept').value = emp.department || 'Admin';
+            document.getElementById('empDesignation').value = emp.designation || '';
+            document.getElementById('empContact').value = emp.contact || '';
+            document.getElementById('empEmergency').value = emp.emergency || '';
+            document.getElementById('empAddress').value = emp.address || '';
+            document.getElementById('empJoined').value = emp.joinedDate || '';
+            document.getElementById('empSalary').value = emp.salary || '';
+            document.getElementById('empEpf').value = emp.epf || '';
+            document.getElementById('empStatus').value = emp.status || 'active';
+            document.getElementById('employeeModalTitle').textContent = '✏️ Edit Employee';
+            document.getElementById('employeeModal').classList.add('open');
+        }
+
+        function deleteEmployee(id) {
+            if (!confirm('Delete this employee?')) return;
+            appData.employees = appData.employees.filter(e => e.id !== id);
+            saveData();
+            renderEmployees();
+            showToast('🗑️ Employee removed.');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // INVENTORY
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderInventory() {
+            const search = document.getElementById('invSearch').value.toLowerCase().trim();
+            const catFilter = document.getElementById('invCatFilter').value;
+            const sort = document.getElementById('invSort').value;
+
+            // Populate category filter
+            const catSelect = document.getElementById('invCatFilter');
+            const currentCat = catSelect.value;
+            const cats = [...new Set(appData.items.map(i => i.category).filter(Boolean))];
+            catSelect.innerHTML = '<option value="all">All Categories</option>' + cats.map(c =>
+                `<option value="${c}">${c}</option>`).join('');
+            if (currentCat && [...catSelect.options].some(o => o.value === currentCat)) catSelect.value = currentCat;
+
+            let filtered = appData.items.filter(i => {
+                const matchName = i.name.toLowerCase().includes(search);
+                const matchBarcode = i.barcode && i.barcode.includes(search);
+                const matchCat = catFilter === 'all' || i.category === catFilter;
+                return (matchName || matchBarcode) && matchCat;
+            });
+
+            filtered.sort((a, b) => {
+                if (sort === 'qty') return (a.qty || 0) - (b.qty || 0);
+                if (sort === 'price') return (a.price || 0) - (b.price || 0);
+                return a.name.localeCompare(b.name);
+            });
+
+            document.getElementById('invCount').textContent = filtered.length;
+
+            const tbody = document.getElementById('inventoryTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No items found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(i =>
+                `<tr>
+                    <td><code style="font-size:11px;">${escapeHtml(i.barcode || '—')}</code></td>
+                    <td><strong>${escapeHtml(i.name)}</strong></td>
+                    <td>${escapeHtml(i.category || '—')}</td>
+                    <td class="${(i.qty || 0) <= 5 ? 'text-danger' : ''}" style="font-weight:600;">${i.qty || 0}</td>
+                    <td>LKR ${formatCurrency(i.price || 0)}</td>
+                    <td><span class="badge ${i.status === 'active' ? 'badge-success' : 'badge-danger'}">${i.status || 'active'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editItem('${i.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteItem('${i.id}')">🗑️</button>
+                    </td>
+                </tr>`
+            ).join('');
+        }
+
+        function editItem(id) {
+            const item = appData.items.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('itemEditId').value = item.id;
+            document.getElementById('itemBarcode').value = item.barcode || '';
+            document.getElementById('itemName').value = item.name || '';
+            document.getElementById('itemQty').value = item.qty || 0;
+            document.getElementById('itemPrice').value = item.price || 0;
+            document.getElementById('itemCategory').value = item.category || '';
+            document.getElementById('itemBrand').value = item.brand || '';
+            document.getElementById('itemDesc').value = item.desc || '';
+            document.getElementById('itemExpiry').value = item.expiry || '';
+            document.getElementById('itemBatch').value = item.batch || '';
+            document.getElementById('itemStatus').value = item.status || 'active';
+            document.getElementById('itemModalTitle').textContent = '✏️ Edit Item';
+            document.getElementById('itemModal').classList.add('open');
+            populateItemDropdowns();
+        }
+
+        function deleteItem(id) {
+            if (!confirm('Delete this item?')) return;
+            appData.items = appData.items.filter(i => i.id !== id);
+            saveData();
+            renderInventory();
+            showToast('🗑️ Item removed.');
+        }
+
+        function populateItemDropdowns() {
+            const catSelect = document.getElementById('itemCategory');
+            const brandSelect = document.getElementById('itemBrand');
+            const currentCat = catSelect.value;
+            const currentBrand = brandSelect.value;
+
+            catSelect.innerHTML = '<option value="">Select...</option>' + appData.categories.map(c =>
+                `<option value="${c}">${c}</option>`).join('');
+            if (currentCat && [...catSelect.options].some(o => o.value === currentCat)) catSelect.value = currentCat;
+
+            brandSelect.innerHTML = '<option value="">Select...</option>' + appData.brands.map(b =>
+                `<option value="${b}">${b}</option>`).join('');
+            if (currentBrand && [...brandSelect.options].some(o => o.value === currentBrand)) brandSelect.value =
+            currentBrand;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // PRODUCTS (Categories & Brands)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderProducts() {
+            const catChips = document.getElementById('categoryChips');
+            const brandChips = document.getElementById('brandChips');
+
+            catChips.innerHTML = appData.categories.map(c =>
+                `<span class="badge badge-info" style="margin:2px;">${escapeHtml(c)} <span style="cursor:pointer;color:var(--danger);" onclick="removeCategory('${c}')">✕</span></span>`
+            ).join('') || '<span class="text-muted">No categories</span>';
+
+            brandChips.innerHTML = appData.brands.map(b =>
+                `<span class="badge badge-success" style="margin:2px;">${escapeHtml(b)} <span style="cursor:pointer;color:var(--danger);" onclick="removeBrand('${b}')">✕</span></span>`
+            ).join('') || '<span class="text-muted">No brands</span>';
+        }
+
+        function removeCategory(cat) {
+            if (!confirm(`Remove category "${cat}"?`)) return;
+            appData.categories = appData.categories.filter(c => c !== cat);
+            appData.items.forEach(i => { if (i.category === cat) i.category = ''; });
+            saveData();
+            renderProducts();
+            renderInventory();
+            showToast(`🗑️ Removed "${cat}"`);
+        }
+
+        function removeBrand(brand) {
+            if (!confirm(`Remove brand "${brand}"?`)) return;
+            appData.brands = appData.brands.filter(b => b !== brand);
+            appData.items.forEach(i => { if (i.brand === brand) i.brand = ''; });
+            saveData();
+            renderProducts();
+            showToast(`🗑️ Removed "${brand}"`);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // DELIVERIES
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderDeliveries() {
+            // Populate item select
+            const select = document.getElementById('delItemSelect');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Select --</option>' + appData.items.filter(i => i.status !== 'inactive')
+                .map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0})</option>`).join('');
+            if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
+
+            // Delivery table
+            const dateFilter = document.getElementById('delDateFilter').value;
+            let filtered = [...appData.deliveries];
+            if (dateFilter) {
+                filtered = filtered.filter(d => d.date && d.date.slice(0, 10) === dateFilter);
+            }
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const tbody = document.getElementById('deliveryTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No deliveries.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(d =>
+                `<tr>
+                    <td>${formatDate(d.date)}</td>
+                    <td>${escapeHtml(d.customer || '—')}</td>
+                    <td>${escapeHtml(d.itemName || '—')}</td>
+                    <td>${d.qty || 0}</td>
+                    <td>${escapeHtml(d.driver || '—')}</td>
+                    <td>${escapeHtml(d.route || '—')}</td>
+                </tr>`
+            ).join('');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ATTENDANCE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderAttendance() {
+            const tbody = document.getElementById('attendanceTableBody');
+            const records = appData.attendance.filter(a => a.employeeId === (currentUser?.id || ''));
+            if (records.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No attendance records.</td></tr>`;
+                return;
+            }
+            records.sort((a, b) => new Date(b.date) - new Date(a.date));
+            tbody.innerHTML = records.map(a => {
+                const hours = a.checkIn && a.checkOut ? ((new Date(a.checkOut) - new Date(a.checkIn)) / (1000 *
+                60 * 60)).toFixed(1) : '—';
+                return `<tr>
+                    <td>${formatDate(a.date)}</td>
+                    <td>${a.checkIn ? formatDateTime(a.checkIn) : '—'}</td>
+                    <td>${a.checkOut ? formatDateTime(a.checkOut) : '—'}</td>
+                    <td>${hours}</td>
+                    <td><span class="badge badge-success">Present</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // LEAVE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderLeave() {
+            // Populate employee select
+            const select = document.getElementById('leaveEmployeeSelect');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Select --</option>' + appData.employees.map(e =>
+                `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+            if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
+
+            const tbody = document.getElementById('leaveTableBody');
+            const records = appData.leaves;
+            if (records.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No leave requests.</td></tr>`;
+                return;
+            }
+            records.sort((a, b) => new Date(b.from) - new Date(a.from));
+            tbody.innerHTML = records.map(l => {
+                const statusColor = l.status === 'approved' ? 'badge-success' : l.status === 'rejected' ?
+                    'badge-danger' : 'badge-warning';
+                return `<tr>
+                    <td>${escapeHtml(l.employeeName || '—')}</td>
+                    <td>${l.type || '—'}</td>
+                    <td>${formatDate(l.from)}</td>
+                    <td>${formatDate(l.to)}</td>
+                    <td><span class="badge ${statusColor}">${l.status || 'pending'}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // PAYROLL
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderPayroll() {
+            const select = document.getElementById('payrollEmployeeSelect');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Select --</option>' + appData.employees.map(e =>
+                `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+            if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
+
+            const tbody = document.getElementById('payrollTableBody');
+            const records = appData.payroll;
+            if (records.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No payroll records.</td></tr>`;
+                return;
+            }
+            records.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+            tbody.innerHTML = records.map(p => {
+                const net = (p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0);
+                return `<tr>
+                    <td>${escapeHtml(p.employeeName || '—')}</td>
+                    <td>${p.month || '—'}</td>
+                    <td>LKR ${formatCurrency(p.basic || 0)}</td>
+                    <td>LKR ${formatCurrency(p.allowances || 0)}</td>
+                    <td>LKR ${formatCurrency(p.deductions || 0)}</td>
+                    <td><strong>LKR ${formatCurrency(net)}</strong></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // CUSTOMERS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderCustomers() {
+            const search = document.getElementById('custSearch').value.toLowerCase().trim();
+            let filtered = appData.customers.filter(c => c.name.toLowerCase().includes(search));
+            document.getElementById('custCount').textContent = filtered.length;
+
+            const tbody = document.getElementById('customerTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No customers.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(c =>
+                `<tr>
+                    <td><strong>${escapeHtml(c.name)}</strong></td>
+                    <td>${escapeHtml(c.contact || '—')}</td>
+                    <td>LKR ${formatCurrency(c.creditLimit || 0)}</td>
+                    <td>LKR ${formatCurrency(c.balance || 0)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editCustomer('${c.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.id}')">🗑️</button>
+                    </td>
+                </tr>`
+            ).join('');
+        }
+
+        function editCustomer(id) {
+            const c = appData.customers.find(c => c.id === id);
+            if (!c) return;
+            document.getElementById('custEditId').value = c.id;
+            document.getElementById('custName').value = c.name || '';
+            document.getElementById('custContact').value = c.contact || '';
+            document.getElementById('custCategory').value = c.category || 'Retail';
+            document.getElementById('custAddress').value = c.address || '';
+            document.getElementById('custCreditLimit').value = c.creditLimit || 0;
+            document.getElementById('custBalance').value = c.balance || 0;
+            document.getElementById('customerModalTitle').textContent = '✏️ Edit Customer';
+            document.getElementById('customerModal').classList.add('open');
+        }
+
+        function deleteCustomer(id) {
+            if (!confirm('Delete this customer?')) return;
+            appData.customers = appData.customers.filter(c => c.id !== id);
+            saveData();
+            renderCustomers();
+            showToast('🗑️ Customer removed.');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // FINANCE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderFinance() {
+            const tbody = document.getElementById('financeTableBody');
+            const records = appData.finance;
+            if (records.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No transactions.</td></tr>`;
+            } else {
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+                tbody.innerHTML = records.map(f =>
+                    `<tr>
+                        <td>${formatDate(f.date)}</td>
+                        <td><span class="badge ${f.type === 'income' ? 'badge-success' : 'badge-danger'}">${f.type}</span></td>
+                        <td>${escapeHtml(f.desc || '—')}</td>
+                        <td>${f.type === 'income' ? '+' : '-'} LKR ${formatCurrency(f.amount || 0)}</td>
+                    </tr>`
+                ).join('');
+            }
+
+            const totalIncome = appData.finance.filter(f => f.type === 'income').reduce((s, f) => s + (f.amount || 0), 0);
+            const totalExpense = appData.finance.filter(f => f.type === 'expense').reduce((s, f) => s + (f.amount || 0), 0);
+            document.getElementById('financeTotalIncome').textContent = 'LKR ' + formatCurrency(totalIncome);
+            document.getElementById('financeTotalExpense').textContent = 'LKR ' + formatCurrency(totalExpense);
+            document.getElementById('financeBalance').textContent = 'LKR ' + formatCurrency(totalIncome - totalExpense);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // REPORTS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderReports() {
+            const type = document.getElementById('reportType').value;
+            const container = document.getElementById('reportContent');
+
+            let html = '';
+            switch (type) {
+                case 'stock':
+                    html = generateStockReport();
+                    break;
+                case 'sales':
+                    html = generateSalesReport();
+                    break;
+                case 'attendance':
+                    html = generateAttendanceReport();
+                    break;
+                case 'payroll':
+                    html = generatePayrollReport();
+                    break;
+                case 'customers':
+                    html = generateCustomerReport();
+                    break;
+                default:
+                    html = '<div class="text-muted text-center" style="padding:20px;">Select a report type.</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function generateStockReport() {
+            if (appData.items.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No items.</div>';
+            let rows = appData.items.map(i =>
+                `<tr><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.category||'—')}</td><td>${i.qty||0}</td><td>LKR ${formatCurrency(i.price||0)}</td><td>LKR ${formatCurrency((i.qty||0)*(i.price||0))}</td></tr>`
+            ).join('');
+            return `<table><thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Price</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        function generateSalesReport() {
+            const sales = appData.salesData;
+            if (sales.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No sales data.</div>';
+            let rows = sales.map(s =>
+                `<tr><td>${formatDate(s.date)}</td><td>${escapeHtml(s.customer||'—')}</td><td>${escapeHtml(s.item||'—')}</td><td>${s.qty||0}</td><td>LKR ${formatCurrency(s.total||0)}</td></tr>`
+            ).join('');
+            const total = sales.reduce((s, item) => s + (item.total || 0), 0);
+            return `<table><thead><tr><th>Date</th><th>Customer</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" class="text-right"><strong>Grand Total</strong></td><td><strong>LKR ${formatCurrency(total)}</strong></td></tr></tfoot></table>`;
+        }
+
+        function generateAttendanceReport() {
+            const att = appData.attendance;
+            if (att.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No attendance records.</div>';
+            let rows = att.map(a =>
+                `<tr><td>${formatDate(a.date)}</td><td>${escapeHtml(a.employeeName||'—')}</td><td>${a.checkIn ? formatDateTime(a.checkIn) : '—'}</td><td>${a.checkOut ? formatDateTime(a.checkOut) : '—'}</td></tr>`
+            ).join('');
+            return `<table><thead><tr><th>Date</th><th>Employee</th><th>Check In</th><th>Check Out</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        function generatePayrollReport() {
+            const pay = appData.payroll;
+            if (pay.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No payroll records.</div>';
+            let rows = pay.map(p => {
+                const net = (p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0);
+                return `<tr><td>${escapeHtml(p.employeeName||'—')}</td><td>${p.month||'—'}</td><td>LKR ${formatCurrency(p.basic||0)}</td><td>LKR ${formatCurrency(p.allowances||0)}</td><td>LKR ${formatCurrency(p.deductions||0)}</td><td>LKR ${formatCurrency(net)}</td></tr>`;
+            }).join('');
+            return `<table><thead><tr><th>Employee</th><th>Month</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        function generateCustomerReport() {
+            const cust = appData.customers;
+            if (cust.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No customers.</div>';
+            let rows = cust.map(c =>
+                `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.contact||'—')}</td><td>${escapeHtml(c.category||'Retail')}</td><td>LKR ${formatCurrency(c.creditLimit||0)}</td><td>LKR ${formatCurrency(c.balance||0)}</td></tr>`
+            ).join('');
+            return `<table><thead><tr><th>Name</th><th>Contact</th><th>Category</th><th>Credit Limit</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // VEHICLES
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderVehicles() {
+            const tbody = document.getElementById('vehicleTableBody');
+            const records = appData.vehicles;
+            if (records.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No vehicles.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = records.map(v =>
+                `<tr>
+                    <td><strong>${escapeHtml(v.vehicleNo || '—')}</strong></td>
+                    <td>${escapeHtml(v.driver || '—')}</td>
+                    <td>${escapeHtml(v.fuel || '—')}</td>
+                    <td><span class="badge badge-success">Active</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editVehicle('${v.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteVehicle('${v.id}')">🗑️</button>
+                    </td>
+                </tr>`
+            ).join();
+        }
+
+        function editVehicle(id) {
+            const v = appData.vehicles.find(v => v.id === id);
+            if (!v) return;
+            document.getElementById('vehicleNo').value = v.vehicleNo || '';
+            document.getElementById('vehicleDriver').value = v.driver || '';
+            document.getElementById('vehicleFuel').value = v.fuel || '';
+            // We'll use the same modal for edit by storing the id in a data attribute
+            document.getElementById('addVehicleBtn').dataset.editId = v.id;
+            document.getElementById('addVehicleBtn').textContent = '💾 Update Vehicle';
+            showToast('✏️ Editing vehicle. Update and save.');
+        }
+
+        function deleteVehicle(id) {
+            if (!confirm('Delete this vehicle?')) return;
+            appData.vehicles = appData.vehicles.filter(v => v.id !== id);
+            saveData();
+            renderVehicles();
+            showToast('🗑️ Vehicle removed.');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SETTINGS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderSettings() {
+            document.getElementById('settingsCompany').value = appData.settings.company || '';
+            document.getElementById('settingsAddress').value = appData.settings.address || '';
+            document.getElementById('settingsPhone').value = appData.settings.phone || '';
+            document.getElementById('settingsEmail').value = appData.settings.email || '';
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // EVENT BINDINGS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function initEvents() {
+            // ── Sidebar toggle ──
+            document.getElementById('menuToggle').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('open');
+            });
+
+            // ── Dark Mode ──
+            document.getElementById('darkModeToggle').addEventListener('click', () => {
+                isDark = !isDark;
+                document.body.classList.toggle('dark', isDark);
+                document.getElementById('darkModeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i>' :
+                    '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            });
+            if (localStorage.getItem('darkMode') === 'true') {
+                isDark = true;
+                document.body.classList.add('dark');
+                document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+
+            // ── Language Toggle ──
+            document.getElementById('langToggle').addEventListener('click', () => {
+                lang = lang === 'en' ? 'si' : 'en';
+                document.getElementById('langToggle').textContent = lang === 'en' ? '🇱🇰 SI' : '🇬🇧 EN';
+                renderSidebar();
+                const activePanel = document.querySelector('.panel.active');
+                if (activePanel) {
+                    const id = activePanel.id.replace('panel-', '');
+                    const navItem = navItems.find(n => n.id === id);
+                    if (navItem) {
+                        const label = lang === 'si' && navItem.labelSI ? navItem.labelSI : navItem.label;
+                        document.getElementById('pageTitle').textContent = label;
+                    }
+                }
+                showToast(lang === 'en' ? '🌐 English' : '🌐 සිංහල');
+            });
+
+            // ── Employee Modal ──
+            document.getElementById('addEmployeeBtn').addEventListener('click', () => {
+                document.getElementById('empEditId').value = '';
+                document.getElementById('employeeModalTitle').textContent = '👤 Add Employee';
+                document.getElementById('empName').value = '';
+                document.getElementById('empNIC').value = '';
+                document.getElementById('empDept').value = 'Admin';
+                document.getElementById('empDesignation').value = '';
+                document.getElementById('empContact').value = '';
+                document.getElementById('empEmergency').value = '';
+                document.getElementById('empAddress').value = '';
+                document.getElementById('empJoined').value = '';
+                document.getElementById('empSalary').value = '';
+                document.getElementById('empEpf').value = '';
+                document.getElementById('empStatus').value = 'active';
+                document.getElementById('employeeModal').classList.add('open');
+            });
+
+            document.getElementById('empModalClose').addEventListener('click', () => {
+                document.getElementById('employeeModal').classList.remove('open');
+            });
+
+            document.getElementById('empSaveBtn').addEventListener('click', () => {
+                const id = document.getElementById('empEditId').value;
+                const name = document.getElementById('empName').value.trim();
+                if (!name) { showToast('Enter employee name.', 'error'); return; }
+                const data = {
+                    name,
+                    nic: document.getElementById('empNIC').value.trim(),
+                    department: document.getElementById('empDept').value,
+                    designation: document.getElementById('empDesignation').value.trim(),
+                    contact: document.getElementById('empContact').value.trim(),
+                    emergency: document.getElementById('empEmergency').value.trim(),
+                    address: document.getElementById('empAddress').value.trim(),
+                    joinedDate: document.getElementById('empJoined').value,
+                    salary: parseFloat(document.getElementById('empSalary').value) || 0,
+                    epf: document.getElementById('empEpf').value.trim(),
+                    status: document.getElementById('empStatus').value,
+                    updatedAt: nowISO()
+                };
+                if (id) {
+                    const idx = appData.employees.findIndex(e => e.id === id);
+                    if (idx > -1) { appData.employees[idx] = { ...appData.employees[idx], ...data }; }
+                } else {
+                    data.id = generateId();
+                    data.createdAt = nowISO();
+                    appData.employees.push(data);
+                }
+                saveData();
+                document.getElementById('employeeModal').classList.remove('open');
+                renderEmployees();
+                showToast(id ? '✅ Employee updated!' : '✅ Employee added!');
+            });
+
+            // ── Item Modal ──
+            document.getElementById('addItemBtn').addEventListener('click', () => {
+                document.getElementById('itemEditId').value = '';
+                document.getElementById('itemModalTitle').textContent = '📦 Add Item';
+                document.getElementById('itemBarcode').value = '';
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemQty').value = '1';
+                document.getElementById('itemPrice').value = '0';
+                document.getElementById('itemCategory').value = '';
+                document.getElementById('itemBrand').value = '';
+                document.getElementById('itemDesc').value = '';
+                document.getElementById('itemExpiry').value = '';
+                document.getElementById('itemBatch').value = '';
+                document.getElementById('itemStatus').value = 'active';
+                populateItemDropdowns();
+                document.getElementById('itemModal').classList.add('open');
+            });
+
+            document.getElementById('itemModalClose').addEventListener('click', () => {
+                document.getElementById('itemModal').classList.remove('open');
+            });
+
+            document.getElementById('itemSaveBtn').addEventListener('click', () => {
+                const id = document.getElementById('itemEditId').value;
+                const name = document.getElementById('itemName').value.trim();
+                if (!name) { showToast('Enter item name.', 'error'); return; }
+                const data = {
+                    barcode: document.getElementById('itemBarcode').value.trim(),
+                    name,
+                    qty: parseInt(document.getElementById('itemQty').value) || 0,
+                    price: parseFloat(document.getElementById('itemPrice').value) || 0,
+                    category: document.getElementById('itemCategory').value,
+                    brand: document.getElementById('itemBrand').value,
+                    desc: document.getElementById('itemDesc').value.trim(),
+                    expiry: document.getElementById('itemExpiry').value,
+                    batch: document.getElementById('itemBatch').value.trim(),
+                    status: document.getElementById('itemStatus').value,
+                    updatedAt: nowISO()
+                };
+                if (id) {
+                    const idx = appData.items.findIndex(i => i.id === id);
+                    if (idx > -1) { appData.items[idx] = { ...appData.items[idx], ...data }; }
+                } else {
+                    data.id = generateId();
+                    data.createdAt = nowISO();
+                    appData.items.push(data);
+                }
+                saveData();
+                document.getElementById('itemModal').classList.remove('open');
+                renderInventory();
+                renderDashboard();
+                showToast(id ? '✅ Item updated!' : '✅ Item added!');
+            });
+
+            // ── Customer Modal ──
+            document.getElementById('addCustomerBtn').addEventListener('click', () => {
+                document.getElementById('custEditId').value = '';
+                document.getElementById('customerModalTitle').textContent = '👤 Add Customer';
+                document.getElementById('custName').value = '';
+                document.getElementById('custContact').value = '';
+                document.getElementById('custCategory').value = 'Retail';
+                document.getElementById('custAddress').value = '';
+                document.getElementById('custCreditLimit').value = '0';
+                document.getElementById('custBalance').value = '0';
+                document.getElementById('customerModal').classList.add('open');
+            });
+
+            document.getElementById('custModalClose').addEventListener('click', () => {
+                document.getElementById('customerModal').classList.remove('open');
+            });
+
+            document.getElementById('custSaveBtn').addEventListener('click', () => {
+                const id = document.getElementById('custEditId').value;
+                const name = document.getElementById('custName').value.trim();
+                if (!name) { showToast('Enter customer name.', 'error'); return; }
+                const data = {
+                    name,
+                    contact: document.getElementById('custContact').value.trim(),
+                    category: document.getElementById('custCategory').value,
+                    address: document.getElementById('custAddress').value.trim(),
+                    creditLimit: parseFloat(document.getElementById('custCreditLimit').value) || 0,
+                    balance: parseFloat(document.getElementById('custBalance').value) || 0,
+                    updatedAt: nowISO()
+                };
+                if (id) {
+                    const idx = appData.customers.findIndex(c => c.id === id);
+                    if (idx > -1) { appData.customers[idx] = { ...appData.customers[idx], ...data }; }
+                } else {
+                    data.id = generateId();
+                    data.createdAt = nowISO();
+                    appData.customers.push(data);
+                }
+                saveData();
+                document.getElementById('customerModal').classList.remove('open');
+                renderCustomers();
+                showToast(id ? '✅ Customer updated!' : '✅ Customer added!');
+            });
+
+            // ── Quick Actions ──
+            document.getElementById('quickAddItem').addEventListener('click', () => {
+                document.getElementById('addItemBtn').click();
+            });
+            document.getElementById('quickNewDelivery').addEventListener('click', () => {
+                switchPanel('deliveries');
+            });
+            document.getElementById('quickAddEmployee').addEventListener('click', () => {
+                document.getElementById('addEmployeeBtn').click();
+            });
+            document.getElementById('quickPrint').addEventListener('click', () => {
+                window.print();
+            });
+
+            // ── Deliveries ──
+            document.getElementById('deliverSubmitBtn').addEventListener('click', () => {
+                const customer = document.getElementById('delCustomer').value.trim();
+                const itemId = document.getElementById('delItemSelect').value;
+                const qty = parseInt(document.getElementById('delQty').value);
+                const driver = document.getElementById('delDriver').value.trim();
+                const route = document.getElementById('delRoute').value.trim();
+
+                if (!customer) { showToast('Enter customer name.', 'error'); return; }
+                if (!itemId) { showToast('Select an item.', 'error'); return; }
+                if (!qty || qty < 1) { showToast('Enter valid qty.', 'error'); return; }
+
+                const item = appData.items.find(i => i.id === itemId);
+                if (!item) { showToast('Item not found.', 'error'); return; }
+                if ((item.qty || 0) < qty) { showToast(`Insufficient stock! Available: ${item.qty}`, 'error'); return; }
+
+                item.qty = (item.qty || 0) - qty;
+                item.updatedAt = nowISO();
+
+                const delivery = {
+                    id: generateId(),
+                    customer,
+                    itemId: item.id,
+                    itemName: item.name,
+                    qty,
+                    driver,
+                    route,
+                    status: 'delivered',
+                    date: nowISO()
+                };
+                appData.deliveries.push(delivery);
+
+                // Add to sales data
+                appData.salesData.push({
+                    id: generateId(),
+                    customer,
+                    item: item.name,
+                    qty,
+                    total: qty * (item.price || 0),
+                    date: nowISO()
+                });
+
+                saveData();
+                renderDeliveries();
+                renderDashboard();
+                document.getElementById('delCustomer').value = '';
+                document.getElementById('delQty').value = '';
+                document.getElementById('delDriver').value = '';
+                document.getElementById('delRoute').value = '';
+                showToast(`✅ ${qty} ${item.name} delivered to ${customer}!`);
+            });
+
+            // ── Clear Delivery Filter ──
+            document.getElementById('clearDelFilter').addEventListener('click', () => {
+                document.getElementById('delDateFilter').value = '';
+                renderDeliveries();
+            });
+
+            // ── Attendance ──
+            document.getElementById('checkInBtn').addEventListener('click', () => {
+                if (!currentUser) { showToast('Login first.', 'error'); return; }
+                const today = todayStr();
+                const existing = appData.attendance.find(a => a.employeeId === currentUser.id && a.date.slice(0,
+                    10) === today);
+                if (existing && existing.checkIn) { showToast('Already checked in today.', 'warning'); return; }
+                const record = {
+                    id: generateId(),
+                    employeeId: currentUser.id,
+                    employeeName: currentUser.name,
+                    date: nowISO(),
+                    checkIn: nowISO(),
+                    checkOut: null,
+                    location: document.getElementById('attendanceLocation').value || 'Colombo'
+                };
+                if (existing) {
+                    existing.checkIn = record.checkIn;
+                    existing.location = record.location;
+                } else {
+                    appData.attendance.push(record);
+                }
+                saveData();
+                renderAttendance();
+                showToast('✅ Checked in at ' + new Date().toLocaleTimeString());
+            });
+
+            document.getElementById('checkOutBtn').addEventListener('click', () => {
+                if (!currentUser) { showToast('Login first.', 'error'); return; }
+                const today = todayStr();
+                const existing = appData.attendance.find(a => a.employeeId === currentUser.id && a.date.slice(0,
+                    10) === today);
+                if (!existing) { showToast('No check-in found today.', 'error'); return; }
+                if (existing.checkOut) { showToast('Already checked out.', 'warning'); return; }
+                existing.checkOut = nowISO();
+                saveData();
+                renderAttendance();
+                showToast('✅ Checked out at ' + new Date().toLocaleTimeString());
+            });
+
+            document.getElementById('attendanceRefreshBtn').addEventListener('click', () => {
+                renderAttendance();
+                showToast('🔄 Refreshed.');
+            });
+
+            // ── GPS Location ──
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    document.getElementById('attendanceLocation').value =
+                        `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+                }, () => {
+                    document.getElementById('attendanceLocation').value = '📍 Location unavailable';
+                });
+            }
+
+            // ── Leave ──
+            document.getElementById('applyLeaveBtn').addEventListener('click', () => {
+                const empId = document.getElementById('leaveEmployeeSelect').value;
+                const type = document.getElementById('leaveType').value;
+                const from = document.getElementById('leaveFrom').value;
+                const to = document.getElementById('leaveTo').value;
+                const reason = document.getElementById('leaveReason').value.trim();
+
+                if (!empId) { showToast('Select employee.', 'error'); return; }
+                if (!from || !to) { showToast('Select dates.', 'error'); return; }
+                const emp = appData.employees.find(e => e.id === empId);
+                appData.leaves.push({
+                    id: generateId(),
+                    employeeId: empId,
+                    employeeName: emp ? emp.name : 'Unknown',
+                    type,
+                    from,
+                    to,
+                    reason,
+                    status: 'pending',
+                    appliedAt: nowISO()
+                });
+                saveData();
+                renderLeave();
+                showToast('✅ Leave applied!');
+                document.getElementById('leaveReason').value = '';
+            });
+
+            document.getElementById('approveLeaveBtn').addEventListener('click', () => {
+                const leaves = appData.leaves.filter(l => l.status === 'pending');
+                if (leaves.length === 0) { showToast('No pending leaves.', 'warning'); return; }
+                const last = leaves[leaves.length - 1];
+                last.status = 'approved';
+                saveData();
+                renderLeave();
+                showToast('✅ Leave approved.');
+            });
+
+            document.getElementById('rejectLeaveBtn').addEventListener('click', () => {
+                const leaves = appData.leaves.filter(l => l.status === 'pending');
+                if (leaves.length === 0) { showToast('No pending leaves.', 'warning'); return; }
+                const last = leaves[leaves.length - 1];
+                last.status = 'rejected';
+                saveData();
+                renderLeave();
+                showToast('❌ Leave rejected.');
+            });
+
+            // ── Payroll ──
+            document.getElementById('calculatePayrollBtn').addEventListener('click', () => {
+                const empId = document.getElementById('payrollEmployeeSelect').value;
+                const month = document.getElementById('payrollMonth').value;
+                const basic = parseFloat(document.getElementById('payrollBasic').value) || 0;
+                const allowances = parseFloat(document.getElementById('payrollAllowances').value) || 0;
+                const deductions = parseFloat(document.getElementById('payrollDeductions').value) || 0;
+                const ot = parseFloat(document.getElementById('payrollOT').value) || 0;
+
+                if (!empId) { showToast('Select employee.', 'error'); return; }
+                if (!month) { showToast('Select month.', 'error'); return; }
+                const emp = appData.employees.find(e => e.id === empId);
+                if (!emp) { showToast('Employee not found.', 'error'); return; }
+
+                const existing = appData.payroll.find(p => p.employeeId === empId && p.month === month);
+                const data = {
+                    employeeId: empId,
+                    employeeName: emp.name,
+                    month,
+                    basic: basic || (emp.salary || 0),
+                    allowances,
+                    deductions,
+                    ot,
+                    updatedAt: nowISO()
+                };
+                if (existing) {
+                    Object.assign(existing, data);
+                } else {
+                    data.id = generateId();
+                    data.createdAt = nowISO();
+                    appData.payroll.push(data);
+                }
+                saveData();
+                renderPayroll();
+                showToast('✅ Payroll calculated!');
+            });
+
+            document.getElementById('generatePayslipBtn').addEventListener('click', () => {
+                showToast('📄 Payslip PDF generated (simulated).', 'success');
+            });
+
+            // ── Finance ──
+            document.getElementById('addFinanceBtn').addEventListener('click', () => {
+                const type = document.getElementById('financeType').value;
+                const amount = parseFloat(document.getElementById('financeAmount').value);
+                const desc = document.getElementById('financeDesc').value.trim();
+
+                if (!amount || amount <= 0) { showToast('Enter valid amount.', 'error'); return; }
+                if (!desc) { showToast('Enter description.', 'error'); return; }
+
+                appData.finance.push({
+                    id: generateId(),
+                    type,
+                    amount,
+                    desc,
+                    date: nowISO()
+                });
+                saveData();
+                renderFinance();
+                document.getElementById('financeAmount').value = '';
+                document.getElementById('financeDesc').value = '';
+                showToast(`✅ ${type} recorded.`);
+            });
+
+            // ── Reports ──
+            document.getElementById('generateReportBtn').addEventListener('click', renderReports);
+            document.getElementById('reportType').addEventListener('change', renderReports);
+
+            document.getElementById('exportReportBtn').addEventListener('click', () => {
+                const type = document.getElementById('reportType').value;
+                const data = appData[type === 'stock' ? 'items' : type === 'sales' ? 'salesData' : type === 'attendance' ?
+                    'attendance' : type === 'payroll' ? 'payroll' : 'customers'
+                ];
+                if (!data || data.length === 0) { showToast('No data to export.', 'error'); return; }
+                let csv = Object.keys(data[0]).join(',') + '\n';
+                data.forEach(row => {
+                    csv += Object.values(row).map(v => `"${v}"`).join(',') + '\n';
+                });
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type}_${todayStr()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('📥 CSV exported!');
+            });
+
+            document.getElementById('printReportBtn').addEventListener('click', () => {
+                window.print();
+            });
+
+            // ── Products (Categories & Brands) ──
+            document.getElementById('addCategoryBtn').addEventListener('click', () => {
+                const val = document.getElementById('newCategoryInput').value.trim();
+                if (!val) { showToast('Enter category name.', 'error'); return; }
+                if (appData.categories.includes(val)) { showToast('Already exists.', 'warning'); return; }
+                appData.categories.push(val);
+                saveData();
+                renderProducts();
+                document.getElementById('newCategoryInput').value = '';
+                showToast(`✅ "${val}" added.`);
+            });
+
+            document.getElementById('addBrandBtn').addEventListener('click', () => {
+                const val = document.getElementById('newBrandInput').value.trim();
+                if (!val) { showToast('Enter brand name.', 'error'); return; }
+                if (appData.brands.includes(val)) { showToast('Already exists.', 'warning'); return; }
+                appData.brands.push(val);
+                saveData();
+                renderProducts();
+                document.getElementById('newBrandInput').value = '';
+                showToast(`✅ "${val}" added.`);
+            });
+
+            // ── Vehicles ──
+            document.getElementById('addVehicleBtn').addEventListener('click', () => {
+                const editId = document.getElementById('addVehicleBtn').dataset.editId;
+                const vehicleNo = document.getElementById('vehicleNo').value.trim();
+                const driver = document.getElementById('vehicleDriver').value.trim();
+                const fuel = document.getElementById('vehicleFuel').value.trim();
+
+                if (!vehicleNo) { showToast('Enter vehicle number.', 'error'); return; }
+
+                if (editId) {
+                    const idx = appData.vehicles.findIndex(v => v.id === editId);
+                    if (idx > -1) {
+                        appData.vehicles[idx] = { ...appData.vehicles[idx], vehicleNo, driver, fuel,
+                        updatedAt: nowISO() };
+                    }
+                    document.getElementById('addVehicleBtn').dataset.editId = '';
+                    document.getElementById('addVehicleBtn').textContent = '🚗 Add Vehicle';
+                } else {
+                    appData.vehicles.push({ id: generateId(), vehicleNo, driver, fuel, status: 'active',
+                        createdAt: nowISO(), updatedAt: nowISO() });
+                }
+                saveData();
+                renderVehicles();
+                document.getElementById('vehicleNo').value = '';
+                document.getElementById('vehicleDriver').value = '';
+                document.getElementById('vehicleFuel').value = '';
+                showToast(editId ? '✅ Vehicle updated!' : '✅ Vehicle added!');
+            });
+
+            // ── Settings ──
+            document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+                appData.settings = {
+                    company: document.getElementById('settingsCompany').value.trim(),
+                    address: document.getElementById('settingsAddress').value.trim(),
+                    phone: document.getElementById('settingsPhone').value.trim(),
+                    email: document.getElementById('settingsEmail').value.trim()
+                };
+                saveData();
+                showToast('✅ Settings saved!');
+            });
+
+            document.getElementById('backupDataBtn').addEventListener('click', () => {
+                const data = JSON.stringify(appData, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_${todayStr()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('💾 Backup downloaded!');
+            });
+
+            document.getElementById('restoreDataBtn').addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = function(e) {
+                    const file = this.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if (!data.items || !data.employees) { showToast('Invalid backup.',
+                                    'error'); return; }
+                            if (!confirm('Replace ALL current data?')) return;
+                            appData = { ...appData, ...data };
+                            saveData();
+                            renderAll();
+                            showToast('✅ Restored!');
+                        } catch (_) { showToast('Failed to restore.', 'error'); }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            });
+
+            document.getElementById('clearDataBtn').addEventListener('click', () => {
+                if (!confirm('⚠️ Delete ALL data? This cannot be undone!')) return;
+                if (!confirm('Are you sure?')) return;
+                appData = {
+                    items: [],
+                    categories: ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'],
+                    brands: ['Nike', 'Apple', 'Samsung', 'Adidas', 'Pepsi'],
+                    employees: [],
+                    deliveries: [],
+                    attendance: [],
+                    leaves: [],
+                    payroll: [],
+                    customers: [],
+                    finance: [],
+                    vehicles: [],
+                    users: DEFAULT_USERS.map(u => ({ ...u, id: Date.now() + Math.random() * 1000 })),
+                    notifications: [],
+                    settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka',
+                        phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' },
+                    salesData: []
+                };
+                saveData();
+                renderAll();
+                showToast('🗑️ All data cleared.');
+            });
+
+            // ── Notifications ──
+            document.getElementById('notifBell').addEventListener('click', () => {
+                const list = document.getElementById('notifList');
+                const notifs = appData.notifications || [];
+                if (notifs.length === 0) {
+                    list.innerHTML = '<div class="text-muted text-center" style="padding:20px;">No notifications.</div>';
+                } else {
+                    list.innerHTML = notifs.slice().reverse().map(n =>
+                        `<div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+                            <div><strong>${escapeHtml(n.title || '')}</strong></div>
+                            <div class="text-muted">${escapeHtml(n.message || '')} · ${formatDateTime(n.date)}</div>
+                        </div>`
+                    ).join('');
+                }
+                document.getElementById('notifModal').classList.add('open');
+                document.querySelector('#notifBell .dot').style.display = 'none';
+            });
+
+            document.getElementById('notifModalClose').addEventListener('click', () => {
+                document.getElementById('notifModal').classList.remove('open');
+            });
+
+            // ── Search / Filter events ──
+            document.getElementById('empSearch').addEventListener('input', renderEmployees);
+            document.getElementById('empDeptFilter').addEventListener('change', renderEmployees);
+            document.getElementById('empStatusFilter').addEventListener('change', renderEmployees);
+
+            document.getElementById('invSearch').addEventListener('input', renderInventory);
+            document.getElementById('invCatFilter').addEventListener('change', renderInventory);
+            document.getElementById('invSort').addEventListener('change', renderInventory);
+
+            document.getElementById('custSearch').addEventListener('input', renderCustomers);
+
+            // ── Modal close on overlay click ──
+            document.querySelectorAll('.modal-overlay').forEach(m => {
+                m.addEventListener('click', function(e) {
+                    if (e.target === this) this.classList.remove('open');
+                });
+            });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // RENDER ALL
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderAll() {
+            renderDashboard();
+            renderEmployees();
+            renderInventory();
+            renderProducts();
+            renderDeliveries();
+            renderAttendance();
+            renderLeave();
+            renderPayroll();
+            renderCustomers();
+            renderFinance();
+            renderReports();
+            renderVehicles();
+            renderSettings();
+            renderSidebar();
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // INIT
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function init() {
+            loadData();
+            initLogin();
+            initEvents();
+
+            // Check if already logged in (session)
+            // Not using session, just show login screen
+
+            // Set default month for payroll
+            document.getElementById('payrollMonth').value = new Date().toISOString().slice(0, 7);
+
+            // Set default date for leave
+            document.getElementById('leaveFrom').value = todayStr();
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('leaveTo').value = nextWeek.toISOString().slice(0, 10);
+
+            // Set default date for delivery filter
+            document.getElementById('delDateFilter').value = todayStr();
+
+            renderAll();
+
+            // Add some sample data if empty
+            if (appData.items.length === 0) {
+                appData.items.push({
+                    id: generateId(),
+                    barcode: '1234567890123',
+                    name: 'COLÖGNE SPRAY',
+                    qty: 15,
+                    price: 4500,
+                    category: 'Cosmetics',
+                    brand: 'Nike',
+                    desc: '3.4FL OZ · 100ml',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.items.push({
+                    id: generateId(),
+                    barcode: '8901234567890',
+                    name: 'WIRELESS HEADPHONES',
+                    qty: 8,
+                    price: 12900,
+                    category: 'Electronics',
+                    brand: 'Apple',
+                    desc: 'Noise cancelling, Bluetooth 5.0',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.items.push({
+                    id: generateId(),
+                    barcode: '5678901234567',
+                    name: 'PREMIUM TEA PACK',
+                    qty: 25,
+                    price: 850,
+                    category: 'Food',
+                    brand: 'Pepsi',
+                    desc: 'Ceylon black tea, 100g',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.employees.push({
+                    id: generateId(),
+                    name: 'Kamal Perera',
+                    nic: '123456789V',
+                    department: 'Sales',
+                    designation: 'Senior Sales Rep',
+                    contact: '0771234567',
+                    emergency: '0777654321',
+                    address: 'Colombo 07',
+                    joinedDate: '2023-01-15',
+                    salary: 75000,
+                    epf: 'EPF12345',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.employees.push({
+                    id: generateId(),
+                    name: 'Nimal Fernando',
+                    nic: '987654321V',
+                    department: 'Delivery',
+                    designation: 'Delivery Driver',
+                    contact: '0762345678',
+                    emergency: '0768765432',
+                    address: 'Galle',
+                    joinedDate: '2023-03-01',
+                    salary: 55000,
+                    epf: 'EPF67890',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.customers.push({
+                    id: generateId(),
+                    name: 'Lakshmi Stores',
+                    contact: '0112345678',
+                    category: 'Wholesale',
+                    address: 'Negombo',
+                    creditLimit: 500000,
+                    balance: 250000,
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.customers.push({
+                    id: generateId(),
+                    name: 'City Mart',
+                    contact: '0118765432',
+                    category: 'Retail',
+                    address: 'Colombo 03',
+                    creditLimit: 200000,
+                    balance: 75000,
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.vehicles.push({
+                    id: generateId(),
+                    vehicleNo: 'ABC-1234',
+                    driver: 'Nimal Fernando',
+                    fuel: '45L / 350km',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                appData.vehicles.push({
+                    id: generateId(),
+                    vehicleNo: 'DEF-5678',
+                    driver: 'Saman Kumara',
+                    fuel: '38L / 280km',
+                    status: 'active',
+                    createdAt: nowISO(),
+                    updatedAt: nowISO()
+                });
+                saveData();
+                renderAll();
+                showToast('📦 Sample data loaded!');
+            }
+
+            // Add a welcome notification
+            if (!appData.notifications || appData.notifications.length === 0) {
+                appData.notifications = [{
+                    id: generateId(),
+                    title: 'Welcome to ERP System',
+                    message: 'Jayasinghe Distributors · All modules ready.',
+                    date: nowISO()
+                }];
+                saveData();
+            }
+
+            showToast(`👋 Welcome to Jayasinghe Distributors ERP!`, 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
 </body>
 </html>
