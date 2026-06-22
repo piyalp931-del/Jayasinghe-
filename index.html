@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Jayasinghe Distributors</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+    </script>
+    <!-- JsBarcode -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js">
+    </script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
+    </script>
+    <!-- Papa Parse (CSV) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js">
+    </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- ============================================================
+    LOGIN PAGE
+    ============================================================ -->
+    <div id="loginPage">
+        <div class="login-card">
+            <div class="logo">
+                <i class="fas fa-boxes"></i>
+                <h1>Jayasinghe Distributors</h1>
+                <p>Management System</p>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="loginUser" value="admin" placeholder="Enter username" />
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="loginPass" value="admin123" placeholder="Enter password" />
+            </div>
+            <button class="btn-login" onclick="handleLogin()">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+            <div class="error-msg" id="loginError">Invalid credentials. Try again.</div>
+            <div style="margin-top:14px;font-size:12px;color:var(--gray-500);text-align:center;">
+                Default: admin / admin123
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    SIDEBAR OVERLAY (mobile)
+    ============================================================ -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- ============================================================
+    APP SHELL
+    ============================================================ -->
+    <div id="app">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <i class="fas fa-boxes"></i>
+                <span>Jayasinghe</span>
+            </div>
+            <nav class="nav-items" id="navItems">
+                <a href="#" data-page="dashboard" class="active"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                <a href="#" data-page="products"><i class="fas fa-cube"></i><span>Products</span><span class="badge">12</span></a>
+                <a href="#" data-page="stock"><i class="fas fa-warehouse"></i><span>Stock</span></a>
+                <a href="#" data-page="customers"><i class="fas fa-users"></i><span>Customers</span></a>
+                <a href="#" data-page="suppliers"><i class="fas fa-truck"></i><span>Suppliers</span></a>
+                <a href="#" data-page="purchases"><i class="fas fa-shopping-cart"></i><span>Purchases</span></a>
+                <a href="#" data-page="sales"><i class="fas fa-cash-register"></i><span>Sales</span></a>
+                <a href="#" data-page="distribution"><i class="fas fa-route"></i><span>Distribution</span></a>
+                <a href="#" data-page="accounts"><i class="fas fa-coins"></i><span>Accounts</span></a>
+                <a href="#" data-page="reports"><i class="fas fa-file-alt"></i><span>Reports</span></a>
+                <a href="#" data-page="employees"><i class="fas fa-users-cog"></i><span>Employees</span></a>
+                <a href="#" data-page="attendance"><i class="fas fa-clock"></i><span>Attendance</span></a>
+                <a href="#" data-page="vouchers"><i class="fas fa-receipt"></i><span>Vouchers</span></a>
+                <a href="#" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main-content">
+
+            <!-- Header -->
+            <header class="header">
+                <div class="left">
+                    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h2 id="pageTitle">Dashboard <span class="page-sub" id="pageSub">Overview</span></h2>
+                </div>
+                <div class="right">
+                    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></button>
+                    <button class="notif-btn" onclick="showNotification('🔔 You have 3 new notifications')">
+                        <i class="fas fa-bell"></i>
+                        <span class="dot"></span>
+                    </button>
+                    <div class="user-info" onclick="handleLogout()">
+                        <div class="avatar" id="userAvatar">A</div>
+                        <div>
+                            <div class="name" id="userName">Admin</div>
+                            <div class="role" id="userRole">Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content" id="pageContent">
+
+                <!-- ========== DASHBOARD ========== -->
+                <div class="page active" id="page-dashboard">
+                    <!-- Dashboard content rendered by JS -->
+                    <div id="dashboardContent"></div>
+                </div>
+
+                <!-- ========== PRODUCTS ========== -->
+                <div class="page" id="page-products">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="productSearch" placeholder="Search products..." oninput="renderProducts()" /></div>
+                        <button class="btn-add" onclick="openProductModal()"><i class="fas fa-plus"></i> Add Product</button>
+                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportCSV('products')"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="document.getElementById('importProductsCSV').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                        <input type="file" id="importProductsCSV" style="display:none" accept=".csv" onchange="importCSV('products', event)" />
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>#</th><th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+                            <tbody id="productTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== STOCK ========== -->
+                <div class="page" id="page-stock">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="stockSearch" placeholder="Search stock..." oninput="renderStock()" /></div>
+                        <button class="btn-add" onclick="openStockModal()"><i class="fas fa-plus"></i> Stock In</button>
+                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="openStockOutModal()"><i class="fas fa-arrow-right"></i> Stock Out</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Product</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="stockTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== CUSTOMERS ========== -->
+                <div class="page" id="page-customers">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="customerSearch" placeholder="Search customers..." oninput="renderCustomers()" /></div>
+                        <button class="btn-add" onclick="openCustomerModal()"><i class="fas fa-user-plus"></i> Add Customer</button>
+                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportCSV('customers')"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="document.getElementById('importCustomersCSV').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                        <input type="file" id="importCustomersCSV" style="display:none" accept=".csv" onchange="importCSV('customers', event)" />
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Balance</th><th>Actions</th></tr></thead>
+                            <tbody id="customerTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== SUPPLIERS ========== -->
+                <div class="page" id="page-suppliers">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="supplierSearch" placeholder="Search suppliers..." oninput="renderSuppliers()" /></div>
+                        <button class="btn-add" onclick="openSupplierModal()"><i class="fas fa-truck"></i> Add Supplier</button>
+                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportCSV('suppliers')"><i class="fas fa-file-csv"></i> Export CSV</button>
+                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="document.getElementById('importSuppliersCSV').click()"><i class="fas fa-upload"></i> Import CSV</button>
+                        <input type="file" id="importSuppliersCSV" style="display:none" accept=".csv" onchange="importCSV('suppliers', event)" />
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Name</th><th>Contact</th><th>Phone</th><th>Balance</th><th>Actions</th></tr></thead>
+                            <tbody id="supplierTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== PURCHASES ========== -->
+                <div class="page" id="page-purchases">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="purchaseSearch" placeholder="Search purchases..." oninput="renderPurchases()" /></div>
+                        <button class="btn-add" onclick="openPurchaseModal()"><i class="fas fa-shopping-cart"></i> New Purchase</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Invoice</th><th>Supplier</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="purchaseTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== SALES ========== -->
+                <div class="page" id="page-sales">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="salesSearch" placeholder="Search sales..." oninput="renderSales()" /></div>
+                        <button class="btn-add" onclick="openSaleModal()"><i class="fas fa-cash-register"></i> New Sale</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Invoice</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="salesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== DISTRIBUTION ========== -->
+                <div class="page" id="page-distribution">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="distSearch" placeholder="Search deliveries..." oninput="renderDistribution()" /></div>
+                        <button class="btn-add" onclick="openDistModal()"><i class="fas fa-route"></i> New Delivery</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Delivery #</th><th>Driver</th><th>Vehicle</th><th>Route</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="distTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== ACCOUNTS ========== -->
+                <div class="page" id="page-accounts">
+                    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
+                        <div class="stat-card success"><div class="label">Total Income</div><div class="value" id="accIncome">LKR 0</div></div>
+                        <div class="stat-card danger"><div class="label">Total Expenses</div><div class="value" id="accExpenses">LKR 0</div></div>
+                        <div class="stat-card info"><div class="label">Profit</div><div class="value" id="accProfit">LKR 0</div></div>
+                        <div class="stat-card"><div class="label">Cash Balance</div><div class="value" id="accCash">LKR 0</div></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead>
+                            <tbody id="accountTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== REPORTS ========== -->
+                <div class="page" id="page-reports">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;">
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('daily')"><i class="fas fa-calendar-day"></i> Daily</button>
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('monthly')"><i class="fas fa-calendar-alt"></i> Monthly</button>
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('yearly')"><i class="fas fa-calendar-year"></i> Yearly</button>
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('stock')"><i class="fas fa-warehouse"></i> Stock</button>
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('customers')"><i class="fas fa-users"></i> Customers</button>
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('suppliers')"><i class="fas fa-truck"></i> Suppliers</button>
+                        <button class="btn-add" style="background:var(--primary-light);color:var(--primary);" onclick="generateReport('profit')"><i class="fas fa-chart-line"></i> Profit</button>
+                    </div>
+                    <div id="reportOutput" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);min-height:120px;">
+                        <p style="color:var(--gray-500);text-align:center;">Select a report to generate</p>
+                    </div>
+                    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn-add" style="background:var(--secondary);color:#fff;" onclick="exportPDFReport()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                        <button class="btn-add" style="background:var(--info);color:#fff;" onclick="exportExcelReport()"><i class="fas fa-file-excel"></i> Export Excel</button>
+                    </div>
+                </div>
+
+                <!-- ========== EMPLOYEES ========== -->
+                <div class="page" id="page-employees">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="employeeSearch" placeholder="Search employees..." oninput="renderEmployees()" /></div>
+                        <button class="btn-add" onclick="openEmployeeModal()"><i class="fas fa-user-plus"></i> Add Employee</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Salary</th><th>Actions</th></tr></thead>
+                            <tbody id="employeeTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== ATTENDANCE ========== -->
+                <div class="page" id="page-attendance">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="attendanceSearch" placeholder="Search attendance..." oninput="renderAttendance()" /></div>
+                        <button class="btn-add" onclick="openAttendanceModal()"><i class="fas fa-clock"></i> Check In/Out</button>
+                        <button class="btn-add" style="background:var(--warning);color:#fff;" onclick="openLeaveModal()"><i class="fas fa-calendar-alt"></i> Request Leave</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Employee</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="attendanceTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== VOUCHERS ========== -->
+                <div class="page" id="page-vouchers">
+                    <div class="toolbar">
+                        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="voucherSearch" placeholder="Search vouchers..." oninput="renderVouchers()" /></div>
+                        <button class="btn-add" onclick="openVoucherModal()"><i class="fas fa-plus"></i> New Voucher</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>#</th><th>Type</th><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr></thead>
+                            <tbody id="voucherTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ========== SETTINGS ========== -->
+                <div class="page" id="page-settings">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+                        <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
+                            <h4 style="margin-bottom:12px;"><i class="fas fa-building"></i> Company Details</h4>
+                            <div class="form-group"><label>Company Name</label><input type="text" id="companyName" value="Jayasinghe Distributors" /></div>
+                            <div class="form-group"><label>Currency</label><select id="currencySelect"><option value="LKR">LKR</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+                            <button class="btn-add" style="width:100%;justify-content:center;margin-top:8px;" onclick="saveSettings()"><i class="fas fa-save"></i> Save</button>
+                        </div>
+                        <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
+                            <h4 style="margin-bottom:12px;"><i class="fas fa-palette"></i> Theme</h4>
+                            <button class="btn-add" style="width:100%;justify-content:center;" onclick="toggleTheme()"><i class="fas fa-moon"></i> Toggle Dark Mode</button>
+                            <hr style="margin:16px 0;border-color:var(--gray-200);" />
+                            <h4 style="margin-bottom:12px;"><i class="fas fa-database"></i> Backup</h4>
+                            <button class="btn-add" style="width:100%;justify-content:center;background:var(--secondary);color:#fff;" onclick="backupData()"><i class="fas fa-download"></i> Export Backup</button>
+                            <button class="btn-add" style="width:100%;justify-content:center;background:var(--warning);color:#fff;margin-top:8px;" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> Restore Backup</button>
+                            <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreData(event)" />
+                        </div>
+                        <div class="card" style="background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
+                            <h4 style="margin-bottom:12px;"><i class="fas fa-trash"></i> Data Management</h4>
+                            <button class="btn-add" style="width:100%;justify-content:center;background:var(--danger);color:#fff;" onclick="clearAllData()"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /page-content -->
+        </div><!-- /main-content -->
+    </div><!-- /app -->
+
+    <!-- ============================================================
+    MOBILE BOTTOM NAV
+    ============================================================ -->
+    <nav class="mobile-bottom-nav" id="bottomNav">
+        <a href="#" data-page="dashboard" class="active"><i class="fas fa-chart-pie"></i><span>Home</span></a>
+        <a href="#" data-page="products"><i class="fas fa-cube"></i><span>Products</span></a>
+        <a href="#" data-page="sales"><i class="fas fa-cash-register"></i><span>Sales</span></a>
+        <a href="#" data-page="employees"><i class="fas fa-users-cog"></i><span>Staff</span></a>
+        <a href="#" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+
+    <!-- ============================================================
+    MODAL
+    ============================================================ -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    JavaScript
+    ============================================================ -->
+    <script src="app.js"></script>
+</body>
+</html>
