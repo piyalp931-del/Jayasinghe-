@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- HTML5-QRCode for Barcode Scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -542,12 +544,32 @@
         </div>
     </div>
 
-    <!-- Item Modal -->
+    <!-- ==========================================================
+    ITEM MODAL (with Barcode Scanner)
+    ========================================================== -->
     <div class="modal-overlay" id="itemModal">
         <div class="modal-content">
             <div class="modal-header"><h3 id="itemModalTitle">📦 Add Item</h3><button class="modal-close" id="itemModalClose">✕</button></div>
             <input type="hidden" id="itemEditId" />
-            <div class="form-group"><label>🔢 Barcode</label><input type="text" id="itemBarcode" placeholder="Scan or enter" /></div>
+
+            <!-- Barcode with Scan Button -->
+            <div class="form-group" style="position:relative;">
+                <label>🔢 Barcode</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="itemBarcode" placeholder="Scan or enter" style="flex:1;" />
+                    <button type="button" class="btn btn-sm btn-primary" id="scanBarcodeBtn" title="Scan Barcode">
+                        <i class="fas fa-camera"></i> Scan
+                    </button>
+                </div>
+                <!-- Scanner Container (hidden by default) -->
+                <div id="scannerContainer" style="display:none; margin-top:8px; border:1px solid var(--border); border-radius:10px; overflow:hidden; position:relative;">
+                    <div id="scannerReader" style="width:100%; max-width:300px; margin:0 auto;"></div>
+                    <button type="button" class="btn btn-sm btn-danger" id="closeScannerBtn" style="position:absolute; top:8px; right:8px; z-index:10; padding:4px 10px;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+
             <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" /></div>
             <div class="form-row">
                 <div class="form-group"><label>Qty *</label><input type="number" id="itemQty" min="0" /></div>
