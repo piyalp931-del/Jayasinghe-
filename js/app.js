@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FIXED + SYNC BUTTON)
+// MAIN APP MODULE (FULLY INTEGRATED)
 // ============================================================
 
 // ============================================================
@@ -18,15 +18,13 @@ function showToast(msg, type = 'success') {
 window.showToast = showToast;
 
 // ============================================================
-// RENDER ALL
+// RENDER ALL (Active panel only - performance fix)
 // ============================================================
 function renderAll() {
     console.log('🔄 Rendering active panel...');
-    // Find the active panel and render it
     const activePanel = document.querySelector('.panel.active');
     if (activePanel) {
         const id = activePanel.id.replace('panel-', '');
-        // Only render if it's a valid panel
         switch (id) {
             case 'dashboard': renderDashboard(); break;
             case 'employees': renderEmployees(); break;
@@ -44,12 +42,12 @@ function renderAll() {
             default: break;
         }
     } else {
-        // If no active panel, default to dashboard
         renderDashboard();
     }
-    renderSidebar(); // always render sidebar
+    renderSidebar();
 }
 window.renderAll = renderAll;
+
 // ============================================================
 // POPULATE ITEM DROPDOWNS
 // ============================================================
@@ -82,16 +80,11 @@ function initEvents() {
     const menuToggle = document.getElementById('menuToggle');
     const sidebarClose = document.getElementById('sidebarClose');
     const sidebar = document.getElementById('sidebar');
-
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
     }
     if (sidebarClose) {
-        sidebarClose.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
+        sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
     }
 
     // ── Dark Mode ──
@@ -131,23 +124,15 @@ function initEvents() {
         });
     }
 
-    // ── 🔥 FIREBASE SYNC BUTTON ──
+    // ── Sync Button ──
     const syncBtn = document.getElementById('syncBtn');
     if (syncBtn) {
         syncBtn.addEventListener('click', async () => {
-            showToast('🔄 Syncing with Firebase...', 'warning');
-            try {
-                // First, save local data to Firebase
-                await saveAllData();
-                // Then, load fresh data from Firebase
-                await loadAllData();
-                // Re-render everything
-                renderAll();
-                showToast('✅ Sync complete! Data saved and loaded from Firebase.', 'success');
-            } catch (error) {
-                console.error('❌ Sync error:', error);
-                showToast('❌ Sync failed. Check console for errors.', 'error');
-            }
+            showToast('🔄 Syncing...', 'warning');
+            await saveAllData();
+            await loadAllData();
+            renderAll();
+            showToast('✅ Sync complete!');
         });
     }
 
@@ -156,7 +141,7 @@ function initEvents() {
     if (addEmpBtn) {
         addEmpBtn.addEventListener('click', () => {
             if (!window.canManage('employees')) {
-                showToast('⛔ You don\'t have permission to add employees.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             document.getElementById('empEditId').value = '';
@@ -171,6 +156,8 @@ function initEvents() {
             document.getElementById('empJoined').value = '';
             document.getElementById('empSalary').value = '';
             document.getElementById('empEpf').value = '';
+            document.getElementById('empUsername').value = '';
+            document.getElementById('empPassword').value = '';
             document.getElementById('empStatus').value = 'active';
             document.getElementById('employeeModal').classList.add('open');
         });
@@ -183,16 +170,24 @@ function initEvents() {
         });
     }
 
+    // ── Save Employee (with Auth) ──
     const empSaveBtn = document.getElementById('empSaveBtn');
     if (empSaveBtn) {
         empSaveBtn.addEventListener('click', async () => {
             if (!window.canManage('employees')) {
-                showToast('⛔ You don\'t have permission to manage employees.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             const id = document.getElementById('empEditId').value;
             const name = document.getElementById('empName').value.trim();
+            const username = document.getElementById('empUsername').value.trim();
+            const password = document.getElementById('empPassword').value.trim();
+
             if (!name) { showToast('Enter employee name.', 'error'); return; }
+            if (!id && !username) { showToast('Enter username (email) for new employee.', 'error'); return; }
+            if (!id && !password) { showToast('Enter password for new employee.', 'error'); return; }
+            if (!id && password.length < 6) { showToast('Password must be at least 6 characters.', 'error'); return; }
+
             const data = getAppData();
             const empData = {
                 name,
@@ -208,19 +203,40 @@ function initEvents() {
                 status: document.getElementById('empStatus').value,
                 updatedAt: nowISO()
             };
-            if (id) {
-                const idx = data.employees.findIndex(e => e.id === id);
-                if (idx > -1) { data.employees[idx] = { ...data.employees[idx], ...empData }; }
-            } else {
-                empData.id = generateId();
-                empData.createdAt = nowISO();
-                data.employees.push(empData);
+
+            try {
+                if (id) {
+                    // Update existing employee (keep uid/email)
+                    const idx = data.employees.findIndex(e => e.id === id);
+                    if (idx > -1) {
+                        const existing = data.employees[idx];
+                        data.employees[idx] = { ...existing, ...empData };
+                    }
+                } else {
+                    // NEW employee: create Firebase Auth user first
+                    const userCredential = await auth.createUserWithEmailAndPassword(username, password);
+                    const user = userCredential.user;
+                    empData.uid = user.uid;
+                    empData.email = username;
+                    empData.id = generateId();
+                    empData.createdAt = nowISO();
+                    data.employees.push(empData);
+                    // Initialize leave balance
+                    if (!data.leaveBalances) data.leaveBalances = {};
+                    data.leaveBalances[empData.id] = { sick: 10, casual: 5, annual: 12 };
+                    showToast(`✅ Employee added! They can login with ${username}`);
+                }
+
+                setAppData(data);
+                await saveAllData();
+                document.getElementById('employeeModal').classList.remove('open');
+                renderEmployees();
+                document.getElementById('empPassword').value = '';
+                if (!id) document.getElementById('empUsername').value = '';
+            } catch (error) {
+                console.error('Error saving employee:', error);
+                showToast('❌ ' + (error.message || 'Failed to save employee.'), 'error');
             }
-            setAppData(data);
-            await saveAllData();
-            document.getElementById('employeeModal').classList.remove('open');
-            renderEmployees();
-            showToast(id ? '✅ Employee updated!' : '✅ Employee added!');
         });
     }
 
@@ -229,7 +245,7 @@ function initEvents() {
     if (addItemBtn) {
         addItemBtn.addEventListener('click', () => {
             if (!window.canManage('inventory')) {
-                showToast('⛔ You don\'t have permission to add items.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             document.getElementById('itemEditId').value = '';
@@ -260,7 +276,7 @@ function initEvents() {
     if (itemSaveBtn) {
         itemSaveBtn.addEventListener('click', async () => {
             if (!window.canManage('inventory')) {
-                showToast('⛔ You don\'t have permission to manage inventory.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             const id = document.getElementById('itemEditId').value;
@@ -282,7 +298,7 @@ function initEvents() {
             };
             if (id) {
                 const idx = data.items.findIndex(i => i.id === id);
-                if (idx > -1) { data.items[idx] = { ...data.items[idx], ...itemData }; }
+                if (idx > -1) data.items[idx] = { ...data.items[idx], ...itemData };
             } else {
                 itemData.id = generateId();
                 itemData.createdAt = nowISO();
@@ -302,7 +318,7 @@ function initEvents() {
     if (addCustBtn) {
         addCustBtn.addEventListener('click', () => {
             if (!window.canManage('customers')) {
-                showToast('⛔ You don\'t have permission to add customers.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             document.getElementById('custEditId').value = '';
@@ -328,7 +344,7 @@ function initEvents() {
     if (custSaveBtn) {
         custSaveBtn.addEventListener('click', async () => {
             if (!window.canManage('customers')) {
-                showToast('⛔ You don\'t have permission to manage customers.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             const id = document.getElementById('custEditId').value;
@@ -346,7 +362,7 @@ function initEvents() {
             };
             if (id) {
                 const idx = data.customers.findIndex(c => c.id === id);
-                if (idx > -1) { data.customers[idx] = { ...data.customers[idx], ...custData }; }
+                if (idx > -1) data.customers[idx] = { ...data.customers[idx], ...custData };
             } else {
                 custData.id = generateId();
                 custData.createdAt = nowISO();
@@ -363,28 +379,25 @@ function initEvents() {
     // ── Quick Actions ──
     document.getElementById('quickAddItem')?.addEventListener('click', () => {
         if (!window.canManage('inventory')) {
-            showToast('⛔ You don\'t have permission to add items.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         document.getElementById('addItemBtn')?.click();
     });
-
     document.getElementById('quickNewDelivery')?.addEventListener('click', () => {
         if (!window.canManage('deliveries') && !window.canView('deliveries')) {
-            showToast('⛔ You don\'t have permission to manage deliveries.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         switchPanel('deliveries');
     });
-
     document.getElementById('quickAddEmployee')?.addEventListener('click', () => {
         if (!window.canManage('employees')) {
-            showToast('⛔ You don\'t have permission to add employees.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         document.getElementById('addEmployeeBtn')?.click();
     });
-
     document.getElementById('quickPrint')?.addEventListener('click', () => {
         window.print();
     });
@@ -393,9 +406,8 @@ function initEvents() {
     const deliverSubmit = document.getElementById('deliverSubmitBtn');
     if (deliverSubmit) {
         deliverSubmit.addEventListener('click', async () => {
-            // ✅ FIX: Correct permission check for deliveries and sales
             if (!window.canManage('deliveries') && !window.hasPermission('create_deliveries')) {
-                showToast('⛔ You don\'t have permission to create deliveries.', 'error');
+                showToast('⛔ No permission.', 'error');
                 return;
             }
             const customer = document.getElementById('delCustomer').value.trim();
@@ -504,7 +516,6 @@ function initEvents() {
         showToast('🔄 Refreshed.');
     });
 
-    // GPS Location
     if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(pos => {
             document.getElementById('attendanceLocation').value =
@@ -514,10 +525,10 @@ function initEvents() {
         });
     }
 
-    // ── Leave ──
+    // ── Leave (with Balance Management) ──
     document.getElementById('applyLeaveBtn')?.addEventListener('click', async () => {
         if (!window.canView('leave')) {
-            showToast('⛔ You don\'t have permission to apply for leave.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const user = window.getCurrentUser();
@@ -532,10 +543,27 @@ function initEvents() {
             const emp = data.employees.find(e => e.id === user.uid);
             empId = emp ? emp.id : user.uid;
         }
-
         if (!empId) { showToast('Select employee.', 'error'); return; }
         if (!from || !to) { showToast('Select dates.', 'error'); return; }
+
+        // --- Leave Balance Check ---
         const data = getAppData();
+        if (!data.leaveBalances) data.leaveBalances = {};
+        const empBalance = data.leaveBalances[empId] || { sick: 0, casual: 0, annual: 0 };
+        if (empBalance[type] <= 0) {
+            showToast(`⚠️ No ${type} leave balance left!`, 'error');
+            return;
+        }
+        const days = Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)) + 1;
+        if (empBalance[type] < days) {
+            showToast(`⚠️ Only ${empBalance[type]} ${type} days available.`, 'error');
+            return;
+        }
+        // Deduct balance
+        empBalance[type] -= days;
+        data.leaveBalances[empId] = empBalance;
+        // --- End Balance Check ---
+
         const emp = data.employees.find(e => e.id === empId);
         data.leaves.push({
             id: generateId(),
@@ -545,6 +573,7 @@ function initEvents() {
             from,
             to,
             reason,
+            days,
             status: 'pending',
             appliedAt: nowISO()
         });
@@ -557,7 +586,7 @@ function initEvents() {
 
     document.getElementById('approveLeaveBtn')?.addEventListener('click', async () => {
         if (!window.canManage('leave') && !window.canManage('employees')) {
-            showToast('⛔ You don\'t have permission to approve leave.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const data = getAppData();
@@ -572,7 +601,7 @@ function initEvents() {
 
     document.getElementById('rejectLeaveBtn')?.addEventListener('click', async () => {
         if (!window.canManage('leave') && !window.canManage('employees')) {
-            showToast('⛔ You don\'t have permission to reject leave.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const data = getAppData();
@@ -585,10 +614,10 @@ function initEvents() {
         showToast('❌ Leave rejected.');
     });
 
-    // ── Payroll ──
+    // ── Payroll (with EPF/ETF) ──
     document.getElementById('calculatePayrollBtn')?.addEventListener('click', async () => {
         if (!window.canManage('payroll')) {
-            showToast('⛔ You don\'t have permission to manage payroll.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const empId = document.getElementById('payrollEmployeeSelect').value;
@@ -604,6 +633,14 @@ function initEvents() {
         const emp = data.employees.find(e => e.id === empId);
         if (!emp) { showToast('Employee not found.', 'error'); return; }
 
+        // --- EPF & ETF Calculations ---
+        const epfRate = 0.08; // 8%
+        const etfRate = 0.03; // 3%
+        const epf = basic * epfRate;
+        const etf = basic * etfRate;
+        const net = basic + allowances + ot - deductions - epf - etf;
+        // ---
+
         const existing = data.payroll.find(p => p.employeeId === empId && p.month === month);
         const payData = {
             employeeId: empId,
@@ -613,6 +650,9 @@ function initEvents() {
             allowances,
             deductions,
             ot,
+            epf,
+            etf,
+            net,
             updatedAt: nowISO()
         };
         if (existing) {
@@ -630,30 +670,38 @@ function initEvents() {
 
     document.getElementById('generatePayslipBtn')?.addEventListener('click', () => {
         if (!window.canView('payroll')) {
-            showToast('⛔ You don\'t have permission to view payslips.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         showToast('📄 Payslip PDF generated (simulated).', 'success');
     });
 
-    // ── Finance ──
+    // ── Finance (with Category & Budget) ──
     document.getElementById('addFinanceBtn')?.addEventListener('click', async () => {
         if (!window.canManage('finance')) {
-            showToast('⛔ You don\'t have permission to manage finance.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const type = document.getElementById('financeType').value;
         const amount = parseFloat(document.getElementById('financeAmount').value);
+        const category = document.getElementById('financeCategory').value;
         const desc = document.getElementById('financeDesc').value.trim();
+        const budgetInput = document.getElementById('financeBudget').value.trim();
 
         if (!amount || amount <= 0) { showToast('Enter valid amount.', 'error'); return; }
         if (!desc) { showToast('Enter description.', 'error'); return; }
 
         const data = getAppData();
+        if (!data.budget) data.budget = { monthly: 0, category: {} };
+        if (budgetInput !== '') {
+            data.budget.category[category] = parseFloat(budgetInput) || 0;
+        }
+
         data.finance.push({
             id: generateId(),
             type,
             amount,
+            category,
             desc,
             date: nowISO()
         });
@@ -662,13 +710,14 @@ function initEvents() {
         renderFinance();
         document.getElementById('financeAmount').value = '';
         document.getElementById('financeDesc').value = '';
+        document.getElementById('financeBudget').value = '';
         showToast(`✅ ${type} recorded.`);
     });
 
     // ── Reports ──
     document.getElementById('generateReportBtn')?.addEventListener('click', () => {
         if (!window.canView('reports')) {
-            showToast('⛔ You don\'t have permission to view reports.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         renderReports();
@@ -676,7 +725,15 @@ function initEvents() {
 
     document.getElementById('reportType')?.addEventListener('change', () => {
         if (!window.canView('reports')) {
-            showToast('⛔ You don\'t have permission to view reports.', 'error');
+            showToast('⛔ No permission.', 'error');
+            return;
+        }
+        renderReports();
+    });
+
+    document.getElementById('applyReportFilters')?.addEventListener('click', () => {
+        if (!window.canView('reports')) {
+            showToast('⛔ No permission.', 'error');
             return;
         }
         renderReports();
@@ -684,7 +741,7 @@ function initEvents() {
 
     document.getElementById('exportReportBtn')?.addEventListener('click', () => {
         if (!window.canView('reports')) {
-            showToast('⛔ You don\'t have permission to export reports.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const type = document.getElementById('reportType').value;
@@ -714,7 +771,7 @@ function initEvents() {
 
     document.getElementById('printReportBtn')?.addEventListener('click', () => {
         if (!window.canView('reports')) {
-            showToast('⛔ You don\'t have permission to print reports.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         window.print();
@@ -723,7 +780,7 @@ function initEvents() {
     // ── Products (Categories & Brands) ──
     document.getElementById('addCategoryBtn')?.addEventListener('click', async () => {
         if (!window.canManage('inventory')) {
-            showToast('⛔ You don\'t have permission to manage categories.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const val = document.getElementById('newCategoryInput').value.trim();
@@ -740,7 +797,7 @@ function initEvents() {
 
     document.getElementById('addBrandBtn')?.addEventListener('click', async () => {
         if (!window.canManage('inventory')) {
-            showToast('⛔ You don\'t have permission to manage brands.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const val = document.getElementById('newBrandInput').value.trim();
@@ -758,7 +815,7 @@ function initEvents() {
     // ── Vehicles ──
     document.getElementById('addVehicleBtn')?.addEventListener('click', async () => {
         if (!window.canManage('vehicles')) {
-            showToast('⛔ You don\'t have permission to manage vehicles.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const editId = document.getElementById('addVehicleBtn').dataset.editId;
@@ -791,7 +848,7 @@ function initEvents() {
     // ── Settings ──
     document.getElementById('saveSettingsBtn')?.addEventListener('click', async () => {
         if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ You don\'t have permission to change settings.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const data = getAppData();
@@ -808,7 +865,7 @@ function initEvents() {
 
     document.getElementById('backupDataBtn')?.addEventListener('click', () => {
         if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ You don\'t have permission to backup data.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const data = getAppData();
@@ -824,7 +881,7 @@ function initEvents() {
 
     document.getElementById('restoreDataBtn')?.addEventListener('click', () => {
         if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ You don\'t have permission to restore data.', 'error');
+            showToast('⛔ No permission.', 'error');
             return;
         }
         const input = document.createElement('input');
@@ -870,7 +927,9 @@ function initEvents() {
             vehicles: [],
             notifications: [],
             salesData: [],
-            settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' }
+            settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' },
+            leaveBalances: {},
+            budget: { monthly: 0, category: {} }
         };
         setAppData(emptyData);
         await saveAllData();
@@ -888,9 +947,9 @@ function initEvents() {
         } else {
             list.innerHTML = notifs.slice().reverse().map(n =>
                 `<div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
-                            <div><strong>${escapeHtml(n.title || '')}</strong></div>
-                            <div class="text-muted">${escapeHtml(n.message || '')} · ${formatDateTime(n.date)}</div>
-                        </div>`
+                    <div><strong>${escapeHtml(n.title || '')}</strong></div>
+                    <div class="text-muted">${escapeHtml(n.message || '')} · ${formatDateTime(n.date)}</div>
+                </div>`
             ).join('');
         }
         document.getElementById('notifModal').classList.add('open');
@@ -929,32 +988,24 @@ async function init() {
     console.log('🚀 Initializing app...');
 
     try {
-        // Load data from Firestore
         await loadAllData();
         console.log('✅ Data loaded from Firestore');
 
         // Set default dates
         const payrollMonth = document.getElementById('payrollMonth');
         if (payrollMonth) payrollMonth.value = new Date().toISOString().slice(0, 7);
-        
         const leaveFrom = document.getElementById('leaveFrom');
         if (leaveFrom) leaveFrom.value = todayStr();
-        
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
         const leaveTo = document.getElementById('leaveTo');
         if (leaveTo) leaveTo.value = nextWeek.toISOString().slice(0, 10);
-        
         const delDateFilter = document.getElementById('delDateFilter');
         if (delDateFilter) delDateFilter.value = todayStr();
 
-        // Init events
         initEvents();
-
-        // Render all
         renderAll();
 
-        // Add welcome notification if empty
         const data = getAppData();
         if (!data.notifications || data.notifications.length === 0) {
             data.notifications = [{
@@ -976,5 +1027,4 @@ async function init() {
     }
 }
 
-// Start the app when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
