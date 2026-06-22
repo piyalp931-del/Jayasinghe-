@@ -1,5 +1,5 @@
 // ============================================================
-// UI RENDERING MODULE (FULL DEFENSIVE - NULL CHECKS)
+// UI RENDERING MODULE (FULLY INTEGRATED - ALL FEATURES)
 // ============================================================
 
 // Define all nav items with permissions
@@ -90,7 +90,7 @@ function switchPanel(id) {
         if (titleEl) titleEl.textContent = label;
     }
 
-    // ✅ Render only the requested panel
+    // Refresh only the requested panel
     switch (id) {
         case 'dashboard': renderDashboard(); break;
         case 'employees': if (window.canView('employees')) renderEmployees(); else showAccessDenied('employees'); break;
@@ -576,7 +576,7 @@ function renderAttendance() {
 }
 
 // ============================================================
-// LEAVE
+// LEAVE (with Balance Display)
 // ============================================================
 function renderLeave() {
     if (!window.canView('leave')) return;
@@ -585,6 +585,9 @@ function renderLeave() {
     const employees = data.employees || [];
     const leaves = data.leaves || [];
     const user = window.getCurrentUser();
+
+    // Render leave balance for the logged-in user or selected employee
+    renderLeaveBalance();
 
     const select = document.getElementById('leaveEmployeeSelect');
     const tbody = document.getElementById('leaveTableBody');
@@ -631,8 +634,26 @@ function renderLeave() {
     }).join('');
 }
 
+function renderLeaveBalance() {
+    const user = window.getCurrentUser();
+    if (!user) return;
+    const data = getAppData();
+    const balances = data.leaveBalances || {};
+    let empId = user.uid;
+    // If admin, maybe show selected employee's balance? For simplicity, show admin's own balance.
+    // But admin may not have an employee record. If admin, we can show a summary.
+    // For now, show logged-in user's balance if exists, else show 0.
+    const empBalance = balances[empId] || { sick: 0, casual: 0, annual: 0 };
+    const sickEl = document.getElementById('lbSick');
+    const casualEl = document.getElementById('lbCasual');
+    const annualEl = document.getElementById('lbAnnual');
+    if (sickEl) sickEl.textContent = empBalance.sick || 0;
+    if (casualEl) casualEl.textContent = empBalance.casual || 0;
+    if (annualEl) annualEl.textContent = empBalance.annual || 0;
+}
+
 // ============================================================
-// PAYROLL
+// PAYROLL (with EPF/ETF)
 // ============================================================
 function renderPayroll() {
     if (!window.canView('payroll')) return;
@@ -671,18 +692,22 @@ function renderPayroll() {
     }
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No payroll records.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:20px;">No payroll records.</td></tr>`;
         return;
     }
     filtered.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
     tbody.innerHTML = filtered.map(p => {
-        const net = (p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0);
+        const net = p.net || ((p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0));
+        const epf = p.epf || ((p.basic || 0) * 0.08);
+        const etf = p.etf || ((p.basic || 0) * 0.03);
         return `<tr>
             <td>${escapeHtml(p.employeeName || '—')}</td>
             <td>${p.month || '—'}</td>
             <td>LKR ${formatCurrency(p.basic || 0)}</td>
             <td>LKR ${formatCurrency(p.allowances || 0)}</td>
             <td>LKR ${formatCurrency(p.deductions || 0)}</td>
+            <td>LKR ${formatCurrency(epf)}</td>
+            <td>LKR ${formatCurrency(etf)}</td>
             <td><strong>LKR ${formatCurrency(net)}</strong></td>
         </tr>`;
     }).join('');
@@ -725,7 +750,7 @@ function renderCustomers() {
 }
 
 // ============================================================
-// FINANCE
+// FINANCE (with Category & Budget)
 // ============================================================
 function renderFinance() {
     if (!window.canView('finance')) return;
@@ -740,13 +765,14 @@ function renderFinance() {
     if (!tbody || !totalIncomeEl || !totalExpenseEl || !balanceEl) return;
 
     if (finance.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No transactions.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No transactions.</td></tr>`;
     } else {
         finance.sort((a, b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = finance.map(f =>
             `<tr>
                 <td>${formatDate(f.date)}</td>
                 <td><span class="badge ${f.type === 'income' ? 'badge-success' : 'badge-danger'}">${f.type}</span></td>
+                <td>${escapeHtml(f.category || '—')}</td>
                 <td>${escapeHtml(f.desc || '—')}</td>
                 <td>${f.type === 'income' ? '+' : '-'} LKR ${formatCurrency(f.amount || 0)}</td>
             </tr>`
@@ -758,10 +784,41 @@ function renderFinance() {
     totalIncomeEl.textContent = 'LKR ' + formatCurrency(totalIncome);
     totalExpenseEl.textContent = 'LKR ' + formatCurrency(totalExpense);
     balanceEl.textContent = 'LKR ' + formatCurrency(totalIncome - totalExpense);
+
+    // Render budget vs actual
+    renderBudget();
+}
+
+function renderBudget() {
+    const data = getAppData();
+    const finance = data.finance || [];
+    const budget = data.budget || { category: {} };
+    const container = document.getElementById('budgetDisplay');
+    if (!container) return;
+    if (!budget.category || Object.keys(budget.category).length === 0) {
+        container.innerHTML = '<div class="text-muted" style="font-size:13px;">No budget set. Add a budget amount when creating finance entries.</div>';
+        return;
+    }
+    let html = '<div style="font-size:13px;"><strong>📊 Budget vs Actual (Expenses)</strong><br/>';
+    let totalBudget = 0, totalActual = 0;
+    for (const [cat, budgetAmt] of Object.entries(budget.category)) {
+        const actual = finance.filter(f => f.category === cat && f.type === 'expense')
+            .reduce((s, f) => s + (f.amount || 0), 0);
+        const variance = budgetAmt - actual;
+        const color = variance >= 0 ? 'green' : 'red';
+        totalBudget += budgetAmt;
+        totalActual += actual;
+        html += `<span style="margin-right:12px;">${cat}: Budget LKR ${formatCurrency(budgetAmt)} | Actual LKR ${formatCurrency(actual)} | <span style="color:${color};">${variance >= 0 ? '✅' : '⚠️'} ${formatCurrency(Math.abs(variance))}</span></span><br/>`;
+    }
+    const totalVariance = totalBudget - totalActual;
+    const totalColor = totalVariance >= 0 ? 'green' : 'red';
+    html += `<hr/><strong>Total:</strong> Budget LKR ${formatCurrency(totalBudget)} | Actual LKR ${formatCurrency(totalActual)} | <span style="color:${totalColor};">${totalVariance >= 0 ? '✅' : '⚠️'} ${formatCurrency(Math.abs(totalVariance))}</span>`;
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // ============================================================
-// REPORTS
+// REPORTS (with Date Filters)
 // ============================================================
 function renderReports() {
     if (!window.canView('reports')) return;
@@ -770,33 +827,50 @@ function renderReports() {
     const container = document.getElementById('reportContent');
     if (!typeEl || !container) return;
 
+    // Get date filters
+    const from = document.getElementById('reportFrom')?.value || '';
+    const to = document.getElementById('reportTo')?.value || '';
+
     const type = typeEl.value;
     let html = '';
     switch (type) {
-        case 'stock': html = generateStockReport(); break;
-        case 'sales': html = generateSalesReport(); break;
-        case 'attendance': html = generateAttendanceReport(); break;
-        case 'payroll': html = generatePayrollReport(); break;
-        case 'customers': html = generateCustomerReport(); break;
+        case 'stock': html = generateStockReport(from, to); break;
+        case 'sales': html = generateSalesReport(from, to); break;
+        case 'attendance': html = generateAttendanceReport(from, to); break;
+        case 'payroll': html = generatePayrollReport(from, to); break;
+        case 'customers': html = generateCustomerReport(from, to); break;
         default: html = '<div class="text-muted text-center" style="padding:20px;">Select a report type.</div>';
     }
     container.innerHTML = html;
 }
 
-function generateStockReport() {
+function filterByDate(data, dateField, from, to) {
+    if (!from && !to) return data;
+    return data.filter(item => {
+        if (!item[dateField]) return true;
+        const d = item[dateField].slice(0, 10);
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        return true;
+    });
+}
+
+function generateStockReport(from, to) {
     const data = getAppData();
-    const items = data.items || [];
-    if (items.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No items.</div>';
+    let items = data.items || [];
+    items = filterByDate(items, 'updatedAt', from, to);
+    if (items.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No items in this date range.</div>';
     let rows = items.map(i =>
         `<tr><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.category||'—')}</td><td>${i.qty||0}</td><td>LKR ${formatCurrency(i.price||0)}</td><td>LKR ${formatCurrency((i.qty||0)*(i.price||0))}</td></tr>`
     ).join('');
     return `<table><thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Price</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function generateSalesReport() {
+function generateSalesReport(from, to) {
     const data = getAppData();
-    const sales = data.salesData || [];
-    if (sales.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No sales data.</div>';
+    let sales = data.salesData || [];
+    sales = filterByDate(sales, 'date', from, to);
+    if (sales.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No sales data in this date range.</div>';
     let rows = sales.map(s =>
         `<tr><td>${formatDate(s.date)}</td><td>${escapeHtml(s.customer||'—')}</td><td>${escapeHtml(s.item||'—')}</td><td>${s.qty||0}</td><td>LKR ${formatCurrency(s.total||0)}</td></tr>`
     ).join('');
@@ -804,31 +878,36 @@ function generateSalesReport() {
     return `<table><thead><tr><th>Date</th><th>Customer</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" class="text-right"><strong>Grand Total</strong></td><td><strong>LKR ${formatCurrency(total)}</strong></td></tr></tfoot></table>`;
 }
 
-function generateAttendanceReport() {
+function generateAttendanceReport(from, to) {
     const data = getAppData();
-    const att = data.attendance || [];
-    if (att.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No attendance records.</div>';
+    let att = data.attendance || [];
+    att = filterByDate(att, 'date', from, to);
+    if (att.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No attendance records in this date range.</div>';
     let rows = att.map(a =>
         `<tr><td>${formatDate(a.date)}</td><td>${escapeHtml(a.employeeName||'—')}</td><td>${a.checkIn ? formatDateTime(a.checkIn) : '—'}</td><td>${a.checkOut ? formatDateTime(a.checkOut) : '—'}</td></tr>`
     ).join('');
     return `<table><thead><tr><th>Date</th><th>Employee</th><th>Check In</th><th>Check Out</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function generatePayrollReport() {
+function generatePayrollReport(from, to) {
     const data = getAppData();
-    const pay = data.payroll || [];
-    if (pay.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No payroll records.</div>';
+    let pay = data.payroll || [];
+    pay = filterByDate(pay, 'updatedAt', from, to);
+    if (pay.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No payroll records in this date range.</div>';
     let rows = pay.map(p => {
-        const net = (p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0);
-        return `<tr><td>${escapeHtml(p.employeeName||'—')}</td><td>${p.month||'—'}</td><td>LKR ${formatCurrency(p.basic||0)}</td><td>LKR ${formatCurrency(p.allowances||0)}</td><td>LKR ${formatCurrency(p.deductions||0)}</td><td>LKR ${formatCurrency(net)}</td></tr>`;
+        const net = p.net || ((p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0));
+        const epf = p.epf || ((p.basic || 0) * 0.08);
+        const etf = p.etf || ((p.basic || 0) * 0.03);
+        return `<tr><td>${escapeHtml(p.employeeName||'—')}</td><td>${p.month||'—'}</td><td>LKR ${formatCurrency(p.basic||0)}</td><td>LKR ${formatCurrency(p.allowances||0)}</td><td>LKR ${formatCurrency(p.deductions||0)}</td><td>LKR ${formatCurrency(epf)}</td><td>LKR ${formatCurrency(etf)}</td><td>LKR ${formatCurrency(net)}</td></tr>`;
     }).join('');
-    return `<table><thead><tr><th>Employee</th><th>Month</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table><thead><tr><th>Employee</th><th>Month</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>EPF</th><th>ETF</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function generateCustomerReport() {
+function generateCustomerReport(from, to) {
     const data = getAppData();
-    const cust = data.customers || [];
-    if (cust.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No customers.</div>';
+    let cust = data.customers || [];
+    cust = filterByDate(cust, 'updatedAt', from, to);
+    if (cust.length === 0) return '<div class="text-muted text-center" style="padding:20px;">No customers in this date range.</div>';
     let rows = cust.map(c =>
         `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.contact||'—')}</td><td>${escapeHtml(c.category||'Retail')}</td><td>LKR ${formatCurrency(c.creditLimit||0)}</td><td>LKR ${formatCurrency(c.balance||0)}</td></tr>`
     ).join('');
@@ -916,7 +995,7 @@ function nowISO() {
 }
 
 // ============================================================
-// GLOBAL EXPOSURES (keep the same)
+// GLOBAL EXPOSURES
 // ============================================================
 window.switchPanel = switchPanel;
 window.showAccessDenied = showAccessDenied;
@@ -935,38 +1014,37 @@ window.renderVehicles = renderVehicles;
 window.renderSettings = renderSettings;
 window.renderSidebar = renderSidebar;
 
-// Edit/Delete functions (unchanged, but add null checks if needed)
+// Edit/Delete functions (with null checks for safety)
 window.editEmployee = function(id) {
     const data = getAppData();
     const emp = data.employees.find(e => e.id === id);
     if (!emp) return;
-    const el = document.getElementById('empEditId'); if (el) el.value = emp.id;
-    const name = document.getElementById('empName'); if (name) name.value = emp.name || '';
-    // ... add similar checks for all fields
-    // For brevity, keep original but ensure elements exist
-    // We'll just call original but with safe access
-    try {
-        document.getElementById('empEditId').value = emp.id;
-        document.getElementById('empName').value = emp.name || '';
-        document.getElementById('empNIC').value = emp.nic || '';
-        document.getElementById('empDept').value = emp.department || 'Admin';
-        document.getElementById('empDesignation').value = emp.designation || '';
-        document.getElementById('empContact').value = emp.contact || '';
-        document.getElementById('empEmergency').value = emp.emergency || '';
-        document.getElementById('empAddress').value = emp.address || '';
-        document.getElementById('empJoined').value = emp.joinedDate || '';
-        document.getElementById('empSalary').value = emp.salary || '';
-        document.getElementById('empEpf').value = emp.epf || '';
-        document.getElementById('empStatus').value = emp.status || 'active';
-        document.getElementById('employeeModalTitle').textContent = '✏️ Edit Employee';
-        document.getElementById('employeeModal').classList.add('open');
-    } catch(e) { console.warn('Edit employee error:', e); }
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('empEditId', emp.id);
+    setVal('empName', emp.name || '');
+    setVal('empNIC', emp.nic || '');
+    setVal('empDept', emp.department || 'Admin');
+    setVal('empDesignation', emp.designation || '');
+    setVal('empContact', emp.contact || '');
+    setVal('empEmergency', emp.emergency || '');
+    setVal('empAddress', emp.address || '');
+    setVal('empJoined', emp.joinedDate || '');
+    setVal('empSalary', emp.salary || '');
+    setVal('empEpf', emp.epf || '');
+    setVal('empUsername', emp.email || '');
+    setVal('empPassword', ''); // clear password field
+    setVal('empStatus', emp.status || 'active');
+    const title = document.getElementById('employeeModalTitle');
+    if (title) title.textContent = '✏️ Edit Employee';
+    const modal = document.getElementById('employeeModal');
+    if (modal) modal.classList.add('open');
 };
 
 window.deleteEmployee = async function(id) {
     if (!confirm('Delete this employee?')) return;
     const data = getAppData();
     data.employees = data.employees.filter(e => e.id !== id);
+    if (data.leaveBalances) delete data.leaveBalances[id];
     setAppData(data);
     await saveAllData();
     renderEmployees();
@@ -977,19 +1055,22 @@ window.editItem = function(id) {
     const data = getAppData();
     const item = data.items.find(i => i.id === id);
     if (!item) return;
-    document.getElementById('itemEditId').value = item.id;
-    document.getElementById('itemBarcode').value = item.barcode || '';
-    document.getElementById('itemName').value = item.name || '';
-    document.getElementById('itemQty').value = item.qty || 0;
-    document.getElementById('itemPrice').value = item.price || 0;
-    document.getElementById('itemCategory').value = item.category || '';
-    document.getElementById('itemBrand').value = item.brand || '';
-    document.getElementById('itemDesc').value = item.desc || '';
-    document.getElementById('itemExpiry').value = item.expiry || '';
-    document.getElementById('itemBatch').value = item.batch || '';
-    document.getElementById('itemStatus').value = item.status || 'active';
-    document.getElementById('itemModalTitle').textContent = '✏️ Edit Item';
-    document.getElementById('itemModal').classList.add('open');
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('itemEditId', item.id);
+    setVal('itemBarcode', item.barcode || '');
+    setVal('itemName', item.name || '');
+    setVal('itemQty', item.qty || 0);
+    setVal('itemPrice', item.price || 0);
+    setVal('itemCategory', item.category || '');
+    setVal('itemBrand', item.brand || '');
+    setVal('itemDesc', item.desc || '');
+    setVal('itemExpiry', item.expiry || '');
+    setVal('itemBatch', item.batch || '');
+    setVal('itemStatus', item.status || 'active');
+    const title = document.getElementById('itemModalTitle');
+    if (title) title.textContent = '✏️ Edit Item';
+    const modal = document.getElementById('itemModal');
+    if (modal) modal.classList.add('open');
     populateItemDropdowns();
 };
 
@@ -1007,15 +1088,18 @@ window.editCustomer = function(id) {
     const data = getAppData();
     const c = data.customers.find(c => c.id === id);
     if (!c) return;
-    document.getElementById('custEditId').value = c.id;
-    document.getElementById('custName').value = c.name || '';
-    document.getElementById('custContact').value = c.contact || '';
-    document.getElementById('custCategory').value = c.category || 'Retail';
-    document.getElementById('custAddress').value = c.address || '';
-    document.getElementById('custCreditLimit').value = c.creditLimit || 0;
-    document.getElementById('custBalance').value = c.balance || 0;
-    document.getElementById('customerModalTitle').textContent = '✏️ Edit Customer';
-    document.getElementById('customerModal').classList.add('open');
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('custEditId', c.id);
+    setVal('custName', c.name || '');
+    setVal('custContact', c.contact || '');
+    setVal('custCategory', c.category || 'Retail');
+    setVal('custAddress', c.address || '');
+    setVal('custCreditLimit', c.creditLimit || 0);
+    setVal('custBalance', c.balance || 0);
+    const title = document.getElementById('customerModalTitle');
+    if (title) title.textContent = '✏️ Edit Customer';
+    const modal = document.getElementById('customerModal');
+    if (modal) modal.classList.add('open');
 };
 
 window.deleteCustomer = async function(id) {
@@ -1032,11 +1116,15 @@ window.editVehicle = function(id) {
     const data = getAppData();
     const v = data.vehicles.find(v => v.id === id);
     if (!v) return;
-    document.getElementById('vehicleNo').value = v.vehicleNo || '';
-    document.getElementById('vehicleDriver').value = v.driver || '';
-    document.getElementById('vehicleFuel').value = v.fuel || '';
-    document.getElementById('addVehicleBtn').dataset.editId = v.id;
-    document.getElementById('addVehicleBtn').textContent = '💾 Update Vehicle';
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('vehicleNo', v.vehicleNo || '');
+    setVal('vehicleDriver', v.driver || '');
+    setVal('vehicleFuel', v.fuel || '');
+    const btn = document.getElementById('addVehicleBtn');
+    if (btn) {
+        btn.dataset.editId = v.id;
+        btn.textContent = '💾 Update Vehicle';
+    }
     showToast('✏️ Editing vehicle. Update and save.');
 };
 
