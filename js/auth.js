@@ -78,6 +78,32 @@ const userRole = document.getElementById('userRole');
 const roleOptions = document.querySelectorAll('.role-option');
 
 // ============================================================
+// HELPER FUNCTIONS (exposed globally)
+// ============================================================
+function hasPermission(permission) {
+    if (!currentUser) return false;
+    const perms = currentUser.permissions || [];
+    return perms.includes('all') || perms.includes(permission);
+}
+
+function canView(module) {
+    // Admin always has access
+    if (currentUser && currentUser.role === 'admin') return true;
+    return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
+}
+
+function canManage(module) {
+    if (currentUser && currentUser.role === 'admin') return true;
+    return hasPermission('manage_' + module) || hasPermission('all');
+}
+
+// Expose to global scope for use in other files
+window.hasPermission = hasPermission;
+window.canView = canView;
+window.canManage = canManage;
+window.getCurrentUser = () => currentUser;
+
+// ============================================================
 // LOGIN
 // ============================================================
 async function handleLogin() {
@@ -110,6 +136,9 @@ async function handleLogin() {
             role: selectedRole,
             permissions: ROLES[selectedRole].permissions || []
         };
+
+        // Debug: log currentUser to console
+        console.log('✅ Current User:', currentUser);
 
         // Update UI
         loginScreen.classList.add('hidden');
@@ -178,23 +207,6 @@ async function handleResetPassword() {
 }
 
 // ============================================================
-// CHECK PERMISSION HELPER
-// ============================================================
-function hasPermission(permission) {
-    if (!currentUser) return false;
-    const perms = currentUser.permissions || [];
-    return perms.includes('all') || perms.includes(permission);
-}
-
-function canView(module) {
-    return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
-}
-
-function canManage(module) {
-    return hasPermission('manage_' + module) || hasPermission('all');
-}
-
-// ============================================================
 // EVENT LISTENERS
 // ============================================================
 loginBtn.addEventListener('click', handleLogin);
@@ -229,7 +241,6 @@ resetPasswordBtn.addEventListener('click', handleResetPassword);
 auth.onAuthStateChanged((user) => {
     if (user) {
         // User is already logged in
-        // You can load user data from Firestore here
         console.log('User already logged in:', user.email);
         // Optionally auto-login with stored role
         // For now, show login screen to allow role selection
@@ -239,10 +250,3 @@ auth.onAuthStateChanged((user) => {
         loginScreen.classList.remove('hidden');
     }
 });
-
-// Export for use in other files
-window.hasPermission = hasPermission;
-window.canView = canView;
-window.canManage = canManage;
-window.currentUser = () => currentUser;
-window.ROLES = ROLES;
