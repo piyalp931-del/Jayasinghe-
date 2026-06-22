@@ -1,5 +1,5 @@
 // ============================================================
-// AUTHENTICATION MODULE
+// AUTHENTICATION MODULE (FIXED - Employee permissions added)
 // ============================================================
 
 // Global currentUser variable
@@ -49,13 +49,14 @@ const ROLES = {
         dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
         nav: ['dashboard', 'finance', 'payroll', 'reports']
     },
+    // ✅ FIXED: Employee permissions with view_attendance, view_leave, view_payroll
     employee: {
-    label: 'Employee',
-    icon: '👤',
-    permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll'],
-    dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
-    nav: ['dashboard', 'attendance', 'leave', 'payroll']
-}
+        label: 'Employee',
+        icon: '👤',
+        permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll'],
+        dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
+        nav: ['dashboard', 'attendance', 'leave', 'payroll']
+    }
 };
 
 // DOM references
@@ -79,13 +80,13 @@ const userRole = document.getElementById('userRole');
 const roleOptions = document.querySelectorAll('.role-option');
 
 // ============================================================
-// EXPOSE GLOBALLY (important for other files)
+// EXPOSE GLOBALLY
 // ============================================================
 window.getCurrentUser = function() { return currentUser; };
 window.ROLES = ROLES;
 
 // ============================================================
-// HELPER FUNCTIONS (exposed globally)
+// HELPER FUNCTIONS
 // ============================================================
 function hasPermission(permission) {
     if (!currentUser) return false;
@@ -94,7 +95,6 @@ function hasPermission(permission) {
 }
 
 function canView(module) {
-    // Admin always has access
     if (currentUser && currentUser.role === 'admin') return true;
     return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
 }
@@ -104,7 +104,6 @@ function canManage(module) {
     return hasPermission('manage_' + module) || hasPermission('all');
 }
 
-// Expose to global scope for use in other files
 window.hasPermission = hasPermission;
 window.canView = canView;
 window.canManage = canManage;
@@ -130,12 +129,10 @@ async function handleLogin() {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // Check if role exists
         if (!ROLES[selectedRole]) {
             throw new Error('Invalid role selected.');
         }
 
-        // ✅ Set currentUser
         currentUser = {
             uid: user.uid,
             email: user.email,
@@ -144,20 +141,15 @@ async function handleLogin() {
             permissions: ROLES[selectedRole].permissions || []
         };
 
-        // ✅ Debug: log currentUser to console
         console.log('✅ Current User after login:', currentUser);
-        console.log('✅ Permissions:', currentUser.permissions);
 
-        // Update UI
         loginScreen.classList.add('hidden');
         userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
         userName.textContent = currentUser.name;
         userRole.textContent = ROLES[selectedRole].label || selectedRole;
 
-        // Load data from Firestore
         await loadAllData();
 
-        // Render sidebar and dashboard based on role
         renderSidebar();
         switchPanel('dashboard');
 
@@ -245,16 +237,11 @@ forgotModalClose.addEventListener('click', () => {
 
 resetPasswordBtn.addEventListener('click', handleResetPassword);
 
-// Check auth state on load
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // User is already logged in
         console.log('User already logged in:', user.email);
-        // Optionally auto-login with stored role
-        // For now, show login screen to allow role selection
         loginScreen.classList.remove('hidden');
     } else {
-        // Show login screen
         loginScreen.classList.remove('hidden');
     }
 });
