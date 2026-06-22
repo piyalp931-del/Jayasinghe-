@@ -1193,6 +1193,83 @@ body.dark .badge-orange {
 }
 
 /* ============================================================
+   DELIVERIES PANEL (Enhanced)
+   ============================================================ */
+/* Customer Balance Display */
+#customerBalanceDisplay {
+    font-size: 11px;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    min-height: 20px;
+    transition: 0.2s;
+}
+#customerBalanceDisplay[style*="color: var(--danger)"] {
+    background: var(--danger-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+#customerBalanceDisplay[style*="color: var(--success)"] {
+    background: var(--success-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+/* Item Stock Display */
+#itemStockDisplay {
+    font-size: 11px;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    min-height: 20px;
+    transition: 0.2s;
+}
+#itemStockDisplay[style*="color: var(--danger)"] {
+    background: var(--danger-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+#itemStockDisplay[style*="color: var(--success)"] {
+    background: var(--success-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+/* Quick Add Customer Button */
+#quickAddCustomerBtn {
+    flex-shrink: 0;
+    padding: 9px 12px;
+    min-width: 38px;
+    justify-content: center;
+}
+#quickAddCustomerBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Delivery Status Colors in Table */
+.badge.badge-pending { background: var(--warning-light); color: #d97706; }
+.badge.badge-in-progress { background: var(--primary-light); color: #2563eb; }
+.badge.badge-delivered { background: var(--success-light); color: #16a34a; }
+.badge.badge-cancelled { background: var(--danger-light); color: #dc2626; }
+body.dark .badge.badge-pending { background: #78350f; color: #fcd34d; }
+body.dark .badge.badge-in-progress { background: #1e3a5f; color: #93c5fd; }
+body.dark .badge.badge-delivered { background: #14532d; color: #86efac; }
+body.dark .badge.badge-cancelled { background: #7f1d1d; color: #fca5a5; }
+
+/* Delivery Form - Dropdown with quick add */
+.delivery-customer-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.delivery-customer-group select {
+    flex: 1;
+}
+
+/* ============================================================
    BARCODE SCANNER
    ============================================================ */
 #scannerContainer {
@@ -1220,7 +1297,6 @@ body.dark .badge-orange {
     padding: 4px 12px;
     font-size: 12px;
 }
-/* Scanner toggle button inside item modal */
 #scanBarcodeBtn {
     white-space: nowrap;
 }
@@ -1289,6 +1365,11 @@ body.dark .badge-orange {
         padding: 2px 8px;
         font-size: 10px;
     }
+    #customerBalanceDisplay,
+    #itemStockDisplay {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
 }
 @media (max-width: 768px) {
     .sidebar-close {
@@ -1316,6 +1397,15 @@ body.dark .badge-orange {
         max-width: 100%;
         flex: 1;
     }
+    .delivery-customer-group {
+        flex-wrap: wrap;
+    }
+    .delivery-customer-group select {
+        min-width: 100%;
+    }
+    #quickAddCustomerBtn {
+        width: 100%;
+    }
 }
 
 /* ============================================================
@@ -1332,7 +1422,11 @@ body.dark .badge-orange {
     .report-filters,
     #notifModal,
     .modal-overlay,
-    .toast {
+    .toast,
+    #scannerContainer,
+    #quickAddCustomerBtn,
+    #customerBalanceDisplay,
+    #itemStockDisplay {
         display: none !important;
     }
     .main {
@@ -1391,7 +1485,15 @@ body.dark .badge-orange {
     .toast {
         display: none !important;
     }
-    #scannerContainer {
-        display: none !important;
+    .finance-summary {
+        border-top: 1px solid #ddd !important;
+    }
+    .leave-balance {
+        border: 1px solid #ddd !important;
+        background: #f9f9f9 !important;
+    }
+    #budgetDisplay {
+        border: 1px solid #ddd !important;
+        background: #f9f9f9 !important;
     }
 }
