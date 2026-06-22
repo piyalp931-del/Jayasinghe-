@@ -2,6 +2,7 @@
 // AUTHENTICATION MODULE
 // ============================================================
 
+// Global currentUser variable
 let currentUser = null;
 
 // Role-based permissions
@@ -78,6 +79,12 @@ const userRole = document.getElementById('userRole');
 const roleOptions = document.querySelectorAll('.role-option');
 
 // ============================================================
+// EXPOSE GLOBALLY (important for other files)
+// ============================================================
+window.getCurrentUser = function() { return currentUser; };
+window.ROLES = ROLES;
+
+// ============================================================
 // HELPER FUNCTIONS (exposed globally)
 // ============================================================
 function hasPermission(permission) {
@@ -101,7 +108,6 @@ function canManage(module) {
 window.hasPermission = hasPermission;
 window.canView = canView;
 window.canManage = canManage;
-window.getCurrentUser = () => currentUser;
 
 // ============================================================
 // LOGIN
@@ -129,6 +135,7 @@ async function handleLogin() {
             throw new Error('Invalid role selected.');
         }
 
+        // ✅ Set currentUser
         currentUser = {
             uid: user.uid,
             email: user.email,
@@ -137,8 +144,9 @@ async function handleLogin() {
             permissions: ROLES[selectedRole].permissions || []
         };
 
-        // Debug: log currentUser to console
-        console.log('✅ Current User:', currentUser);
+        // ✅ Debug: log currentUser to console
+        console.log('✅ Current User after login:', currentUser);
+        console.log('✅ Permissions:', currentUser.permissions);
 
         // Update UI
         loginScreen.classList.add('hidden');
