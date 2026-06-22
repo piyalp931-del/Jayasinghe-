@@ -1,9 +1,6 @@
 // ============================================================
-// UI RENDERING MODULE (FIXED - FULLY SCOPED)
+// UI RENDERING MODULE (FIXED - NO ROLES REDECLARATION)
 // ============================================================
-
-// Use ROLES from window (defined in auth.js) or fallback
-const ROLES = window.ROLES || {};
 
 // Define all nav items with permissions
 const ALL_NAV_ITEMS = [
@@ -31,15 +28,14 @@ function renderSidebar() {
     const container = document.getElementById('sidebarNav');
     const user = window.getCurrentUser();
     const role = user?.role || 'admin';
-    const roleConfig = ROLES[role] || ROLES.admin;
+    // Use window.ROLES directly (no local const)
+    const roleConfig = window.ROLES?.[role] || window.ROLES?.admin || { nav: ['dashboard'] };
 
     let html = '';
     const allowedNavIds = roleConfig?.nav || ['dashboard'];
 
     ALL_NAV_ITEMS.forEach(item => {
-        // Check if this nav item is allowed for this role
         if (!allowedNavIds.includes(item.id)) return;
-
         const label = currentLang === 'si' && item.labelSI ? item.labelSI : item.label;
         html += `<button class="nav-item" data-panel="${item.id}">
                     <span class="icon">${item.icon}</span>${label}
@@ -48,7 +44,6 @@ function renderSidebar() {
 
     container.innerHTML = html;
 
-    // Set active
     const activePanel = document.querySelector('.panel.active');
     if (activePanel) {
         const id = activePanel.id.replace('panel-', '');
@@ -57,7 +52,6 @@ function renderSidebar() {
         });
     }
 
-    // Click handlers
     container.querySelectorAll('.nav-item').forEach(b => {
         b.addEventListener('click', () => {
             switchPanel(b.dataset.panel);
@@ -66,101 +60,57 @@ function renderSidebar() {
 }
 
 // ============================================================
-// SWITCH PANEL (FIXED with global scope checks)
+// SWITCH PANEL
 // ============================================================
 function switchPanel(id) {
-    // ✅ Check if user is logged in using global getter
     const user = window.getCurrentUser();
     if (!user) {
         showToast('⛔ Please login first.', 'error');
         return;
     }
 
-    // Check permission for this panel using global canView
     const navItem = ALL_NAV_ITEMS.find(n => n.id === id);
     if (navItem && !window.canView(navItem.perm.replace('view_', ''))) {
         showAccessDenied(id);
         return;
     }
 
-    // Hide all panels
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     const panel = document.getElementById('panel-' + id);
     if (panel) panel.classList.add('active');
 
-    // Update nav
     document.querySelectorAll('.nav-item').forEach(b => {
         b.classList.toggle('active', b.dataset.panel === id);
     });
 
-    // Update title
     const navItemFound = ALL_NAV_ITEMS.find(n => n.id === id);
     if (navItemFound) {
         const label = currentLang === 'si' && navItemFound.labelSI ? navItemFound.labelSI : navItemFound.label;
         document.getElementById('pageTitle').textContent = label;
     }
 
-    // Refresh panel content (with permission checks)
+    // Refresh panel content
     switch (id) {
-        case 'dashboard':
-            renderDashboard();
-            break;
-        case 'employees':
-            if (window.canView('employees')) renderEmployees();
-            else showAccessDenied('employees');
-            break;
-        case 'inventory':
-            if (window.canView('inventory')) renderInventory();
-            else showAccessDenied('inventory');
-            break;
-        case 'products':
-            if (window.canView('inventory')) renderProducts();
-            else showAccessDenied('products');
-            break;
-        case 'deliveries':
-            if (window.canView('deliveries')) renderDeliveries();
-            else showAccessDenied('deliveries');
-            break;
-        case 'attendance':
-            if (window.canView('attendance')) renderAttendance();
-            else showAccessDenied('attendance');
-            break;
-        case 'leave':
-            if (window.canView('leave')) renderLeave();
-            else showAccessDenied('leave');
-            break;
-        case 'payroll':
-            if (window.canView('payroll')) renderPayroll();
-            else showAccessDenied('payroll');
-            break;
-        case 'customers':
-            if (window.canView('customers')) renderCustomers();
-            else showAccessDenied('customers');
-            break;
-        case 'finance':
-            if (window.canView('finance')) renderFinance();
-            else showAccessDenied('finance');
-            break;
-        case 'reports':
-            if (window.canView('reports')) renderReports();
-            else showAccessDenied('reports');
-            break;
-        case 'vehicles':
-            if (window.canView('vehicles')) renderVehicles();
-            else showAccessDenied('vehicles');
-            break;
-        case 'settings':
-            if (window.canView('settings')) renderSettings();
-            else showAccessDenied('settings');
-            break;
+        case 'dashboard': renderDashboard(); break;
+        case 'employees': if (window.canView('employees')) renderEmployees(); else showAccessDenied('employees'); break;
+        case 'inventory': if (window.canView('inventory')) renderInventory(); else showAccessDenied('inventory'); break;
+        case 'products': if (window.canView('inventory')) renderProducts(); else showAccessDenied('products'); break;
+        case 'deliveries': if (window.canView('deliveries')) renderDeliveries(); else showAccessDenied('deliveries'); break;
+        case 'attendance': if (window.canView('attendance')) renderAttendance(); else showAccessDenied('attendance'); break;
+        case 'leave': if (window.canView('leave')) renderLeave(); else showAccessDenied('leave'); break;
+        case 'payroll': if (window.canView('payroll')) renderPayroll(); else showAccessDenied('payroll'); break;
+        case 'customers': if (window.canView('customers')) renderCustomers(); else showAccessDenied('customers'); break;
+        case 'finance': if (window.canView('finance')) renderFinance(); else showAccessDenied('finance'); break;
+        case 'reports': if (window.canView('reports')) renderReports(); else showAccessDenied('reports'); break;
+        case 'vehicles': if (window.canView('vehicles')) renderVehicles(); else showAccessDenied('vehicles'); break;
+        case 'settings': if (window.canView('settings')) renderSettings(); else showAccessDenied('settings'); break;
     }
 
-    // Close sidebar on mobile
     document.getElementById('sidebar').classList.remove('open');
 }
 
 // ============================================================
-// ACCESS DENIED (with working Go to Dashboard button)
+// ACCESS DENIED
 // ============================================================
 function showAccessDenied(module) {
     const panel = document.getElementById('panel-' + module);
@@ -178,7 +128,7 @@ function showAccessDenied(module) {
 }
 
 // ============================================================
-// DASHBOARD (Role-based widgets)
+// DASHBOARD
 // ============================================================
 let salesChartInstance = null;
 
@@ -186,7 +136,7 @@ function renderDashboard() {
     const data = getAppData();
     const user = window.getCurrentUser();
     const role = user?.role || 'admin';
-    const roleConfig = ROLES[role] || ROLES.admin;
+    const roleConfig = window.ROLES?.[role] || window.ROLES?.admin || {};
     const dashboardWidgets = roleConfig?.dashboard || ['stats_all'];
 
     const items = data.items || [];
@@ -213,15 +163,11 @@ function renderDashboard() {
     const balance = totalIncome - totalExpense;
     const totalPayroll = payroll.reduce((s, p) => s + ((p.basic || 0) + (p.allowances || 0) + (p.ot || 0) - (p.deductions || 0)), 0);
 
-    // Build stats grid based on role
     let statsHTML = '';
-
-    // Helper to add stat box
     function addStat(cls, num, label) {
         statsHTML += `<div class="stat-box ${cls}"><div class="num">${num}</div><div class="label">${label}</div></div>`;
     }
 
-    // Define which stats to show based on role
     if (dashboardWidgets.includes('stats_all') || role === 'admin') {
         addStat('blue', totalItems, 'Total Items');
         addStat('green', totalQty, 'Total Stock');
@@ -232,7 +178,6 @@ function renderDashboard() {
         addStat('blue', 'LKR ' + formatCurrency(salesTotal), 'Today Sales');
         addStat('red', pendingDeliveries.length, 'Pending Deliveries');
     } else {
-        // Role-specific stats
         if (dashboardWidgets.includes('stats_employees')) {
             addStat('purple', employees.length, 'Employees');
             addStat('blue', employees.filter(e => e.status === 'active').length, 'Active Employees');
@@ -272,13 +217,11 @@ function renderDashboard() {
 
     document.getElementById('dashStats').innerHTML = statsHTML;
 
-    // ── Low Stock List ──
+    // Low Stock List
     const lowStockContainer = document.getElementById('dashLowStockList');
-    if (dashboardWidgets.includes('low_stock') || dashboardWidgets.includes('stats_all') || role === 'admin' || dashboardWidgets
-        .includes('stats_low_stock')) {
+    if (dashboardWidgets.includes('low_stock') || dashboardWidgets.includes('stats_all') || role === 'admin' || dashboardWidgets.includes('stats_low_stock')) {
         if (lowItems.length === 0) {
-            lowStockContainer.innerHTML =
-                `<div class="empty-state"><span class="icon">✅</span><p>All items well-stocked.</p></div>`;
+            lowStockContainer.innerHTML = `<div class="empty-state"><span class="icon">✅</span><p>All items well-stocked.</p></div>`;
         } else {
             lowStockContainer.innerHTML = lowItems.map(i =>
                 `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;">
@@ -291,19 +234,17 @@ function renderDashboard() {
         lowStockContainer.innerHTML = '';
     }
 
-    // ── Sales Chart ──
+    // Sales Chart
     const chartContainer = document.getElementById('salesChart').parentElement;
-    if (dashboardWidgets.includes('sales_chart') || dashboardWidgets.includes('stats_all') || role === 'admin' || dashboardWidgets
-        .includes('finance_chart') || dashboardWidgets.includes('inventory_chart')) {
+    if (dashboardWidgets.includes('sales_chart') || dashboardWidgets.includes('stats_all') || role === 'admin' || dashboardWidgets.includes('finance_chart') || dashboardWidgets.includes('inventory_chart')) {
         chartContainer.style.display = 'block';
         renderSalesChart(salesData);
     } else {
         chartContainer.style.display = 'none';
-        if (salesChartInstance) { salesChartInstance.destroy();
-            salesChartInstance = null; }
+        if (salesChartInstance) { salesChartInstance.destroy(); salesChartInstance = null; }
     }
 
-    // ── Quick Actions ──
+    // Quick Actions
     const quickActionsContainer = document.querySelector('.quick-actions');
     if (quickActionsContainer) {
         let actionsHTML = '';
@@ -368,7 +309,6 @@ function renderDashboard() {
             switchPanel('finance');
         });
         document.getElementById('checkInBtn')?.addEventListener('click', () => {
-            // Dispatch click to the actual check-in button in attendance panel
             document.getElementById('checkInBtn')?.click();
         });
     }
@@ -419,7 +359,7 @@ function renderSalesChart(salesData) {
 }
 
 // ============================================================
-// EMPLOYEES (with global role check)
+// EMPLOYEES
 // ============================================================
 function renderEmployees() {
     if (!window.canView('employees')) {
@@ -433,7 +373,6 @@ function renderEmployees() {
     const deptFilter = document.getElementById('empDeptFilter').value;
     const statusFilter = document.getElementById('empStatusFilter').value;
 
-    // Populate dept filter
     const depts = [...new Set(employees.map(e => e.department || 'Other'))];
     const deptSelect = document.getElementById('empDeptFilter');
     const currentDept = deptSelect.value;
@@ -452,8 +391,7 @@ function renderEmployees() {
 
     const tbody = document.getElementById('employeeTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No employees found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No employees found.</td></tr>`;
         return;
     }
 
@@ -475,7 +413,7 @@ function renderEmployees() {
 }
 
 // ============================================================
-// INVENTORY (with global role check)
+// INVENTORY
 // ============================================================
 function renderInventory() {
     if (!window.canView('inventory')) {
@@ -513,8 +451,7 @@ function renderInventory() {
 
     const tbody = document.getElementById('inventoryTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No items found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No items found.</td></tr>`;
         return;
     }
 
@@ -537,7 +474,7 @@ function renderInventory() {
 }
 
 // ============================================================
-// PRODUCTS (with global role check)
+// PRODUCTS
 // ============================================================
 function renderProducts() {
     if (!window.canView('inventory')) {
@@ -563,7 +500,7 @@ function renderProducts() {
 }
 
 // ============================================================
-// DELIVERIES (with global role check)
+// DELIVERIES
 // ============================================================
 function renderDeliveries() {
     if (!window.canView('deliveries')) {
@@ -575,14 +512,12 @@ function renderDeliveries() {
     const items = data.items || [];
     const deliveries = data.deliveries || [];
 
-    // Populate item select
     const select = document.getElementById('delItemSelect');
     const currentVal = select.value;
     select.innerHTML = '<option value="">-- Select --</option>' + items.filter(i => i.status !== 'inactive')
         .map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0})</option>`).join('');
     if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
 
-    // Delivery table
     const dateFilter = document.getElementById('delDateFilter').value;
     let filtered = [...deliveries];
     if (dateFilter) {
@@ -592,8 +527,7 @@ function renderDeliveries() {
 
     const tbody = document.getElementById('deliveryTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No deliveries.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No deliveries.</td></tr>`;
         return;
     }
 
@@ -610,7 +544,7 @@ function renderDeliveries() {
 }
 
 // ============================================================
-// ATTENDANCE (with global role check)
+// ATTENDANCE
 // ============================================================
 function renderAttendance() {
     if (!window.canView('attendance')) {
@@ -623,7 +557,6 @@ function renderAttendance() {
     const user = window.getCurrentUser();
     const userId = user?.uid || '';
 
-    // For employees, show only their own attendance
     let filtered = attendance;
     if (user?.role === 'employee') {
         filtered = attendance.filter(a => a.employeeId === userId);
@@ -631,14 +564,12 @@ function renderAttendance() {
 
     const tbody = document.getElementById('attendanceTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No attendance records.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No attendance records.</td></tr>`;
         return;
     }
     filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
     tbody.innerHTML = filtered.map(a => {
-        const hours = a.checkIn && a.checkOut ? ((new Date(a.checkOut) - new Date(a.checkIn)) / (1000 * 60 *
-            60)).toFixed(1) : '—';
+        const hours = a.checkIn && a.checkOut ? ((new Date(a.checkOut) - new Date(a.checkIn)) / (1000 * 60 * 60)).toFixed(1) : '—';
         return `<tr>
                     <td>${formatDate(a.date)}</td>
                     <td>${a.checkIn ? formatDateTime(a.checkIn) : '—'}</td>
@@ -650,7 +581,7 @@ function renderAttendance() {
 }
 
 // ============================================================
-// LEAVE (with global role check)
+// LEAVE
 // ============================================================
 function renderLeave() {
     if (!window.canView('leave')) {
@@ -663,7 +594,6 @@ function renderLeave() {
     const leaves = data.leaves || [];
     const user = window.getCurrentUser();
 
-    // Populate employee select (only for managers/admin)
     const select = document.getElementById('leaveEmployeeSelect');
     const canManageLeave = window.canManage('leave') || window.canManage('employees');
     if (canManageLeave) {
@@ -673,7 +603,6 @@ function renderLeave() {
         if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
         select.disabled = false;
     } else {
-        // Employees can only apply for their own leave
         const emp = employees.find(e => e.id === user?.uid);
         if (emp) {
             select.innerHTML = `<option value="${emp.id}">${escapeHtml(emp.name)}</option>`;
@@ -685,23 +614,19 @@ function renderLeave() {
         select.disabled = true;
     }
 
-    // Show leave list
     const tbody = document.getElementById('leaveTableBody');
     let filtered = leaves;
     if (!canManageLeave) {
-        // Employees see only their own leaves
         filtered = leaves.filter(l => l.employeeId === user?.uid);
     }
 
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No leave requests.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No leave requests.</td></tr>`;
         return;
     }
     filtered.sort((a, b) => new Date(b.from) - new Date(a.from));
     tbody.innerHTML = filtered.map(l => {
-        const statusColor = l.status === 'approved' ? 'badge-success' : l.status === 'rejected' ?
-            'badge-danger' : 'badge-warning';
+        const statusColor = l.status === 'approved' ? 'badge-success' : l.status === 'rejected' ? 'badge-danger' : 'badge-warning';
         return `<tr>
                     <td>${escapeHtml(l.employeeName || '—')}</td>
                     <td>${l.type || '—'}</td>
@@ -713,7 +638,7 @@ function renderLeave() {
 }
 
 // ============================================================
-// PAYROLL (with global role check)
+// PAYROLL
 // ============================================================
 function renderPayroll() {
     if (!window.canView('payroll')) {
@@ -736,7 +661,6 @@ function renderPayroll() {
         if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
         select.disabled = false;
     } else {
-        // Employees see only their own payroll
         const emp = employees.find(e => e.id === user?.uid);
         if (emp) {
             select.innerHTML = `<option value="${emp.id}">${escapeHtml(emp.name)}</option>`;
@@ -755,8 +679,7 @@ function renderPayroll() {
     }
 
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No payroll records.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No payroll records.</td></tr>`;
         return;
     }
     filtered.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
@@ -774,7 +697,7 @@ function renderPayroll() {
 }
 
 // ============================================================
-// CUSTOMERS (with global role check)
+// CUSTOMERS
 // ============================================================
 function renderCustomers() {
     if (!window.canView('customers')) {
@@ -791,8 +714,7 @@ function renderCustomers() {
 
     const tbody = document.getElementById('customerTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No customers.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No customers.</td></tr>`;
         return;
     }
     const canEdit = window.canManage('customers');
@@ -811,7 +733,7 @@ function renderCustomers() {
 }
 
 // ============================================================
-// FINANCE (with global role check)
+// FINANCE
 // ============================================================
 function renderFinance() {
     if (!window.canView('finance')) {
@@ -824,8 +746,7 @@ function renderFinance() {
 
     const tbody = document.getElementById('financeTableBody');
     if (finance.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No transactions.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No transactions.</td></tr>`;
     } else {
         finance.sort((a, b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = finance.map(f =>
@@ -846,7 +767,7 @@ function renderFinance() {
 }
 
 // ============================================================
-// REPORTS (with global role check)
+// REPORTS
 // ============================================================
 function renderReports() {
     if (!window.canView('reports')) {
@@ -859,23 +780,12 @@ function renderReports() {
 
     let html = '';
     switch (type) {
-        case 'stock':
-            html = generateStockReport();
-            break;
-        case 'sales':
-            html = generateSalesReport();
-            break;
-        case 'attendance':
-            html = generateAttendanceReport();
-            break;
-        case 'payroll':
-            html = generatePayrollReport();
-            break;
-        case 'customers':
-            html = generateCustomerReport();
-            break;
-        default:
-            html = '<div class="text-muted text-center" style="padding:20px;">Select a report type.</div>';
+        case 'stock': html = generateStockReport(); break;
+        case 'sales': html = generateSalesReport(); break;
+        case 'attendance': html = generateAttendanceReport(); break;
+        case 'payroll': html = generatePayrollReport(); break;
+        case 'customers': html = generateCustomerReport(); break;
+        default: html = '<div class="text-muted text-center" style="padding:20px;">Select a report type.</div>';
     }
     container.innerHTML = html;
 }
@@ -933,7 +843,7 @@ function generateCustomerReport() {
 }
 
 // ============================================================
-// VEHICLES (with global role check)
+// VEHICLES
 // ============================================================
 function renderVehicles() {
     if (!window.canView('vehicles')) {
@@ -946,8 +856,7 @@ function renderVehicles() {
 
     const tbody = document.getElementById('vehicleTableBody');
     if (vehicles.length === 0) {
-        tbody.innerHTML =
-            `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No vehicles.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No vehicles.</td></tr>`;
         return;
     }
     const canEdit = window.canManage('vehicles');
@@ -966,7 +875,7 @@ function renderVehicles() {
 }
 
 // ============================================================
-// SETTINGS (with global role check)
+// SETTINGS
 // ============================================================
 function renderSettings() {
     if (!window.canView('settings')) {
@@ -1003,8 +912,7 @@ function formatDate(d) {
 
 function formatDateTime(d) {
     if (!d) return '—';
-    return new Date(d).toLocaleString('en-LK', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit',
-        minute: '2-digit' });
+    return new Date(d).toLocaleString('en-LK', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function todayStr() {
@@ -1016,7 +924,7 @@ function nowISO() {
 }
 
 // ============================================================
-// EXPOSE FUNCTIONS FOR GLOBAL ACCESS (especially for "Go to Dashboard")
+// GLOBAL EXPOSURES
 // ============================================================
 window.switchPanel = switchPanel;
 window.showAccessDenied = showAccessDenied;
@@ -1035,9 +943,6 @@ window.renderVehicles = renderVehicles;
 window.renderSettings = renderSettings;
 window.renderSidebar = renderSidebar;
 
-// ============================================================
-// GLOBAL EDIT/DELETE FUNCTIONS (used in onclick attributes)
-// ============================================================
 window.editEmployee = function(id) {
     const data = getAppData();
     const emp = data.employees.find(e => e.id === id);
