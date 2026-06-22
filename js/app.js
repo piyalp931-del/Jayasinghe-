@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FULLY INTEGRATED)
+// MAIN APP MODULE (FULLY INTEGRATED - WITH BARCODE SCANNER)
 // ============================================================
 
 // ============================================================
@@ -136,6 +136,14 @@ function initEvents() {
         });
     }
 
+    // ── Clear Login Fields ──
+    document.getElementById('clearLoginBtn')?.addEventListener('click', () => {
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').style.display = 'none';
+        showToast('🧹 Fields cleared', 'info');
+    });
+
     // ── Employee Modal ──
     const addEmpBtn = document.getElementById('addEmployeeBtn');
     if (addEmpBtn) {
@@ -261,6 +269,8 @@ function initEvents() {
             document.getElementById('itemBatch').value = '';
             document.getElementById('itemStatus').value = 'active';
             populateItemDropdowns();
+            // Close scanner if open
+            closeScanner();
             document.getElementById('itemModal').classList.add('open');
         });
     }
@@ -268,6 +278,7 @@ function initEvents() {
     const itemModalClose = document.getElementById('itemModalClose');
     if (itemModalClose) {
         itemModalClose.addEventListener('click', () => {
+            closeScanner();
             document.getElementById('itemModal').classList.remove('open');
         });
     }
@@ -306,12 +317,84 @@ function initEvents() {
             }
             setAppData(data);
             await saveAllData();
+            closeScanner();
             document.getElementById('itemModal').classList.remove('open');
             renderInventory();
             renderDashboard();
             showToast(id ? '✅ Item updated!' : '✅ Item added!');
         });
     }
+
+    // ── Barcode Scanner ──
+    let html5QrCode = null;
+
+    function closeScanner() {
+        const container = document.getElementById('scannerContainer');
+        if (html5QrCode) {
+            try {
+                html5QrCode.stop();
+                html5QrCode.clear();
+            } catch(e) {}
+            html5QrCode = null;
+        }
+        if (container) container.style.display = 'none';
+    }
+
+    document.getElementById('scanBarcodeBtn')?.addEventListener('click', async () => {
+        const container = document.getElementById('scannerContainer');
+        const readerElement = document.getElementById('scannerReader');
+        const barcodeInput = document.getElementById('itemBarcode');
+        
+        if (!container || !readerElement) return;
+
+        // Toggle scanner visibility
+        if (container.style.display === 'block') {
+            closeScanner();
+            return;
+        }
+
+        // Check if camera is available
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            stream.getTracks().forEach(track => track.stop());
+        } catch (err) {
+            showToast('⚠️ Camera access denied. Please allow camera permission.', 'error');
+            return;
+        }
+
+        container.style.display = 'block';
+        readerElement.innerHTML = '';
+
+        try {
+            html5QrCode = new Html5Qrcode("scannerReader");
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 150 },
+                aspectRatio: 1.0
+            };
+
+            await html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    barcodeInput.value = decodedText;
+                    showToast('✅ Barcode scanned: ' + decodedText, 'success');
+                    closeScanner();
+                },
+                (error) => {
+                    // Ignore intermediate errors
+                }
+            );
+        } catch (err) {
+            console.error('Scanner error:', err);
+            showToast('❌ Failed to start camera. Please try again.', 'error');
+            closeScanner();
+        }
+    });
+
+    // Close scanner button
+    document.getElementById('closeScannerBtn')?.addEventListener('click', closeScanner);
 
     // ── Customer Modal ──
     const addCustBtn = document.getElementById('addCustomerBtn');
@@ -982,6 +1065,34 @@ function initEvents() {
 }
 
 // ============================================================
+// CREATE DEFAULT ADMIN ACCOUNT
+// ============================================================
+async function createDefaultAdmin() {
+    const email = 'admin@example.com';
+    const password = 'admin123';
+    
+    try {
+        // Check if admin already exists
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('✅ Admin account already exists:', userCredential.user.email);
+        return;
+    } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+            // Admin doesn't exist, create one
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                console.log('✅ Default admin account created:', userCredential.user.email);
+                showToast('👑 Default admin account created: admin@example.com', 'success');
+            } catch (createError) {
+                console.warn('⚠️ Could not create admin account:', createError.message);
+            }
+        } else {
+            console.log('ℹ️ Admin login check:', error.message);
+        }
+    }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 async function init() {
@@ -990,6 +1101,9 @@ async function init() {
     try {
         await loadAllData();
         console.log('✅ Data loaded from Firestore');
+
+        // Create default admin account
+        await createDefaultAdmin();
 
         // Set default dates
         const payrollMonth = document.getElementById('payrollMonth');
