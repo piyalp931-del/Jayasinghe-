@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <title>Jayasinghe Distributors · ERP System</title>
 
+    <!-- PWA / Mobile Install -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%233b82f6'/%3E%3Ctext x='96' y='120' text-anchor='middle' font-size='100' fill='white' font-family='sans-serif'%3E📦%3C/text%3E%3C/svg%3E" />
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
     <!-- Font Awesome 6 -->
@@ -50,10 +57,15 @@
                 <i class="fas fa-sign-in-alt"></i> Login
             </button>
 
-            <div class="login-error" id="loginError">Invalid credentials</div>
-            <div class="login-footer">
-                <span class="forgot-link" id="forgotPasswordLink">🔐 Forgot Password?</span>
+            <!-- Clear Button (replaces Forgot Password) -->
+            <div class="flex gap-2" style="margin-top: 8px; justify-content: center;">
+                <button class="btn btn-outline" id="clearLoginBtn" style="flex: 1; justify-content: center;">
+                    <i class="fas fa-eraser"></i> Clear
+                </button>
             </div>
+
+            <div class="login-error" id="loginError">Invalid credentials</div>
+            <!-- Forgot Password link removed -->
         </div>
     </div>
 
@@ -397,63 +409,58 @@
         </section>
 
         <!-- ==========================================================
-PANEL: REPORTS (with Date Filters - FIXED UI)
-========================================================== -->
-<section class="panel" id="panel-reports">
-    <div class="card">
-        <div class="card-title">📈 Reports & Analytics</div>
-
-        <!-- Report Type Dropdown -->
-        <div class="form-group" style="margin-bottom:12px;">
-            <select id="reportType" style="max-width:250px;">
-                <option value="stock">📦 Stock Report</option>
-                <option value="sales">💰 Sales Report</option>
-                <option value="attendance">⏱️ Attendance Report</option>
-                <option value="payroll">🧾 Payroll Report</option>
-                <option value="customers">👥 Customer Report</option>
-            </select>
-        </div>
-
-        <!-- Date Filters + Buttons in 2 rows -->
-        <div class="report-filters">
-            <!-- Row 1: Date inputs + Apply button -->
-            <div class="search-bar" style="flex:1; flex-wrap:nowrap;">
-                <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
-                    From:
-                    <input type="date" id="reportFrom" style="max-width:150px;" />
-                </label>
-                <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
-                    To:
-                    <input type="date" id="reportTo" style="max-width:150px;" />
-                </label>
-                <button class="btn btn-sm btn-primary" id="applyReportFilters">
-                    <i class="fas fa-filter"></i> Apply
-                </button>
+        PANEL: REPORTS (with Date Filters)
+        ========================================================== -->
+        <section class="panel" id="panel-reports">
+            <div class="card">
+                <div class="card-title">📈 Reports & Analytics</div>
+                <!-- Report Type Dropdown -->
+                <div class="form-group" style="margin-bottom:12px;">
+                    <select id="reportType" style="max-width:250px;">
+                        <option value="stock">📦 Stock Report</option>
+                        <option value="sales">💰 Sales Report</option>
+                        <option value="attendance">⏱️ Attendance Report</option>
+                        <option value="payroll">🧾 Payroll Report</option>
+                        <option value="customers">👥 Customer Report</option>
+                    </select>
+                </div>
+                <!-- Date Filters + Apply button -->
+                <div class="report-filters">
+                    <div class="search-bar" style="flex:1; flex-wrap:nowrap;">
+                        <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+                            From:
+                            <input type="date" id="reportFrom" style="max-width:150px;" />
+                        </label>
+                        <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+                            To:
+                            <input type="date" id="reportTo" style="max-width:150px;" />
+                        </label>
+                        <button class="btn btn-sm btn-primary" id="applyReportFilters">
+                            <i class="fas fa-filter"></i> Apply
+                        </button>
+                    </div>
+                </div>
+                <!-- Action buttons -->
+                <div class="toolbar" style="margin-top:8px;">
+                    <button class="btn btn-primary" id="generateReportBtn">
+                        <i class="fas fa-chart-bar"></i> Generate
+                    </button>
+                    <button class="btn btn-outline" id="exportReportBtn">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <button class="btn btn-outline" id="printReportBtn">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+                <!-- Report Content -->
+                <div id="reportContent" class="table-wrap" style="margin-top:12px;">
+                    <div class="text-muted text-center" style="padding:30px;">
+                        <span style="font-size:40px; display:block; margin-bottom:8px;">📊</span>
+                        Select a report type and click <strong>Generate</strong>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- Row 2: Action buttons -->
-        <div class="toolbar" style="margin-top:8px;">
-            <button class="btn btn-primary" id="generateReportBtn">
-                <i class="fas fa-chart-bar"></i> Generate
-            </button>
-            <button class="btn btn-outline" id="exportReportBtn">
-                <i class="fas fa-file-csv"></i> CSV
-            </button>
-            <button class="btn btn-outline" id="printReportBtn">
-                <i class="fas fa-print"></i> Print
-            </button>
-        </div>
-
-        <!-- Report Content -->
-        <div id="reportContent" class="table-wrap" style="margin-top:12px;">
-            <div class="text-muted text-center" style="padding:30px;">
-                <span style="font-size:40px; display:block; margin-bottom:8px;">📊</span>
-                Select a report type and click <strong>Generate</strong>
-            </div>
-        </div>
-    </div>
-</section>
+        </section>
 
         <!-- ==========================================================
         PANEL: VEHICLES
@@ -522,7 +529,7 @@ PANEL: REPORTS (with Date Filters - FIXED UI)
                 <div class="form-group"><label>Joined Date</label><input type="date" id="empJoined" /></div>
                 <div class="form-group"><label>Salary</label><input type="number" id="empSalary" placeholder="0" /></div>
             </div>
-            <!-- NEW: Username & Password fields -->
+            <!-- Username & Password fields -->
             <div class="form-row">
                 <div class="form-group"><label>📧 Username (Email) *</label><input type="email" id="empUsername" placeholder="employee@example.com" /></div>
                 <div class="form-group"><label>🔑 Password *</label><input type="password" id="empPassword" placeholder="Min 6 characters" /></div>
@@ -579,7 +586,7 @@ PANEL: REPORTS (with Date Filters - FIXED UI)
         </div>
     </div>
 
-    <!-- Forgot Password Modal -->
+    <!-- Forgot Password Modal (kept for reference but no link points to it) -->
     <div class="modal-overlay" id="forgotModal">
         <div class="modal-content">
             <div class="modal-header"><h3>🔐 Reset Password</h3><button class="modal-close" id="forgotModalClose">✕</button></div>
@@ -609,6 +616,15 @@ PANEL: REPORTS (with Date Filters - FIXED UI)
     <script src="js/db.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
+
+    <!-- Service Worker Registration for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/Jaya/sw.js')
+                .then(() => console.log('✅ Service Worker registered'))
+                .catch(err => console.warn('⚠️ SW registration failed:', err));
+        }
+    </script>
 
 </body>
 </html>
