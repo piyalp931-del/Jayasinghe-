@@ -1136,6 +1136,26 @@ body.dark .badge-orange {
 /* ============================================================
    REPORTS (Enhanced)
    ============================================================ */
+.report-filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.report-filters .search-bar {
+    flex: 1;
+    flex-wrap: nowrap;
+}
+@media (max-width: 600px) {
+    .report-filters .search-bar {
+        flex-wrap: wrap;
+    }
+    .report-filters .search-bar input[type="date"] {
+        max-width: 100% !important;
+        flex: 1;
+    }
+}
 #reportContent {
     margin-top: 12px;
 }
@@ -1171,15 +1191,38 @@ body.dark .badge-orange {
 #reportContent .text-right {
     text-align: right;
 }
-.report-filters {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-bottom: 12px;
+
+/* ============================================================
+   BARCODE SCANNER
+   ============================================================ */
+#scannerContainer {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 8px;
+    position: relative;
+    border: 2px solid var(--primary);
+    overflow: hidden;
 }
-.report-filters .btn-sm {
-    padding: 6px 16px;
+#scannerReader {
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    background: #000;
+    min-height: 150px;
+}
+#scannerContainer .btn-danger {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    padding: 4px 12px;
+    font-size: 12px;
+}
+/* Scanner toggle button inside item modal */
+#scanBarcodeBtn {
+    white-space: nowrap;
 }
 
 /* ============================================================
@@ -1236,6 +1279,16 @@ body.dark .badge-orange {
         font-size: 12px;
         padding: 8px 10px;
     }
+    #scannerReader {
+        max-width: 100%;
+        min-height: 120px;
+    }
+    #scannerContainer .btn-danger {
+        top: 8px;
+        right: 8px;
+        padding: 2px 8px;
+        font-size: 10px;
+    }
 }
 @media (max-width: 768px) {
     .sidebar-close {
@@ -1261,6 +1314,7 @@ body.dark .badge-orange {
     }
     .report-filters .search-bar input[type="date"] {
         max-width: 100%;
+        flex: 1;
     }
 }
 
@@ -1274,7 +1328,11 @@ body.dark .badge-orange {
     .search-bar,
     .toolbar,
     .quick-actions,
-    .no-print {
+    .no-print,
+    .report-filters,
+    #notifModal,
+    .modal-overlay,
+    .toast {
         display: none !important;
     }
     .main {
@@ -1331,6 +1389,9 @@ body.dark .badge-orange {
         display: none !important;
     }
     .toast {
+        display: none !important;
+    }
+    #scannerContainer {
         display: none !important;
     }
 }
