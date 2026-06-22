@@ -233,38 +233,122 @@
             </div>
         </section>
 
-        <!-- ==========================================================
-        PANEL: DELIVERIES
-        ========================================================== -->
-        <section class="panel" id="panel-deliveries">
-            <div class="card">
-                <div class="card-title">🚚 Deliveries <span class="sub">Manage & track</span></div>
-                <div class="form-row">
-                    <div class="form-group"><label>👤 Customer *</label><input type="text" id="delCustomer" placeholder="Customer name" /></div>
-                    <div class="form-group"><label>📦 Item *</label><select id="delItemSelect"><option value="">-- Select --</option></select></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>📤 Qty *</label><input type="number" id="delQty" min="1" placeholder="1" /></div>
-                    <div class="form-group"><label>🚚 Driver</label><input type="text" id="delDriver" placeholder="Driver name" /></div>
-                </div>
-                <div class="form-group"><label>📍 Delivery Route</label><input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" /></div>
-                <button class="btn btn-success btn-block" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
-            </div>
+        
+<!-- ==========================================================
+PANEL: DELIVERIES (ENHANCED)
+========================================================== -->
+<section class="panel" id="panel-deliveries">
+    <div class="card">
+        <div class="card-title">🚚 Deliveries <span class="sub">Manage & track</span></div>
 
-            <div class="card">
-                <div class="card-title">📋 Delivery History</div>
-                <div class="search-bar">
-                    <input type="date" id="delDateFilter" />
-                    <button class="btn btn-outline" id="clearDelFilter">Clear</button>
+        <!-- Customer + Item Row -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>👤 Customer *</label>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <select id="delCustomerSelect" style="flex:1;">
+                        <option value="">-- Select Customer --</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline" id="quickAddCustomerBtn" title="Add New Customer">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
-                <div class="table-wrap">
-                    <table><thead><tr><th>Date</th><th>Customer</th><th>Item</th><th>Qty</th><th>Driver</th><th>Route</th></tr></thead>
-                        <tbody id="deliveryTableBody"></tbody>
-                    </table>
-                </div>
+                <div id="customerBalanceDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
             </div>
-        </section>
+            <div class="form-group">
+                <label>📦 Item *</label>
+                <select id="delItemSelect"><option value="">-- Select --</option></select>
+                <div id="itemStockDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
+            </div>
+        </div>
 
+        <!-- Qty + Driver Row -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>📤 Qty *</label>
+                <input type="number" id="delQty" min="1" placeholder="1" />
+            </div>
+            <div class="form-group">
+                <label>🚚 Driver</label>
+                <select id="delDriverSelect">
+                    <option value="">-- Select Driver --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Vehicle + Status Row -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>🚗 Vehicle</label>
+                <select id="delVehicleSelect">
+                    <option value="">-- Select Vehicle --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>📌 Status</label>
+                <select id="delStatusSelect">
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In-Progress</option>
+                    <option value="delivered" selected>Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Date/Time + Route Row -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>📅 Scheduled Date</label>
+                <input type="datetime-local" id="delScheduledDate" />
+            </div>
+            <div class="form-group">
+                <label>📍 Delivery Route</label>
+                <input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" />
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+            <label>📝 Notes</label>
+            <textarea id="delNotes" rows="2" placeholder="Special instructions, delivery notes..."></textarea>
+        </div>
+
+        <button class="btn btn-success btn-block" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
+    </div>
+
+    <!-- Delivery History -->
+    <div class="card">
+        <div class="card-title">📋 Delivery History</div>
+        <div class="search-bar">
+            <input type="date" id="delDateFilter" />
+            <select id="delStatusFilter" style="max-width:140px;">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In-Progress</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <button class="btn btn-outline" id="clearDelFilter">Clear</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Driver</th>
+                        <th>Vehicle</th>
+                        <th>Status</th>
+                        <th>Route</th>
+                    </tr>
+                </thead>
+                <tbody id="deliveryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
         <!-- ==========================================================
         PANEL: ATTENDANCE
         ========================================================== -->
