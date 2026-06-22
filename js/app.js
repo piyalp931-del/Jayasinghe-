@@ -120,7 +120,7 @@ function initEvents() {
         });
     }
 
-    // ── 🔥 FIREBASE SYNC BUTTON (NEW) ──
+    // ── 🔥 FIREBASE SYNC BUTTON ──
     const syncBtn = document.getElementById('syncBtn');
     if (syncBtn) {
         syncBtn.addEventListener('click', async () => {
@@ -382,7 +382,8 @@ function initEvents() {
     const deliverSubmit = document.getElementById('deliverSubmitBtn');
     if (deliverSubmit) {
         deliverSubmit.addEventListener('click', async () => {
-            if (!window.canManage('deliveries') && !window.canManage('sales')) {
+            // ✅ FIX: Correct permission check for deliveries and sales
+            if (!window.canManage('deliveries') && !window.hasPermission('create_deliveries')) {
                 showToast('⛔ You don\'t have permission to create deliveries.', 'error');
                 return;
             }
