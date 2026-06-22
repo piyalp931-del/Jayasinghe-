@@ -50,12 +50,12 @@ const ROLES = {
         nav: ['dashboard', 'finance', 'payroll', 'reports']
     },
     employee: {
-        label: 'Employee',
-        icon: '👤',
-        permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll'],
-        dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
-        nav: ['dashboard', 'attendance', 'leave', 'payroll']
-    }
+    label: 'Employee',
+    icon: '👤',
+    permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll'],
+    dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
+    nav: ['dashboard', 'attendance', 'leave', 'payroll']
+}
 };
 
 // DOM references
