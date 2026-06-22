@@ -1,5 +1,5 @@
 // ============================================================
-// UI RENDERING MODULE (FULLY INTEGRATED - ALL FEATURES)
+// UI RENDERING MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES)
 // ============================================================
 
 // Define all nav items with permissions
@@ -497,44 +497,57 @@ function renderProducts() {
 }
 
 // ============================================================
-// DELIVERIES
+// DELIVERIES (ENHANCED)
 // ============================================================
 function renderDeliveries() {
-    if (!window.canView('deliveries')) return;
+    if (!window.canView('deliveries')) {
+        showAccessDenied('deliveries');
+        return;
+    }
 
     const data = getAppData();
-    const items = data.items || [];
     const deliveries = data.deliveries || [];
 
-    const select = document.getElementById('delItemSelect');
-    const dateFilterEl = document.getElementById('delDateFilter');
-    const tbody = document.getElementById('deliveryTableBody');
-    if (!select || !dateFilterEl || !tbody) return;
+    // Populate dropdowns (calls function from app.js)
+    if (typeof populateDeliveryDropdowns === 'function') {
+        populateDeliveryDropdowns();
+    }
 
-    const currentVal = select.value;
-    select.innerHTML = '<option value="">-- Select --</option>' + items.filter(i => i.status !== 'inactive')
-        .map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0})</option>`).join('');
-    if (currentVal && [...select.options].some(o => o.value === currentVal)) select.value = currentVal;
-
-    const dateFilter = dateFilterEl.value;
+    const dateFilter = document.getElementById('delDateFilter')?.value || '';
+    const statusFilter = document.getElementById('delStatusFilter')?.value || 'all';
+    
     let filtered = [...deliveries];
     if (dateFilter) {
         filtered = filtered.filter(d => d.date && d.date.slice(0, 10) === dateFilter);
     }
+    if (statusFilter && statusFilter !== 'all') {
+        filtered = filtered.filter(d => d.status === statusFilter);
+    }
     filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    const tbody = document.getElementById('deliveryTableBody');
+    if (!tbody) return;
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">No deliveries.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:20px;">No deliveries found.</td></tr>`;
         return;
     }
+
+    const statusColors = {
+        'pending': 'badge-warning',
+        'in-progress': 'badge-info',
+        'delivered': 'badge-success',
+        'cancelled': 'badge-danger'
+    };
 
     tbody.innerHTML = filtered.map(d =>
         `<tr>
             <td>${formatDate(d.date)}</td>
-            <td>${escapeHtml(d.customer || '—')}</td>
+            <td><strong>${escapeHtml(d.customerName || d.customer || '—')}</strong></td>
             <td>${escapeHtml(d.itemName || '—')}</td>
             <td>${d.qty || 0}</td>
-            <td>${escapeHtml(d.driver || '—')}</td>
+            <td>${escapeHtml(d.driverName || d.driver || '—')}</td>
+            <td>${escapeHtml(d.vehicleNo || '—')}</td>
+            <td><span class="badge ${statusColors[d.status] || 'badge-warning'}">${d.status || 'pending'}</span></td>
             <td>${escapeHtml(d.route || '—')}</td>
         </tr>`
     ).join('');
@@ -586,7 +599,6 @@ function renderLeave() {
     const leaves = data.leaves || [];
     const user = window.getCurrentUser();
 
-    // Render leave balance for the logged-in user or selected employee
     renderLeaveBalance();
 
     const select = document.getElementById('leaveEmployeeSelect');
@@ -640,9 +652,6 @@ function renderLeaveBalance() {
     const data = getAppData();
     const balances = data.leaveBalances || {};
     let empId = user.uid;
-    // If admin, maybe show selected employee's balance? For simplicity, show admin's own balance.
-    // But admin may not have an employee record. If admin, we can show a summary.
-    // For now, show logged-in user's balance if exists, else show 0.
     const empBalance = balances[empId] || { sick: 0, casual: 0, annual: 0 };
     const sickEl = document.getElementById('lbSick');
     const casualEl = document.getElementById('lbCasual');
@@ -785,7 +794,6 @@ function renderFinance() {
     totalExpenseEl.textContent = 'LKR ' + formatCurrency(totalExpense);
     balanceEl.textContent = 'LKR ' + formatCurrency(totalIncome - totalExpense);
 
-    // Render budget vs actual
     renderBudget();
 }
 
@@ -827,7 +835,6 @@ function renderReports() {
     const container = document.getElementById('reportContent');
     if (!typeEl || !container) return;
 
-    // Get date filters
     const from = document.getElementById('reportFrom')?.value || '';
     const to = document.getElementById('reportTo')?.value || '';
 
@@ -1032,7 +1039,7 @@ window.editEmployee = function(id) {
     setVal('empSalary', emp.salary || '');
     setVal('empEpf', emp.epf || '');
     setVal('empUsername', emp.email || '');
-    setVal('empPassword', ''); // clear password field
+    setVal('empPassword', '');
     setVal('empStatus', emp.status || 'active');
     const title = document.getElementById('employeeModalTitle');
     if (title) title.textContent = '✏️ Edit Employee';
