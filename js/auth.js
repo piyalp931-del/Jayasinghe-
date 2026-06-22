@@ -94,7 +94,6 @@ function hasPermission(permission) {
 }
 
 function canView(module) {
-    // Admin always has access
     if (currentUser && currentUser.role === 'admin') return true;
     return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
 }
@@ -238,22 +237,18 @@ forgotModalClose.addEventListener('click', () => {
 resetPasswordBtn.addEventListener('click', handleResetPassword);
 
 // ============================================================
-// ✅ FIXED onAuthStateChanged – no longer hides login screen after login
+// ✅ FIXED onAuthStateChanged
 // ============================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // User is signed in, but we only hide login screen if we have a currentUser
-        // (which means we already processed login via the button)
+        // If we don't have currentUser, keep login screen visible
+        // so user can select role and login again.
         if (!currentUser) {
-            // If we don't have currentUser, it means page was refreshed or user signed in elsewhere.
-            // We keep login screen visible to let user select role and login again.
-            // This avoids automatically logging in without role selection.
             console.log('User signed in but no currentUser. Showing login screen.');
             loginScreen.classList.remove('hidden');
         }
         // else: currentUser exists, login screen already hidden.
     } else {
-        // User signed out, show login screen
         loginScreen.classList.remove('hidden');
     }
 });
