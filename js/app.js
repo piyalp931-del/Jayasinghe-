@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FIXED)
+// MAIN APP MODULE (FIXED + SYNC BUTTON)
 // ============================================================
 
 // ============================================================
@@ -117,6 +117,26 @@ function initEvents() {
                 }
             }
             showToast(currentLang === 'en' ? '🌐 English' : '🌐 සිංහල');
+        });
+    }
+
+    // ── 🔥 FIREBASE SYNC BUTTON (NEW) ──
+    const syncBtn = document.getElementById('syncBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', async () => {
+            showToast('🔄 Syncing with Firebase...', 'warning');
+            try {
+                // First, save local data to Firebase
+                await saveAllData();
+                // Then, load fresh data from Firebase
+                await loadAllData();
+                // Re-render everything
+                renderAll();
+                showToast('✅ Sync complete! Data saved and loaded from Firebase.', 'success');
+            } catch (error) {
+                console.error('❌ Sync error:', error);
+                showToast('❌ Sync failed. Check console for errors.', 'error');
+            }
         });
     }
 
@@ -495,7 +515,6 @@ function initEvents() {
         const to = document.getElementById('leaveTo').value;
         const reason = document.getElementById('leaveReason').value.trim();
 
-        // If employee, force their own ID
         if (user?.role === 'employee') {
             const data = getAppData();
             const emp = data.employees.find(e => e.id === user.uid);
