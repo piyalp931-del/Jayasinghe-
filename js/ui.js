@@ -305,12 +305,8 @@ function renderDashboard() {
         document.getElementById('quickPrint')?.addEventListener('click', () => {
             window.print();
         });
-        document.getElementById('addFinanceBtn')?.addEventListener('click', () => {
-            switchPanel('finance');
-        });
-        document.getElementById('checkInBtn')?.addEventListener('click', () => {
-            document.getElementById('checkInBtn')?.click();
-        });
+        // NOTE: addFinanceBtn and checkInBtn are handled in app.js,
+        // so we do NOT bind them here to avoid duplication/recursion.
     }
 }
 
