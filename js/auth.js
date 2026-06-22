@@ -24,7 +24,7 @@ const ROLES = {
     sales: {
         label: 'Sales Representative',
         icon: '🛒',
-        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'create_deliveries', 'view_reports'],
+        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports'],
         dashboard: ['stats_inventory', 'stats_customers', 'stats_deliveries', 'sales_chart', 'quick_actions_sales'],
         nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports']
     },
