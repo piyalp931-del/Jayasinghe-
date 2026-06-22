@@ -1,6 +1,9 @@
 // ============================================================
-// UI RENDERING MODULE
+// UI RENDERING MODULE (FIXED - FULLY SCOPED)
 // ============================================================
+
+// Use ROLES from window (defined in auth.js) or fallback
+const ROLES = window.ROLES || {};
 
 // Define all nav items with permissions
 const ALL_NAV_ITEMS = [
@@ -21,10 +24,14 @@ const ALL_NAV_ITEMS = [
 
 let currentLang = 'en';
 
+// ============================================================
+// SIDEBAR
+// ============================================================
 function renderSidebar() {
     const container = document.getElementById('sidebarNav');
-    const role = currentUser?.role || 'admin';
-    const roleConfig = ROLES[role];
+    const user = window.getCurrentUser();
+    const role = user?.role || 'admin';
+    const roleConfig = ROLES[role] || ROLES.admin;
 
     let html = '';
     const allowedNavIds = roleConfig?.nav || ['dashboard'];
@@ -59,18 +66,19 @@ function renderSidebar() {
 }
 
 // ============================================================
-// SWITCH PANEL WITH LOGIN & PERMISSION CHECK
+// SWITCH PANEL (FIXED with global scope checks)
 // ============================================================
 function switchPanel(id) {
-    // ✅ Check if user is logged in first
-    if (!currentUser) {
+    // ✅ Check if user is logged in using global getter
+    const user = window.getCurrentUser();
+    if (!user) {
         showToast('⛔ Please login first.', 'error');
         return;
     }
 
-    // Check permission for this panel
+    // Check permission for this panel using global canView
     const navItem = ALL_NAV_ITEMS.find(n => n.id === id);
-    if (navItem && !canView(navItem.perm.replace('view_', ''))) {
+    if (navItem && !window.canView(navItem.perm.replace('view_', ''))) {
         showAccessDenied(id);
         return;
     }
@@ -98,51 +106,51 @@ function switchPanel(id) {
             renderDashboard();
             break;
         case 'employees':
-            if (canView('employees')) renderEmployees();
+            if (window.canView('employees')) renderEmployees();
             else showAccessDenied('employees');
             break;
         case 'inventory':
-            if (canView('inventory')) renderInventory();
+            if (window.canView('inventory')) renderInventory();
             else showAccessDenied('inventory');
             break;
         case 'products':
-            if (canView('inventory')) renderProducts();
+            if (window.canView('inventory')) renderProducts();
             else showAccessDenied('products');
             break;
         case 'deliveries':
-            if (canView('deliveries')) renderDeliveries();
+            if (window.canView('deliveries')) renderDeliveries();
             else showAccessDenied('deliveries');
             break;
         case 'attendance':
-            if (canView('attendance')) renderAttendance();
+            if (window.canView('attendance')) renderAttendance();
             else showAccessDenied('attendance');
             break;
         case 'leave':
-            if (canView('leave')) renderLeave();
+            if (window.canView('leave')) renderLeave();
             else showAccessDenied('leave');
             break;
         case 'payroll':
-            if (canView('payroll')) renderPayroll();
+            if (window.canView('payroll')) renderPayroll();
             else showAccessDenied('payroll');
             break;
         case 'customers':
-            if (canView('customers')) renderCustomers();
+            if (window.canView('customers')) renderCustomers();
             else showAccessDenied('customers');
             break;
         case 'finance':
-            if (canView('finance')) renderFinance();
+            if (window.canView('finance')) renderFinance();
             else showAccessDenied('finance');
             break;
         case 'reports':
-            if (canView('reports')) renderReports();
+            if (window.canView('reports')) renderReports();
             else showAccessDenied('reports');
             break;
         case 'vehicles':
-            if (canView('vehicles')) renderVehicles();
+            if (window.canView('vehicles')) renderVehicles();
             else showAccessDenied('vehicles');
             break;
         case 'settings':
-            if (canView('settings')) renderSettings();
+            if (window.canView('settings')) renderSettings();
             else showAccessDenied('settings');
             break;
     }
@@ -152,7 +160,7 @@ function switchPanel(id) {
 }
 
 // ============================================================
-// SHOW ACCESS DENIED WITH "GO TO DASHBOARD" BUTTON
+// ACCESS DENIED (with working Go to Dashboard button)
 // ============================================================
 function showAccessDenied(module) {
     const panel = document.getElementById('panel-' + module);
@@ -176,8 +184,9 @@ let salesChartInstance = null;
 
 function renderDashboard() {
     const data = getAppData();
-    const role = currentUser?.role || 'admin';
-    const roleConfig = ROLES[role];
+    const user = window.getCurrentUser();
+    const role = user?.role || 'admin';
+    const roleConfig = ROLES[role] || ROLES.admin;
     const dashboardWidgets = roleConfig?.dashboard || ['stats_all'];
 
     const items = data.items || [];
@@ -410,10 +419,10 @@ function renderSalesChart(salesData) {
 }
 
 // ============================================================
-// EMPLOYEES (with role check)
+// EMPLOYEES (with global role check)
 // ============================================================
 function renderEmployees() {
-    if (!canView('employees')) {
+    if (!window.canView('employees')) {
         showAccessDenied('employees');
         return;
     }
@@ -448,6 +457,8 @@ function renderEmployees() {
         return;
     }
 
+    const canEdit = window.canManage('employees');
+
     tbody.innerHTML = filtered.map(e =>
         `<tr>
                     <td>${e.id || '—'}</td>
@@ -456,7 +467,7 @@ function renderEmployees() {
                     <td>${escapeHtml(e.designation || '—')}</td>
                     <td><span class="badge ${e.status === 'active' ? 'badge-success' : 'badge-danger'}">${e.status || 'active'}</span></td>
                     <td class="text-center">
-                        ${canManage('employees') ? `<button class="btn btn-sm btn-outline" onclick="editEmployee('${e.id}')"><i class="fas fa-edit"></i></button>
+                        ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="editEmployee('${e.id}')"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${e.id}')"><i class="fas fa-trash"></i></button>` : '—'}
                     </td>
                 </tr>`
@@ -464,10 +475,10 @@ function renderEmployees() {
 }
 
 // ============================================================
-// INVENTORY (with role check)
+// INVENTORY (with global role check)
 // ============================================================
 function renderInventory() {
-    if (!canView('inventory')) {
+    if (!window.canView('inventory')) {
         showAccessDenied('inventory');
         return;
     }
@@ -507,7 +518,7 @@ function renderInventory() {
         return;
     }
 
-    const canEdit = canManage('inventory');
+    const canEdit = window.canManage('inventory');
 
     tbody.innerHTML = filtered.map(i =>
         `<tr>
@@ -526,10 +537,10 @@ function renderInventory() {
 }
 
 // ============================================================
-// PRODUCTS (with role check)
+// PRODUCTS (with global role check)
 // ============================================================
 function renderProducts() {
-    if (!canView('inventory')) {
+    if (!window.canView('inventory')) {
         showAccessDenied('products');
         return;
     }
@@ -540,7 +551,7 @@ function renderProducts() {
 
     const catChips = document.getElementById('categoryChips');
     const brandChips = document.getElementById('brandChips');
-    const canEdit = canManage('inventory');
+    const canEdit = window.canManage('inventory');
 
     catChips.innerHTML = categories.map(c =>
         `<span class="badge badge-info" style="margin:2px;">${escapeHtml(c)} ${canEdit ? `<span style="cursor:pointer;color:var(--danger);" onclick="removeCategory('${c}')">✕</span>` : ''}</span>`
@@ -552,10 +563,10 @@ function renderProducts() {
 }
 
 // ============================================================
-// DELIVERIES (with role check)
+// DELIVERIES (with global role check)
 // ============================================================
 function renderDeliveries() {
-    if (!canView('deliveries')) {
+    if (!window.canView('deliveries')) {
         showAccessDenied('deliveries');
         return;
     }
@@ -599,21 +610,22 @@ function renderDeliveries() {
 }
 
 // ============================================================
-// ATTENDANCE (with role check)
+// ATTENDANCE (with global role check)
 // ============================================================
 function renderAttendance() {
-    if (!canView('attendance')) {
+    if (!window.canView('attendance')) {
         showAccessDenied('attendance');
         return;
     }
 
     const data = getAppData();
     const attendance = data.attendance || [];
-    const userId = currentUser?.uid || '';
+    const user = window.getCurrentUser();
+    const userId = user?.uid || '';
 
     // For employees, show only their own attendance
     let filtered = attendance;
-    if (currentUser?.role === 'employee') {
+    if (user?.role === 'employee') {
         filtered = attendance.filter(a => a.employeeId === userId);
     }
 
@@ -638,10 +650,10 @@ function renderAttendance() {
 }
 
 // ============================================================
-// LEAVE (with role check)
+// LEAVE (with global role check)
 // ============================================================
 function renderLeave() {
-    if (!canView('leave')) {
+    if (!window.canView('leave')) {
         showAccessDenied('leave');
         return;
     }
@@ -649,10 +661,11 @@ function renderLeave() {
     const data = getAppData();
     const employees = data.employees || [];
     const leaves = data.leaves || [];
+    const user = window.getCurrentUser();
 
     // Populate employee select (only for managers/admin)
     const select = document.getElementById('leaveEmployeeSelect');
-    const canManageLeave = canManage('leave') || canManage('employees');
+    const canManageLeave = window.canManage('leave') || window.canManage('employees');
     if (canManageLeave) {
         const currentVal = select.value;
         select.innerHTML = '<option value="">-- Select --</option>' + employees.map(e =>
@@ -661,13 +674,13 @@ function renderLeave() {
         select.disabled = false;
     } else {
         // Employees can only apply for their own leave
-        const emp = employees.find(e => e.id === currentUser?.uid);
+        const emp = employees.find(e => e.id === user?.uid);
         if (emp) {
             select.innerHTML = `<option value="${emp.id}">${escapeHtml(emp.name)}</option>`;
             select.value = emp.id;
         } else {
-            select.innerHTML = `<option value="${currentUser?.uid || ''}">${currentUser?.name || 'You'}</option>`;
-            select.value = currentUser?.uid || '';
+            select.innerHTML = `<option value="${user?.uid || ''}">${user?.name || 'You'}</option>`;
+            select.value = user?.uid || '';
         }
         select.disabled = true;
     }
@@ -677,7 +690,7 @@ function renderLeave() {
     let filtered = leaves;
     if (!canManageLeave) {
         // Employees see only their own leaves
-        filtered = leaves.filter(l => l.employeeId === currentUser?.uid);
+        filtered = leaves.filter(l => l.employeeId === user?.uid);
     }
 
     if (filtered.length === 0) {
@@ -700,10 +713,10 @@ function renderLeave() {
 }
 
 // ============================================================
-// PAYROLL (with role check)
+// PAYROLL (with global role check)
 // ============================================================
 function renderPayroll() {
-    if (!canView('payroll')) {
+    if (!window.canView('payroll')) {
         showAccessDenied('payroll');
         return;
     }
@@ -711,8 +724,9 @@ function renderPayroll() {
     const data = getAppData();
     const employees = data.employees || [];
     const payroll = data.payroll || [];
+    const user = window.getCurrentUser();
 
-    const canManagePayroll = canManage('payroll');
+    const canManagePayroll = window.canManage('payroll');
     const select = document.getElementById('payrollEmployeeSelect');
 
     if (canManagePayroll) {
@@ -723,13 +737,13 @@ function renderPayroll() {
         select.disabled = false;
     } else {
         // Employees see only their own payroll
-        const emp = employees.find(e => e.id === currentUser?.uid);
+        const emp = employees.find(e => e.id === user?.uid);
         if (emp) {
             select.innerHTML = `<option value="${emp.id}">${escapeHtml(emp.name)}</option>`;
             select.value = emp.id;
         } else {
-            select.innerHTML = `<option value="${currentUser?.uid || ''}">${currentUser?.name || 'You'}</option>`;
-            select.value = currentUser?.uid || '';
+            select.innerHTML = `<option value="${user?.uid || ''}">${user?.name || 'You'}</option>`;
+            select.value = user?.uid || '';
         }
         select.disabled = true;
     }
@@ -737,7 +751,7 @@ function renderPayroll() {
     const tbody = document.getElementById('payrollTableBody');
     let filtered = payroll;
     if (!canManagePayroll) {
-        filtered = payroll.filter(p => p.employeeId === currentUser?.uid);
+        filtered = payroll.filter(p => p.employeeId === user?.uid);
     }
 
     if (filtered.length === 0) {
@@ -760,10 +774,10 @@ function renderPayroll() {
 }
 
 // ============================================================
-// CUSTOMERS (with role check)
+// CUSTOMERS (with global role check)
 // ============================================================
 function renderCustomers() {
-    if (!canView('customers')) {
+    if (!window.canView('customers')) {
         showAccessDenied('customers');
         return;
     }
@@ -781,7 +795,7 @@ function renderCustomers() {
             `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No customers.</td></tr>`;
         return;
     }
-    const canEdit = canManage('customers');
+    const canEdit = window.canManage('customers');
     tbody.innerHTML = filtered.map(c =>
         `<tr>
                     <td><strong>${escapeHtml(c.name)}</strong></td>
@@ -797,10 +811,10 @@ function renderCustomers() {
 }
 
 // ============================================================
-// FINANCE (with role check)
+// FINANCE (with global role check)
 // ============================================================
 function renderFinance() {
-    if (!canView('finance')) {
+    if (!window.canView('finance')) {
         showAccessDenied('finance');
         return;
     }
@@ -832,10 +846,10 @@ function renderFinance() {
 }
 
 // ============================================================
-// REPORTS (with role check)
+// REPORTS (with global role check)
 // ============================================================
 function renderReports() {
-    if (!canView('reports')) {
+    if (!window.canView('reports')) {
         showAccessDenied('reports');
         return;
     }
@@ -919,10 +933,10 @@ function generateCustomerReport() {
 }
 
 // ============================================================
-// VEHICLES (with role check)
+// VEHICLES (with global role check)
 // ============================================================
 function renderVehicles() {
-    if (!canView('vehicles')) {
+    if (!window.canView('vehicles')) {
         showAccessDenied('vehicles');
         return;
     }
@@ -936,7 +950,7 @@ function renderVehicles() {
             `<tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No vehicles.</td></tr>`;
         return;
     }
-    const canEdit = canManage('vehicles');
+    const canEdit = window.canManage('vehicles');
     tbody.innerHTML = vehicles.map(v =>
         `<tr>
                     <td><strong>${escapeHtml(v.vehicleNo || '—')}</strong></td>
@@ -952,10 +966,10 @@ function renderVehicles() {
 }
 
 // ============================================================
-// SETTINGS (with role check)
+// SETTINGS (with global role check)
 // ============================================================
 function renderSettings() {
-    if (!canView('settings')) {
+    if (!window.canView('settings')) {
         showAccessDenied('settings');
         return;
     }
@@ -1002,7 +1016,27 @@ function nowISO() {
 }
 
 // ============================================================
-// EXPOSE FUNCTIONS FOR GLOBAL ACCESS
+// EXPOSE FUNCTIONS FOR GLOBAL ACCESS (especially for "Go to Dashboard")
+// ============================================================
+window.switchPanel = switchPanel;
+window.showAccessDenied = showAccessDenied;
+window.renderDashboard = renderDashboard;
+window.renderEmployees = renderEmployees;
+window.renderInventory = renderInventory;
+window.renderProducts = renderProducts;
+window.renderDeliveries = renderDeliveries;
+window.renderAttendance = renderAttendance;
+window.renderLeave = renderLeave;
+window.renderPayroll = renderPayroll;
+window.renderCustomers = renderCustomers;
+window.renderFinance = renderFinance;
+window.renderReports = renderReports;
+window.renderVehicles = renderVehicles;
+window.renderSettings = renderSettings;
+window.renderSidebar = renderSidebar;
+
+// ============================================================
+// GLOBAL EDIT/DELETE FUNCTIONS (used in onclick attributes)
 // ============================================================
 window.editEmployee = function(id) {
     const data = getAppData();
