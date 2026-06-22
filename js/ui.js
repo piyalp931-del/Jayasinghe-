@@ -58,11 +58,20 @@ function renderSidebar() {
     });
 }
 
+// ============================================================
+// SWITCH PANEL WITH LOGIN & PERMISSION CHECK
+// ============================================================
 function switchPanel(id) {
+    // ✅ Check if user is logged in first
+    if (!currentUser) {
+        showToast('⛔ Please login first.', 'error');
+        return;
+    }
+
     // Check permission for this panel
     const navItem = ALL_NAV_ITEMS.find(n => n.id === id);
     if (navItem && !canView(navItem.perm.replace('view_', ''))) {
-        showToast('⛔ Access Denied: You don\'t have permission to view this module.', 'error');
+        showAccessDenied(id);
         return;
     }
 
@@ -142,6 +151,9 @@ function switchPanel(id) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
+// ============================================================
+// SHOW ACCESS DENIED WITH "GO TO DASHBOARD" BUTTON
+// ============================================================
 function showAccessDenied(module) {
     const panel = document.getElementById('panel-' + module);
     if (panel) {
@@ -992,13 +1004,132 @@ function nowISO() {
 // ============================================================
 // EXPOSE FUNCTIONS FOR GLOBAL ACCESS
 // ============================================================
-window.editEmployee = function(id) { /* ... existing code ... */ };
-window.deleteEmployee = async function(id) { /* ... existing code ... */ };
-window.editItem = function(id) { /* ... existing code ... */ };
-window.deleteItem = async function(id) { /* ... existing code ... */ };
-window.editCustomer = function(id) { /* ... existing code ... */ };
-window.deleteCustomer = async function(id) { /* ... existing code ... */ };
-window.editVehicle = function(id) { /* ... existing code ... */ };
-window.deleteVehicle = async function(id) { /* ... existing code ... */ };
-window.removeCategory = async function(cat) { /* ... existing code ... */ };
-window.removeBrand = async function(brand) { /* ... existing code ... */ };
+window.editEmployee = function(id) {
+    const data = getAppData();
+    const emp = data.employees.find(e => e.id === id);
+    if (!emp) return;
+    document.getElementById('empEditId').value = emp.id;
+    document.getElementById('empName').value = emp.name || '';
+    document.getElementById('empNIC').value = emp.nic || '';
+    document.getElementById('empDept').value = emp.department || 'Admin';
+    document.getElementById('empDesignation').value = emp.designation || '';
+    document.getElementById('empContact').value = emp.contact || '';
+    document.getElementById('empEmergency').value = emp.emergency || '';
+    document.getElementById('empAddress').value = emp.address || '';
+    document.getElementById('empJoined').value = emp.joinedDate || '';
+    document.getElementById('empSalary').value = emp.salary || '';
+    document.getElementById('empEpf').value = emp.epf || '';
+    document.getElementById('empStatus').value = emp.status || 'active';
+    document.getElementById('employeeModalTitle').textContent = '✏️ Edit Employee';
+    document.getElementById('employeeModal').classList.add('open');
+};
+
+window.deleteEmployee = async function(id) {
+    if (!confirm('Delete this employee?')) return;
+    const data = getAppData();
+    data.employees = data.employees.filter(e => e.id !== id);
+    setAppData(data);
+    await saveAllData();
+    renderEmployees();
+    showToast('🗑️ Employee removed.');
+};
+
+window.editItem = function(id) {
+    const data = getAppData();
+    const item = data.items.find(i => i.id === id);
+    if (!item) return;
+    document.getElementById('itemEditId').value = item.id;
+    document.getElementById('itemBarcode').value = item.barcode || '';
+    document.getElementById('itemName').value = item.name || '';
+    document.getElementById('itemQty').value = item.qty || 0;
+    document.getElementById('itemPrice').value = item.price || 0;
+    document.getElementById('itemCategory').value = item.category || '';
+    document.getElementById('itemBrand').value = item.brand || '';
+    document.getElementById('itemDesc').value = item.desc || '';
+    document.getElementById('itemExpiry').value = item.expiry || '';
+    document.getElementById('itemBatch').value = item.batch || '';
+    document.getElementById('itemStatus').value = item.status || 'active';
+    document.getElementById('itemModalTitle').textContent = '✏️ Edit Item';
+    document.getElementById('itemModal').classList.add('open');
+    populateItemDropdowns();
+};
+
+window.deleteItem = async function(id) {
+    if (!confirm('Delete this item?')) return;
+    const data = getAppData();
+    data.items = data.items.filter(i => i.id !== id);
+    setAppData(data);
+    await saveAllData();
+    renderInventory();
+    showToast('🗑️ Item removed.');
+};
+
+window.editCustomer = function(id) {
+    const data = getAppData();
+    const c = data.customers.find(c => c.id === id);
+    if (!c) return;
+    document.getElementById('custEditId').value = c.id;
+    document.getElementById('custName').value = c.name || '';
+    document.getElementById('custContact').value = c.contact || '';
+    document.getElementById('custCategory').value = c.category || 'Retail';
+    document.getElementById('custAddress').value = c.address || '';
+    document.getElementById('custCreditLimit').value = c.creditLimit || 0;
+    document.getElementById('custBalance').value = c.balance || 0;
+    document.getElementById('customerModalTitle').textContent = '✏️ Edit Customer';
+    document.getElementById('customerModal').classList.add('open');
+};
+
+window.deleteCustomer = async function(id) {
+    if (!confirm('Delete this customer?')) return;
+    const data = getAppData();
+    data.customers = data.customers.filter(c => c.id !== id);
+    setAppData(data);
+    await saveAllData();
+    renderCustomers();
+    showToast('🗑️ Customer removed.');
+};
+
+window.editVehicle = function(id) {
+    const data = getAppData();
+    const v = data.vehicles.find(v => v.id === id);
+    if (!v) return;
+    document.getElementById('vehicleNo').value = v.vehicleNo || '';
+    document.getElementById('vehicleDriver').value = v.driver || '';
+    document.getElementById('vehicleFuel').value = v.fuel || '';
+    document.getElementById('addVehicleBtn').dataset.editId = v.id;
+    document.getElementById('addVehicleBtn').textContent = '💾 Update Vehicle';
+    showToast('✏️ Editing vehicle. Update and save.');
+};
+
+window.deleteVehicle = async function(id) {
+    if (!confirm('Delete this vehicle?')) return;
+    const data = getAppData();
+    data.vehicles = data.vehicles.filter(v => v.id !== id);
+    setAppData(data);
+    await saveAllData();
+    renderVehicles();
+    showToast('🗑️ Vehicle removed.');
+};
+
+window.removeCategory = async function(cat) {
+    if (!confirm(`Remove category "${cat}"?`)) return;
+    const data = getAppData();
+    data.categories = data.categories.filter(c => c !== cat);
+    data.items.forEach(i => { if (i.category === cat) i.category = ''; });
+    setAppData(data);
+    await saveAllData();
+    renderProducts();
+    renderInventory();
+    showToast(`🗑️ Removed "${cat}"`);
+};
+
+window.removeBrand = async function(brand) {
+    if (!confirm(`Remove brand "${brand}"?`)) return;
+    const data = getAppData();
+    data.brands = data.brands.filter(b => b !== brand);
+    data.items.forEach(i => { if (i.brand === brand) i.brand = ''; });
+    setAppData(data);
+    await saveAllData();
+    renderProducts();
+    showToast(`🗑️ Removed "${brand}"`);
+};
