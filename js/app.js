@@ -81,7 +81,7 @@ function initEvents() {
         const activePanel = document.querySelector('.panel.active');
         if (activePanel) {
             const id = activePanel.id.replace('panel-', '');
-            const navItem = navItems.find(n => n.id === id);
+            const navItem = ALL_NAV_ITEMS.find(n => n.id === id);
             if (navItem) {
                 const label = currentLang === 'si' && navItem.labelSI ? navItem.labelSI : navItem.label;
                 document.getElementById('pageTitle').textContent = label;
@@ -92,6 +92,11 @@ function initEvents() {
 
     // ── Employee Modal ──
     document.getElementById('addEmployeeBtn').addEventListener('click', () => {
+        // ⛔ Permission check
+        if (!canManage('employees')) {
+            showToast('⛔ You don\'t have permission to add employees.', 'error');
+            return;
+        }
         document.getElementById('empEditId').value = '';
         document.getElementById('employeeModalTitle').textContent = '👤 Add Employee';
         document.getElementById('empName').value = '';
@@ -113,6 +118,11 @@ function initEvents() {
     });
 
     document.getElementById('empSaveBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('employees')) {
+            showToast('⛔ You don\'t have permission to manage employees.', 'error');
+            return;
+        }
         const id = document.getElementById('empEditId').value;
         const name = document.getElementById('empName').value.trim();
         if (!name) { showToast('Enter employee name.', 'error'); return; }
@@ -148,6 +158,11 @@ function initEvents() {
 
     // ── Item Modal ──
     document.getElementById('addItemBtn').addEventListener('click', () => {
+        // ⛔ Permission check
+        if (!canManage('inventory')) {
+            showToast('⛔ You don\'t have permission to add items.', 'error');
+            return;
+        }
         document.getElementById('itemEditId').value = '';
         document.getElementById('itemModalTitle').textContent = '📦 Add Item';
         document.getElementById('itemBarcode').value = '';
@@ -169,6 +184,11 @@ function initEvents() {
     });
 
     document.getElementById('itemSaveBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('inventory')) {
+            showToast('⛔ You don\'t have permission to manage inventory.', 'error');
+            return;
+        }
         const id = document.getElementById('itemEditId').value;
         const name = document.getElementById('itemName').value.trim();
         if (!name) { showToast('Enter item name.', 'error'); return; }
@@ -204,6 +224,11 @@ function initEvents() {
 
     // ── Customer Modal ──
     document.getElementById('addCustomerBtn').addEventListener('click', () => {
+        // ⛔ Permission check
+        if (!canManage('customers')) {
+            showToast('⛔ You don\'t have permission to add customers.', 'error');
+            return;
+        }
         document.getElementById('custEditId').value = '';
         document.getElementById('customerModalTitle').textContent = '👤 Add Customer';
         document.getElementById('custName').value = '';
@@ -220,6 +245,11 @@ function initEvents() {
     });
 
     document.getElementById('custSaveBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('customers')) {
+            showToast('⛔ You don\'t have permission to manage customers.', 'error');
+            return;
+        }
         const id = document.getElementById('custEditId').value;
         const name = document.getElementById('custName').value.trim();
         if (!name) { showToast('Enter customer name.', 'error'); return; }
@@ -249,21 +279,41 @@ function initEvents() {
     });
 
     // ── Quick Actions ──
-    document.getElementById('quickAddItem').addEventListener('click', () => {
+    document.getElementById('quickAddItem')?.addEventListener('click', () => {
+        if (!canManage('inventory')) {
+            showToast('⛔ You don\'t have permission to add items.', 'error');
+            return;
+        }
         document.getElementById('addItemBtn').click();
     });
-    document.getElementById('quickNewDelivery').addEventListener('click', () => {
+
+    document.getElementById('quickNewDelivery')?.addEventListener('click', () => {
+        if (!canManage('deliveries') && !canView('deliveries')) {
+            showToast('⛔ You don\'t have permission to manage deliveries.', 'error');
+            return;
+        }
         switchPanel('deliveries');
     });
-    document.getElementById('quickAddEmployee').addEventListener('click', () => {
+
+    document.getElementById('quickAddEmployee')?.addEventListener('click', () => {
+        if (!canManage('employees')) {
+            showToast('⛔ You don\'t have permission to add employees.', 'error');
+            return;
+        }
         document.getElementById('addEmployeeBtn').click();
     });
-    document.getElementById('quickPrint').addEventListener('click', () => {
+
+    document.getElementById('quickPrint')?.addEventListener('click', () => {
         window.print();
     });
 
     // ── Deliveries ──
     document.getElementById('deliverSubmitBtn').addEventListener('click', async () => {
+        // ⛔ Permission check - only users with manage deliveries permission
+        if (!canManage('deliveries') && !canManage('sales')) {
+            showToast('⛔ You don\'t have permission to create deliveries.', 'error');
+            return;
+        }
         const customer = document.getElementById('delCustomer').value.trim();
         const itemId = document.getElementById('delItemSelect').value;
         const qty = parseInt(document.getElementById('delQty').value);
@@ -379,20 +429,33 @@ function initEvents() {
 
     // ── Leave ──
     document.getElementById('applyLeaveBtn').addEventListener('click', async () => {
+        // ⛔ Permission check - anyone with view_leave can apply (employees too)
+        if (!canView('leave')) {
+            showToast('⛔ You don\'t have permission to apply for leave.', 'error');
+            return;
+        }
         const empId = document.getElementById('leaveEmployeeSelect').value;
         const type = document.getElementById('leaveType').value;
         const from = document.getElementById('leaveFrom').value;
         const to = document.getElementById('leaveTo').value;
         const reason = document.getElementById('leaveReason').value.trim();
 
-        if (!empId) { showToast('Select employee.', 'error'); return; }
+        // If employee, force their own ID
+        let selectedEmpId = empId;
+        if (currentUser?.role === 'employee') {
+            const data = getAppData();
+            const emp = data.employees.find(e => e.id === currentUser.uid);
+            selectedEmpId = emp ? emp.id : currentUser.uid;
+        }
+
+        if (!selectedEmpId) { showToast('Select employee.', 'error'); return; }
         if (!from || !to) { showToast('Select dates.', 'error'); return; }
         const data = getAppData();
-        const emp = data.employees.find(e => e.id === empId);
+        const emp = data.employees.find(e => e.id === selectedEmpId);
         data.leaves.push({
             id: generateId(),
-            employeeId: empId,
-            employeeName: emp ? emp.name : 'Unknown',
+            employeeId: selectedEmpId,
+            employeeName: emp ? emp.name : (currentUser?.name || 'Unknown'),
             type,
             from,
             to,
@@ -408,6 +471,11 @@ function initEvents() {
     });
 
     document.getElementById('approveLeaveBtn').addEventListener('click', async () => {
+        // ⛔ Permission check - only managers/admin can approve
+        if (!canManage('leave') && !canManage('employees')) {
+            showToast('⛔ You don\'t have permission to approve leave.', 'error');
+            return;
+        }
         const data = getAppData();
         const leaves = data.leaves.filter(l => l.status === 'pending');
         if (leaves.length === 0) { showToast('No pending leaves.', 'warning'); return; }
@@ -419,6 +487,11 @@ function initEvents() {
     });
 
     document.getElementById('rejectLeaveBtn').addEventListener('click', async () => {
+        // ⛔ Permission check - only managers/admin can reject
+        if (!canManage('leave') && !canManage('employees')) {
+            showToast('⛔ You don\'t have permission to reject leave.', 'error');
+            return;
+        }
         const data = getAppData();
         const leaves = data.leaves.filter(l => l.status === 'pending');
         if (leaves.length === 0) { showToast('No pending leaves.', 'warning'); return; }
@@ -431,6 +504,11 @@ function initEvents() {
 
     // ── Payroll ──
     document.getElementById('calculatePayrollBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('payroll')) {
+            showToast('⛔ You don\'t have permission to manage payroll.', 'error');
+            return;
+        }
         const empId = document.getElementById('payrollEmployeeSelect').value;
         const month = document.getElementById('payrollMonth').value;
         const basic = parseFloat(document.getElementById('payrollBasic').value) || 0;
@@ -469,11 +547,21 @@ function initEvents() {
     });
 
     document.getElementById('generatePayslipBtn').addEventListener('click', () => {
+        // ⛔ Permission check
+        if (!canView('payroll')) {
+            showToast('⛔ You don\'t have permission to view payslips.', 'error');
+            return;
+        }
         showToast('📄 Payslip PDF generated (simulated).', 'success');
     });
 
     // ── Finance ──
     document.getElementById('addFinanceBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('finance')) {
+            showToast('⛔ You don\'t have permission to manage finance.', 'error');
+            return;
+        }
         const type = document.getElementById('financeType').value;
         const amount = parseFloat(document.getElementById('financeAmount').value);
         const desc = document.getElementById('financeDesc').value.trim();
@@ -498,10 +586,27 @@ function initEvents() {
     });
 
     // ── Reports ──
-    document.getElementById('generateReportBtn').addEventListener('click', renderReports);
-    document.getElementById('reportType').addEventListener('change', renderReports);
+    document.getElementById('generateReportBtn').addEventListener('click', () => {
+        if (!canView('reports')) {
+            showToast('⛔ You don\'t have permission to view reports.', 'error');
+            return;
+        }
+        renderReports();
+    });
+
+    document.getElementById('reportType').addEventListener('change', () => {
+        if (!canView('reports')) {
+            showToast('⛔ You don\'t have permission to view reports.', 'error');
+            return;
+        }
+        renderReports();
+    });
 
     document.getElementById('exportReportBtn').addEventListener('click', () => {
+        if (!canView('reports')) {
+            showToast('⛔ You don\'t have permission to export reports.', 'error');
+            return;
+        }
         const type = document.getElementById('reportType').value;
         const data = getAppData();
         let exportData = [];
@@ -538,11 +643,20 @@ function initEvents() {
     });
 
     document.getElementById('printReportBtn').addEventListener('click', () => {
+        if (!canView('reports')) {
+            showToast('⛔ You don\'t have permission to print reports.', 'error');
+            return;
+        }
         window.print();
     });
 
     // ── Products (Categories & Brands) ──
     document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('inventory')) {
+            showToast('⛔ You don\'t have permission to manage categories.', 'error');
+            return;
+        }
         const val = document.getElementById('newCategoryInput').value.trim();
         if (!val) { showToast('Enter category name.', 'error'); return; }
         const data = getAppData();
@@ -556,6 +670,11 @@ function initEvents() {
     });
 
     document.getElementById('addBrandBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('inventory')) {
+            showToast('⛔ You don\'t have permission to manage brands.', 'error');
+            return;
+        }
         const val = document.getElementById('newBrandInput').value.trim();
         if (!val) { showToast('Enter brand name.', 'error'); return; }
         const data = getAppData();
@@ -570,6 +689,11 @@ function initEvents() {
 
     // ── Vehicles ──
     document.getElementById('addVehicleBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('vehicles')) {
+            showToast('⛔ You don\'t have permission to manage vehicles.', 'error');
+            return;
+        }
         const editId = document.getElementById('addVehicleBtn').dataset.editId;
         const vehicleNo = document.getElementById('vehicleNo').value.trim();
         const driver = document.getElementById('vehicleDriver').value.trim();
@@ -600,6 +724,11 @@ function initEvents() {
 
     // ── Settings ──
     document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+        // ⛔ Permission check
+        if (!canManage('settings') && currentUser?.role !== 'admin') {
+            showToast('⛔ You don\'t have permission to change settings.', 'error');
+            return;
+        }
         const data = getAppData();
         data.settings = {
             company: document.getElementById('settingsCompany').value.trim(),
@@ -613,6 +742,11 @@ function initEvents() {
     });
 
     document.getElementById('backupDataBtn').addEventListener('click', () => {
+        // ⛔ Permission check
+        if (!canManage('settings') && currentUser?.role !== 'admin') {
+            showToast('⛔ You don\'t have permission to backup data.', 'error');
+            return;
+        }
         const data = getAppData();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -625,6 +759,11 @@ function initEvents() {
     });
 
     document.getElementById('restoreDataBtn').addEventListener('click', () => {
+        // ⛔ Permission check
+        if (!canManage('settings') && currentUser?.role !== 'admin') {
+            showToast('⛔ You don\'t have permission to restore data.', 'error');
+            return;
+        }
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
@@ -648,6 +787,11 @@ function initEvents() {
     });
 
     document.getElementById('clearDataBtn').addEventListener('click', async () => {
+        // ⛔ Permission check - only admin can clear all data
+        if (currentUser?.role !== 'admin') {
+            showToast('⛔ Only Admin can clear all data.', 'error');
+            return;
+        }
         if (!confirm('⚠️ Delete ALL data? This cannot be undone!')) return;
         if (!confirm('Are you sure?')) return;
         const emptyData = {
