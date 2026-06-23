@@ -1,53 +1,58 @@
 // ============================================================
-// AUTHENTICATION MODULE (FIXED - auto-login & role from employee record)
+// AUTHENTICATION MODULE (Enterprise Roles)
 // ============================================================
 
-// Global currentUser variable
 let currentUser = null;
 
-// Role-based permissions
 const ROLES = {
-    admin: {
-        label: 'Administrator',
+    superadmin: {
+        label: 'Super Admin',
         icon: '👑',
         permissions: ['all'],
         dashboard: ['stats_all', 'sales_chart', 'low_stock', 'quick_actions_all'],
-        nav: ['dashboard', 'employees', 'inventory', 'products', 'deliveries', 'attendance', 'leave', 'payroll', 'customers', 'finance', 'reports', 'vehicles', 'settings', 'voucher']
+        nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'products', 'purchasing', 'sales', 'deliveries', 'customers', 'finance', 'voucher', 'fleet', 'reports', 'settings']
     },
-    manager: {
-        label: 'Manager',
-        icon: '📊',
+    admin: {
+        label: 'Administrator',
+        icon: '🏢',
         permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory', 'manage_voucher'],
         dashboard: ['stats_employees', 'stats_deliveries', 'stats_low_stock', 'sales_chart', 'quick_actions_ops'],
-        nav: ['dashboard', 'employees', 'inventory', 'deliveries', 'attendance', 'leave', 'payroll', 'reports', 'voucher']
+        nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'deliveries', 'reports', 'voucher']
+    },
+    hr: {
+        label: 'HR Officer',
+        icon: '👤',
+        permissions: ['view_dashboard', 'view_employees', 'view_attendance', 'view_leave', 'view_payroll', 'manage_employees', 'manage_attendance', 'manage_leave'],
+        dashboard: ['stats_employees', 'stats_attendance', 'stats_leave', 'quick_actions_employee'],
+        nav: ['dashboard', 'employees', 'attendance', 'leave', 'payroll', 'reports']
+    },
+    finance: {
+        label: 'Accountant',
+        icon: '💰',
+        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher'],
+        dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
+        nav: ['dashboard', 'finance', 'payroll', 'voucher', 'reports']
     },
     sales: {
-        label: 'Sales Representative',
+        label: 'Sales Manager',
         icon: '🛒',
-        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher', 'view_attendance', 'view_leave', 'view_payroll'],
+        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher'],
         dashboard: ['stats_inventory', 'stats_customers', 'stats_deliveries', 'sales_chart', 'quick_actions_sales'],
-        nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports', 'attendance', 'leave', 'payroll', 'voucher'] // Added 'leave'
+        nav: ['dashboard', 'sales', 'inventory', 'customers', 'deliveries', 'reports', 'voucher']
     },
     delivery: {
         label: 'Delivery Staff',
         icon: '🚚',
-        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'],
-        dashboard: ['stats_deliveries', 'stats_attendance', 'delivery_map', 'quick_actions_delivery'],
-        nav: ['dashboard', 'deliveries', 'attendance', 'vehicles', 'leave', 'payroll', 'voucher'] // Added 'leave'
+        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_voucher'],
+        dashboard: ['stats_deliveries', 'stats_attendance', 'quick_actions_delivery'],
+        nav: ['dashboard', 'deliveries', 'attendance', 'fleet', 'voucher']
     },
     store: {
         label: 'Store Keeper',
         icon: '🏪',
-        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'],
+        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_purchasing'],
         dashboard: ['stats_inventory', 'stats_low_stock', 'inventory_chart', 'quick_actions_store'],
-        nav: ['dashboard', 'inventory', 'products', 'reports', 'attendance', 'leave', 'payroll', 'voucher'] // Added 'leave'
-    },
-    accountant: {
-        label: 'Accountant',
-        icon: '💰',
-        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher', 'view_voucher', 'view_attendance', 'view_leave'],
-        dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
-        nav: ['dashboard', 'finance', 'payroll', 'reports', 'attendance', 'leave', 'voucher'] // Added 'leave'
+        nav: ['dashboard', 'inventory', 'products', 'purchasing', 'reports']
     },
     employee: {
         label: 'Employee',
@@ -58,173 +63,88 @@ const ROLES = {
     }
 };
 
-// DOM references
+// DOM refs
 const loginScreen = document.getElementById('loginScreen');
 const loginBtn = document.getElementById('loginBtn');
 const loginUsername = document.getElementById('loginUsername');
 const loginPassword = document.getElementById('loginPassword');
 const loginError = document.getElementById('loginError');
-const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-const forgotModal = document.getElementById('forgotModal');
-const forgotModalClose = document.getElementById('forgotModalClose');
-const forgotUsername = document.getElementById('forgotUsername');
-const forgotNewPassword = document.getElementById('forgotNewPassword');
-const resetPasswordBtn = document.getElementById('resetPasswordBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const userAvatar = document.getElementById('userAvatar');
 const userName = document.getElementById('userName');
 const userRole = document.getElementById('userRole');
-
-// Role selector
 const roleOptions = document.querySelectorAll('.role-option');
 
-// ============================================================
-// EXPOSE GLOBALLY
-// ============================================================
-window.getCurrentUser = function() { return currentUser; };
+window.getCurrentUser = () => currentUser;
 window.ROLES = ROLES;
 
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-function hasPermission(permission) {
+function hasPermission(p) {
     if (!currentUser) return false;
     const perms = currentUser.permissions || [];
-    return perms.includes('all') || perms.includes(permission);
+    return perms.includes('all') || perms.includes(p);
 }
-
 function canView(module) {
-    if (currentUser && currentUser.role === 'admin') return true;
+    if (currentUser?.role === 'superadmin') return true;
     return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
 }
-
 function canManage(module) {
-    if (currentUser && currentUser.role === 'admin') return true;
+    if (currentUser?.role === 'superadmin') return true;
     return hasPermission('manage_' + module) || hasPermission('all');
 }
-
 window.hasPermission = hasPermission;
 window.canView = canView;
 window.canManage = canManage;
 
-// ============================================================
-// STORAGE HELPERS (to persist user session)
-// ============================================================
 const USER_STORAGE_KEY = 'jayasinghe_erp_user';
+function saveUserToStorage(u) { try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u)); } catch(e){} }
+function loadUserFromStorage() { try { const raw = localStorage.getItem(USER_STORAGE_KEY); if(raw){ const u=JSON.parse(raw); if(u?.uid && u?.role) return u; } } catch(e){} return null; }
+function clearUserStorage(){ localStorage.removeItem(USER_STORAGE_KEY); }
 
-function saveUserToStorage(user) {
-    try {
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    } catch (e) {
-        console.warn('Could not save user to storage:', e);
-    }
-}
-
-function loadUserFromStorage() {
-    try {
-        const raw = localStorage.getItem(USER_STORAGE_KEY);
-        if (raw) {
-            const user = JSON.parse(raw);
-            if (user && user.uid && user.role) {
-                return user;
-            }
-        }
-    } catch (e) {
-        console.warn('Could not load user from storage:', e);
-    }
-    return null;
-}
-
-function clearUserStorage() {
-    localStorage.removeItem(USER_STORAGE_KEY);
-}
-
-// ============================================================
-// LOGIN (with role auto-detection from employee record)
-// ============================================================
 async function handleLogin() {
     const email = loginUsername.value.trim();
     const password = loginPassword.value.trim();
-    // Get selected role from UI (fallback for admin)
-    const selectedRoleFromUI = document.querySelector('.role-option.active')?.dataset.role || 'admin';
-
-    if (!email || !password) {
-        loginError.textContent = 'Please enter email and password.';
-        loginError.style.display = 'block';
-        return;
-    }
-
+    const selectedRoleFromUI = document.querySelector('.role-option.active')?.dataset.role || 'superadmin';
+    if (!email || !password) { loginError.textContent = 'Enter credentials.'; loginError.style.display='block'; return; }
     try {
         loginBtn.disabled = true;
-        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
-
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging...';
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
-
-        // Load data to search for employee
         await loadAllData();
         const data = getAppData();
         const employees = data.employees || [];
-        
-        // Find employee with matching email (case insensitive)
-        const employee = employees.find(emp => emp.email && emp.email.toLowerCase() === email.toLowerCase());
-        
+        const employee = employees.find(e => e.email && e.email.toLowerCase() === email.toLowerCase());
         let role = selectedRoleFromUI;
         if (employee && employee.department) {
-            // Map department to role (case insensitive)
             const dept = employee.department.toLowerCase();
-            if (dept === 'admin') role = 'admin';
-            else if (dept === 'manager') role = 'manager';
+            if (dept === 'super admin') role = 'superadmin';
+            else if (dept === 'admin') role = 'admin';
+            else if (dept === 'hr') role = 'hr';
+            else if (dept === 'finance') role = 'finance';
             else if (dept === 'sales') role = 'sales';
             else if (dept === 'delivery') role = 'delivery';
             else if (dept === 'store') role = 'store';
-            else if (dept === 'finance') role = 'accountant';
-            else role = 'employee'; // HR, IT, etc. fallback to employee
-            console.log('🔍 Role detected from employee record:', role);
-        } else {
-            console.log('ℹ️ No employee record found, using UI selected role:', role);
+            else role = 'employee';
         }
-
-        // Validate role exists
-        if (!ROLES[role]) {
-            role = 'employee';
-        }
-
-        currentUser = {
-            uid: user.uid,
-            email: user.email,
-            name: user.displayName || email.split('@')[0],
-            role: role,
-            permissions: ROLES[role].permissions || []
-        };
-
+        if (!ROLES[role]) role = 'employee';
+        currentUser = { uid: user.uid, email: user.email, name: user.displayName || email.split('@')[0], role, permissions: ROLES[role].permissions || [] };
         saveUserToStorage(currentUser);
-
-        console.log('✅ Current User after login:', currentUser);
-
         loginScreen.classList.add('hidden');
         userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
         userName.textContent = currentUser.name;
         userRole.textContent = ROLES[role].label || role;
-
         renderSidebar();
         switchPanel('dashboard');
-
         showToast(`👋 Welcome, ${currentUser.name}! (${ROLES[role].label})`, 'success');
-
     } catch (error) {
-        loginError.textContent = error.message || 'Invalid credentials.';
+        loginError.textContent = error.message;
         loginError.style.display = 'block';
-        console.error('Login error:', error);
     } finally {
         loginBtn.disabled = false;
         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
     }
 }
 
-// ============================================================
-// LOGOUT
-// ============================================================
 async function handleLogout() {
     try {
         await auth.signOut();
@@ -235,89 +155,30 @@ async function handleLogout() {
         loginUsername.value = 'admin@example.com';
         loginError.style.display = 'none';
         document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
-        document.querySelector('.role-option[data-role="admin"]')?.classList.add('active');
+        document.querySelector('.role-option[data-role="superadmin"]')?.classList.add('active');
         showToast('👋 Logged out.');
-    } catch (error) {
-        console.error('Logout error:', error);
-        showToast('❌ Logout failed.', 'error');
-    }
+    } catch (error) { showToast('❌ Logout failed.', 'error'); }
 }
 
-// ============================================================
-// FORGOT PASSWORD
-// ============================================================
-async function handleResetPassword() {
-    const username = forgotUsername.value.trim();
-    const newPassword = forgotNewPassword.value.trim();
-
-    if (!username || !newPassword) {
-        showToast('Please fill all fields.', 'error');
-        return;
-    }
-
-    try {
-        await auth.sendPasswordResetEmail(username);
-        showToast('✅ Password reset email sent!');
-        forgotModal.classList.remove('open');
-    } catch (error) {
-        showToast('❌ Error: ' + error.message, 'error');
-    }
-}
-
-// ============================================================
-// EVENT LISTENERS
-// ============================================================
 loginBtn.addEventListener('click', handleLogin);
-
-loginPassword.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleLogin();
-});
-loginUsername.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleLogin();
-});
-
+loginPassword.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleLogin(); });
+loginUsername.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleLogin(); });
 roleOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-        roleOptions.forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-    });
+    opt.addEventListener('click', () => { roleOptions.forEach(o => o.classList.remove('active')); opt.classList.add('active'); });
 });
-
 logoutBtn.addEventListener('click', handleLogout);
 
-forgotPasswordLink.addEventListener('click', () => {
-    forgotModal.classList.add('open');
-});
-
-forgotModalClose.addEventListener('click', () => {
-    forgotModal.classList.remove('open');
-});
-
-resetPasswordBtn.addEventListener('click', handleResetPassword);
-
-// ============================================================
-// ✅ FIXED onAuthStateChanged – auto-login from storage
-// ============================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
         const storedUser = loadUserFromStorage();
         if (storedUser && storedUser.uid === user.uid) {
             currentUser = storedUser;
-            console.log('🔄 Auto-login restored for:', currentUser.name);
-
             loginScreen.classList.add('hidden');
             userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
             userName.textContent = currentUser.name;
             userRole.textContent = ROLES[currentUser.role]?.label || currentUser.role;
-
-            loadAllData().then(() => {
-                renderSidebar();
-                switchPanel('dashboard');
-                showToast(`👋 Welcome back, ${currentUser.name}!`, 'success');
-            });
+            loadAllData().then(() => { renderSidebar(); switchPanel('dashboard'); showToast(`👋 Welcome back, ${currentUser.name}!`, 'success'); });
         } else {
-            // User signed in but no stored role – show login screen
-            console.log('User signed in but no stored role. Showing login screen.');
             loginScreen.classList.remove('hidden');
         }
     } else {
