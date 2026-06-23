@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES)
+// MAIN APP MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES & VOUCHER)
 // ============================================================
 
 // ============================================================
@@ -39,6 +39,7 @@ function renderAll() {
             case 'reports': renderReports(); break;
             case 'vehicles': renderVehicles(); break;
             case 'settings': renderSettings(); break;
+            case 'voucher': renderVouchers(); break;
             default: break;
         }
     } else {
@@ -1139,7 +1140,8 @@ function initEvents() {
             salesData: [],
             settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' },
             leaveBalances: {},
-            budget: { monthly: 0, category: {} }
+            budget: { monthly: 0, category: {} },
+            vouchers: []
         };
         setAppData(emptyData);
         await saveAllData();
@@ -1187,6 +1189,204 @@ function initEvents() {
             if (e.target === this) this.classList.remove('open');
         });
     });
+
+    // ── VOUCHER MODULE ──
+    // Set default date
+    const voucherDate = document.getElementById('voucherDate');
+    if (voucherDate) voucherDate.value = todayStr();
+
+    // Auto-generate Voucher No
+    const voucherNoInput = document.getElementById('voucherNo');
+    if (voucherNoInput && !voucherNoInput.value) {
+        const data = getAppData();
+        const vouchers = data.vouchers || [];
+        const nextNo = vouchers.length + 1;
+        voucherNoInput.value = 'JV-' + String(nextNo).padStart(4, '0');
+    }
+
+    // Add Voucher
+    document.getElementById('addVoucherBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('voucher') && !window.canManage('finance')) {
+            showToast('⛔ No permission.', 'error');
+            return;
+        }
+
+        const voucherNo = document.getElementById('voucherNo').value.trim();
+        const date = document.getElementById('voucherDate').value;
+        const paidTo = document.getElementById('voucherPaidTo').value.trim();
+        const amount = parseFloat(document.getElementById('voucherAmount').value);
+        const description = document.getElementById('voucherDescription').value.trim();
+        const approvedBy = document.getElementById('voucherApprovedBy').value.trim();
+        const receivedBy = document.getElementById('voucherReceivedBy').value.trim();
+        const signature = document.getElementById('voucherSignature').value.trim();
+
+        // Get checked payment types
+        const checkboxes = document.querySelectorAll('.voucher-payment-type:checked');
+        const paymentTypes = Array.from(checkboxes).map(cb => cb.value);
+        const otherText = document.getElementById('voucherOtherText').value.trim();
+        if (paymentTypes.includes('Other') && otherText) {
+            paymentTypes[paymentTypes.indexOf('Other')] = 'Other: ' + otherText;
+        }
+
+        if (!paidTo) { showToast('Enter "Paid To" name.', 'error'); return; }
+        if (!amount || amount <= 0) { showToast('Enter valid amount.', 'error'); return; }
+
+        const data = getAppData();
+        if (!data.vouchers) data.vouchers = [];
+
+        const voucherData = {
+            id: generateId(),
+            voucherNo: voucherNo || 'JV-' + String(data.vouchers.length + 1).padStart(4, '0'),
+            date: date || nowISO(),
+            paidTo,
+            amount,
+            paymentTypes,
+            description,
+            approvedBy: approvedBy || '—',
+            receivedBy: receivedBy || '—',
+            signature: signature || '—',
+            createdAt: nowISO(),
+            updatedAt: nowISO()
+        };
+
+        data.vouchers.push(voucherData);
+        setAppData(data);
+        await saveAllData();
+
+        // Reset form (keep date & voucher no)
+        document.getElementById('voucherPaidTo').value = '';
+        document.getElementById('voucherAmount').value = '';
+        document.getElementById('voucherDescription').value = '';
+        document.getElementById('voucherApprovedBy').value = '';
+        document.getElementById('voucherReceivedBy').value = '';
+        document.getElementById('voucherSignature').value = '';
+        document.getElementById('voucherOtherText').value = '';
+        document.querySelectorAll('.voucher-payment-type').forEach(cb => cb.checked = false);
+        
+        // Update next voucher no
+        const nextNo = data.vouchers.length + 1;
+        document.getElementById('voucherNo').value = 'JV-' + String(nextNo).padStart(4, '0');
+
+        renderVouchers();
+        showToast('✅ Voucher #' + voucherData.voucherNo + ' saved!');
+    });
+
+    // ── PRINT VOUCHER ──
+    document.getElementById('printVoucherBtn')?.addEventListener('click', () => {
+        const data = getAppData();
+        const vouchers = data.vouchers || [];
+        if (vouchers.length === 0) {
+            showToast('No vouchers to print.', 'error');
+            return;
+        }
+        // Print the latest voucher
+        const latest = vouchers[vouchers.length - 1];
+        printVoucherCard(latest);
+    });
+
+    function printVoucherCard(voucher) {
+        const paymentTypes = voucher.paymentTypes ? voucher.paymentTypes.join(', ') : '—';
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        printWindow.document.write(`
+            <html><head><title>Voucher #${voucher.voucherNo}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #000; }
+                .voucher-card { max-width: 600px; margin: 0 auto; border: 2px solid #000; padding: 30px; border-radius: 8px; }
+                h2 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+                .label { font-weight: bold; }
+                .amount { font-size: 24px; color: #2563eb; }
+                .footer { margin-top: 30px; display: flex; justify-content: space-between; }
+                .signature-line { border-top: 1px solid #000; width: 150px; margin-top: 30px; text-align: center; font-size: 12px; }
+            </style>
+            </head><body>
+            <div class="voucher-card">
+                <h2>🧾 CASH PAYMENT VOUCHER</h2>
+                <p style="text-align:center; font-size:14px; color:#555;">P.M. Jayasinghe Distributors</p>
+                <div class="row"><span class="label">Voucher No</span><span>${voucher.voucherNo}</span></div>
+                <div class="row"><span class="label">Date</span><span>${formatDate(voucher.date)}</span></div>
+                <div class="row"><span class="label">Paid To</span><span>${voucher.paidTo}</span></div>
+                <div class="row" style="border-bottom: 2px solid #000;"><span class="label">Amount</span><span class="amount">LKR ${formatCurrency(voucher.amount)}</span></div>
+                <div class="row"><span class="label">Payment For</span><span>${paymentTypes}</span></div>
+                <div class="row"><span class="label">Description</span><span>${voucher.description || '—'}</span></div>
+                <div style="margin-top: 20px;">
+                    <div class="row"><span class="label">Approved By</span><span>${voucher.approvedBy}</span></div>
+                    <div class="row"><span class="label">Received By</span><span>${voucher.receivedBy}</span></div>
+                    <div class="row"><span class="label">Signature</span><span>${voucher.signature}</span></div>
+                </div>
+                <div class="footer">
+                    <div><div class="signature-line">Approved Signature</div></div>
+                    <div><div class="signature-line">Receiver Signature</div></div>
+                </div>
+            </div>
+            <script>
+                window.onload = function() { window.print(); window.close(); }
+            <\/script>
+            </body></html>
+        `);
+        printWindow.document.close();
+    }
+
+    // ── DOWNLOAD VOUCHER PDF ──
+    document.getElementById('downloadVoucherBtn')?.addEventListener('click', async () => {
+        const data = getAppData();
+        const vouchers = data.vouchers || [];
+        if (vouchers.length === 0) {
+            showToast('No vouchers to download.', 'error');
+            return;
+        }
+        const latest = vouchers[vouchers.length - 1];
+        await downloadVoucherPDF(latest);
+    });
+
+    async function downloadVoucherPDF(voucher) {
+        const paymentTypes = voucher.paymentTypes ? voucher.paymentTypes.join(', ') : '—';
+        
+        // Create a temporary div to render the voucher card for PDF
+        const tempDiv = document.createElement('div');
+        tempDiv.style.cssText = 'position:absolute; left:-9999px; top:0; width:600px; background:#fff; padding:30px; font-family:Arial,sans-serif; border:2px solid #000; border-radius:8px;';
+        tempDiv.innerHTML = `
+            <h2 style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px;">🧾 CASH PAYMENT VOUCHER</h2>
+            <p style="text-align:center; font-size:14px; color:#555;">P.M. Jayasinghe Distributors</p>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ccc;"><strong>Voucher No</strong><span>${voucher.voucherNo}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ccc;"><strong>Date</strong><span>${formatDate(voucher.date)}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ccc;"><strong>Paid To</strong><span>${voucher.paidTo}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:2px solid #000; font-size:24px; color:#2563eb;"><strong>Amount</strong><span>LKR ${formatCurrency(voucher.amount)}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ccc;"><strong>Payment For</strong><span>${paymentTypes}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ccc;"><strong>Description</strong><span>${voucher.description || '—'}</span></div>
+            <div style="margin-top:20px;">
+                <div style="display:flex; justify-content:space-between; padding:4px 0;"><strong>Approved By</strong><span>${voucher.approvedBy}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:4px 0;"><strong>Received By</strong><span>${voucher.receivedBy}</span></div>
+                <div style="display:flex; justify-content:space-between; padding:4px 0;"><strong>Signature</strong><span>${voucher.signature}</span></div>
+            </div>
+            <div style="margin-top:30px; display:flex; justify-content:space-between;">
+                <div><div style="border-top:1px solid #000; width:150px; margin-top:30px; text-align:center; font-size:12px;">Approved Signature</div></div>
+                <div><div style="border-top:1px solid #000; width:150px; margin-top:30px; text-align:center; font-size:12px;">Receiver Signature</div></div>
+            </div>
+        `;
+        document.body.appendChild(tempDiv);
+
+        try {
+            const canvas = await html2canvas(tempDiv, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Voucher_${voucher.voucherNo}.pdf`);
+            showToast('✅ PDF Downloaded!');
+        } catch (err) {
+            console.error('PDF Error:', err);
+            showToast('❌ Failed to generate PDF.', 'error');
+        } finally {
+            document.body.removeChild(tempDiv);
+        }
+    }
 
     console.log('✅ Events initialized!');
 }
