@@ -19,9 +19,9 @@ let appData = {
     salesData: [],
     settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567',
         email: 'info@jayasinghe.lk' },
-    // NEW: leave balances & budget
     leaveBalances: {},
-    budget: { monthly: 0, category: {} }
+    budget: { monthly: 0, category: {} },
+    vouchers: [] // NEW
 };
 
 const COLLECTIONS = {
@@ -40,7 +40,8 @@ const COLLECTIONS = {
     salesData: 'salesData',
     settings: 'settings',
     leaveBalances: 'leaveBalances',
-    budget: 'budget'
+    budget: 'budget',
+    vouchers: 'vouchers' // NEW
 };
 
 // ============================================================
