@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES & VOUCHER)
+// MAIN APP MODULE (FULLY INTEGRATED - WITH PROFILE MODAL)
 // ============================================================
 
 // ============================================================
@@ -18,7 +18,7 @@ function showToast(msg, type = 'success') {
 window.showToast = showToast;
 
 // ============================================================
-// RENDER ALL (Active panel only - performance fix)
+// RENDER ALL
 // ============================================================
 function renderAll() {
     console.log('🔄 Rendering active panel...');
@@ -57,14 +57,11 @@ function populateItemDropdowns() {
     const catSelect = document.getElementById('itemCategory');
     const brandSelect = document.getElementById('itemBrand');
     if (!catSelect || !brandSelect) return;
-    
     const currentCat = catSelect.value;
     const currentBrand = brandSelect.value;
-
     catSelect.innerHTML = '<option value="">Select...</option>' + (data.categories || []).map(c =>
         `<option value="${c}">${c}</option>`).join('');
     if (currentCat && [...catSelect.options].some(o => o.value === currentCat)) catSelect.value = currentCat;
-
     brandSelect.innerHTML = '<option value="">Select...</option>' + (data.brands || []).map(b =>
         `<option value="${b}">${b}</option>`).join('');
     if (currentBrand && [...brandSelect.options].some(o => o.value === currentBrand)) brandSelect.value = currentBrand;
@@ -72,23 +69,16 @@ function populateItemDropdowns() {
 window.populateItemDropdowns = populateItemDropdowns;
 
 // ============================================================
-// POPULATE DELIVERY DROPDOWNS (ENHANCED)
+// POPULATE DELIVERY DROPDOWNS
 // ============================================================
 function populateDeliveryDropdowns() {
     const data = getAppData();
-    
-    // Customer dropdown with balance display
     const customerSelect = document.getElementById('delCustomerSelect');
     if (customerSelect) {
         const currentVal = customerSelect.value;
         customerSelect.innerHTML = '<option value="">-- Select Customer --</option>' + 
-            (data.customers || []).map(c => 
-                `<option value="${c.id}">${escapeHtml(c.name)} ${c.balance > 0 ? '⚠️' : ''}</option>`
-            ).join('');
-        if (currentVal && [...customerSelect.options].some(o => o.value === currentVal)) {
-            customerSelect.value = currentVal;
-        }
-        // Show customer balance on change
+            (data.customers || []).map(c => `<option value="${c.id}">${escapeHtml(c.name)} ${c.balance > 0 ? '⚠️' : ''}</option>`).join('');
+        if (currentVal && [...customerSelect.options].some(o => o.value === currentVal)) customerSelect.value = currentVal;
         customerSelect.onchange = function() {
             const customer = data.customers.find(c => c.id === this.value);
             const balanceDisplay = document.getElementById('customerBalanceDisplay');
@@ -97,26 +87,17 @@ function populateDeliveryDropdowns() {
                     `⚠️ Outstanding Balance: LKR ${formatCurrency(customer.balance)}` : 
                     `✅ Balance: LKR ${formatCurrency(customer.balance || 0)}`;
                 balanceDisplay.style.color = customer.balance > 0 ? 'var(--danger)' : 'var(--success)';
-            } else if (balanceDisplay) {
-                balanceDisplay.textContent = '';
-            }
+            } else if (balanceDisplay) balanceDisplay.textContent = '';
         };
-        if (customerSelect.value) {
-            customerSelect.dispatchEvent(new Event('change'));
-        }
+        if (customerSelect.value) customerSelect.dispatchEvent(new Event('change'));
     }
-
-    // Item dropdown with stock display
     const itemSelect = document.getElementById('delItemSelect');
     if (itemSelect) {
         const currentVal = itemSelect.value;
         itemSelect.innerHTML = '<option value="">-- Select --</option>' + 
             (data.items || []).filter(i => i.status !== 'inactive').map(i =>
-                `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0} available)</option>`
-            ).join('');
-        if (currentVal && [...itemSelect.options].some(o => o.value === currentVal)) {
-            itemSelect.value = currentVal;
-        }
+                `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0} available)</option>`).join('');
+        if (currentVal && [...itemSelect.options].some(o => o.value === currentVal)) itemSelect.value = currentVal;
         itemSelect.onchange = function() {
             const item = data.items.find(i => i.id === this.value);
             const stockDisplay = document.getElementById('itemStockDisplay');
@@ -124,46 +105,28 @@ function populateDeliveryDropdowns() {
                 const qty = item.qty || 0;
                 stockDisplay.textContent = qty <= 5 ? `⚠️ Low Stock: ${qty} left` : `✅ Available: ${qty} units`;
                 stockDisplay.style.color = qty <= 5 ? 'var(--danger)' : 'var(--success)';
-            } else if (stockDisplay) {
-                stockDisplay.textContent = '';
-            }
+            } else if (stockDisplay) stockDisplay.textContent = '';
         };
-        if (itemSelect.value) {
-            itemSelect.dispatchEvent(new Event('change'));
-        }
+        if (itemSelect.value) itemSelect.dispatchEvent(new Event('change'));
     }
-
-    // Driver dropdown (employees with Delivery department or all active)
     const driverSelect = document.getElementById('delDriverSelect');
     if (driverSelect) {
         const currentVal = driverSelect.value;
         const employees = data.employees || [];
-        const deliveryStaff = employees.filter(e => 
-            e.status === 'active' && 
-            (e.department === 'Delivery' || e.designation?.toLowerCase().includes('driver'))
-        );
+        const deliveryStaff = employees.filter(e => e.status === 'active' && 
+            (e.department === 'Delivery' || e.designation?.toLowerCase().includes('driver')));
         const staffList = deliveryStaff.length > 0 ? deliveryStaff : employees.filter(e => e.status === 'active');
         driverSelect.innerHTML = '<option value="">-- Select Driver --</option>' + 
             staffList.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-        if (currentVal && [...driverSelect.options].some(o => o.value === currentVal)) {
-            driverSelect.value = currentVal;
-        }
+        if (currentVal && [...driverSelect.options].some(o => o.value === currentVal)) driverSelect.value = currentVal;
     }
-
-    // Vehicle dropdown
     const vehicleSelect = document.getElementById('delVehicleSelect');
     if (vehicleSelect) {
         const currentVal = vehicleSelect.value;
         vehicleSelect.innerHTML = '<option value="">-- Select Vehicle --</option>' + 
-            (data.vehicles || []).map(v => 
-                `<option value="${v.id}">${escapeHtml(v.vehicleNo)} (${escapeHtml(v.driver || 'No Driver')})</option>`
-            ).join('');
-        if (currentVal && [...vehicleSelect.options].some(o => o.value === currentVal)) {
-            vehicleSelect.value = currentVal;
-        }
+            (data.vehicles || []).map(v => `<option value="${v.id}">${escapeHtml(v.vehicleNo)} (${escapeHtml(v.driver || 'No Driver')})</option>`).join('');
+        if (currentVal && [...vehicleSelect.options].some(o => o.value === currentVal)) vehicleSelect.value = currentVal;
     }
-
-    // Set default scheduled date (1 hour from now)
     const scheduledDate = document.getElementById('delScheduledDate');
     if (scheduledDate && !scheduledDate.value) {
         const now = new Date();
@@ -172,6 +135,71 @@ function populateDeliveryDropdowns() {
     }
 }
 window.populateDeliveryDropdowns = populateDeliveryDropdowns;
+
+// ============================================================
+// PROFILE MODAL
+// ============================================================
+function openProfileModal() {
+    const user = window.getCurrentUser();
+    if (!user) { showToast('Please login first.', 'error'); return; }
+    const data = getAppData();
+    const employees = data.employees || [];
+    const emp = employees.find(e => e.email === user.email) || 
+                employees.find(e => e.id === user.uid) || 
+                { name: user.name, email: user.email, department: user.role };
+    const nameEl = document.getElementById('profileName');
+    const roleEl = document.getElementById('profileRole');
+    const detailsEl = document.getElementById('profileDetails');
+    const statsEl = document.getElementById('profileStats');
+    if (nameEl) nameEl.textContent = emp.name || user.name;
+    if (roleEl) roleEl.textContent = (emp.department || user.role || 'Employee');
+    if (detailsEl) {
+        detailsEl.innerHTML = `
+            <div><strong>📧 Email</strong><br/>${emp.email || user.email || '—'}</div>
+            <div><strong>🆔 NIC</strong><br/>${emp.nic || '—'}</div>
+            <div><strong>🏢 Department</strong><br/>${emp.department || '—'}</div>
+            <div><strong>💼 Designation</strong><br/>${emp.designation || '—'}</div>
+            <div><strong>📞 Contact</strong><br/>${emp.contact || '—'}</div>
+            <div><strong>📅 Joined</strong><br/>${emp.joinedDate ? formatDate(emp.joinedDate) : '—'}</div>
+            <div><strong>💰 Salary</strong><br/>LKR ${formatCurrency(emp.salary || 0)}</div>
+            <div><strong>📌 Status</strong><br/><span class="badge ${emp.status === 'active' ? 'badge-success' : 'badge-danger'}">${emp.status || 'Active'}</span></div>
+        `;
+    }
+    const attendance = data.attendance || [];
+    const leaves = data.leaves || [];
+    const payroll = data.payroll || [];
+    const vouchers = data.vouchers || [];
+    const empAttendance = attendance.filter(a => a.employeeId === emp.id || a.employeeId === user.uid);
+    const empLeaves = leaves.filter(l => l.employeeId === emp.id || l.employeeId === user.uid);
+    const empPayroll = payroll.filter(p => p.employeeId === emp.id || p.employeeId === user.uid);
+    const empVouchers = vouchers.filter(v => v.paidTo === emp.name || v.createdBy === emp.id);
+    const totalPresent = empAttendance.length;
+    const pendingLeaves = empLeaves.filter(l => l.status === 'pending').length;
+    const totalPayroll = empPayroll.reduce((s, p) => s + (p.net || 0), 0);
+    const totalVouchers = empVouchers.length;
+    if (statsEl) {
+        statsEl.innerHTML = `
+            <div style="text-align:center; background:var(--bg); padding:10px; border-radius:8px;">
+                <div style="font-size:18px; font-weight:700; color:var(--success);">${totalPresent}</div>
+                <div style="font-size:10px; color:var(--text-muted);">✅ Present</div>
+            </div>
+            <div style="text-align:center; background:var(--bg); padding:10px; border-radius:8px;">
+                <div style="font-size:18px; font-weight:700; color:var(--warning);">${pendingLeaves}</div>
+                <div style="font-size:10px; color:var(--text-muted);">⏳ Pending Leave</div>
+            </div>
+            <div style="text-align:center; background:var(--bg); padding:10px; border-radius:8px;">
+                <div style="font-size:18px; font-weight:700; color:var(--primary);">LKR ${formatCurrency(totalPayroll)}</div>
+                <div style="font-size:10px; color:var(--text-muted);">💰 Payroll</div>
+            </div>
+            <div style="text-align:center; background:var(--bg); padding:10px; border-radius:8px;">
+                <div style="font-size:18px; font-weight:700; color:var(--purple);">${totalVouchers}</div>
+                <div style="font-size:10px; color:var(--text-muted);">🧾 Vouchers</div>
+            </div>
+        `;
+    }
+    document.getElementById('profileModal').classList.add('open');
+}
+window.openProfileModal = openProfileModal;
 
 // ============================================================
 // EVENT BINDINGS
@@ -183,12 +211,22 @@ function initEvents() {
     const menuToggle = document.getElementById('menuToggle');
     const sidebarClose = document.getElementById('sidebarClose');
     const sidebar = document.getElementById('sidebar');
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-    }
-    if (sidebarClose) {
-        sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
-    }
+    if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    if (sidebarClose) sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
+
+    // ── User Badge Click → Profile Modal ──
+    document.getElementById('userBadge')?.addEventListener('click', function(e) {
+        if (e.target.closest('.logout-btn')) return;
+        openProfileModal();
+    });
+
+    // ── Profile Modal Close ──
+    document.getElementById('profileModalClose')?.addEventListener('click', () => {
+        document.getElementById('profileModal').classList.remove('open');
+    });
+    document.getElementById('profileModal')?.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('open');
+    });
 
     // ── Dark Mode ──
     let isDark = false;
@@ -228,16 +266,13 @@ function initEvents() {
     }
 
     // ── Sync Button ──
-    const syncBtn = document.getElementById('syncBtn');
-    if (syncBtn) {
-        syncBtn.addEventListener('click', async () => {
-            showToast('🔄 Syncing...', 'warning');
-            await saveAllData();
-            await loadAllData();
-            renderAll();
-            showToast('✅ Sync complete!');
-        });
-    }
+    document.getElementById('syncBtn')?.addEventListener('click', async () => {
+        showToast('🔄 Syncing...', 'warning');
+        await saveAllData();
+        await loadAllData();
+        renderAll();
+        showToast('✅ Sync complete!');
+    });
 
     // ── Clear Login Fields ──
     document.getElementById('clearLoginBtn')?.addEventListener('click', () => {
@@ -251,10 +286,7 @@ function initEvents() {
     const addEmpBtn = document.getElementById('addEmployeeBtn');
     if (addEmpBtn) {
         addEmpBtn.addEventListener('click', () => {
-            if (!window.canManage('employees')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
+            if (!window.canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
             document.getElementById('empEditId').value = '';
             document.getElementById('employeeModalTitle').textContent = '👤 Add Employee';
             document.getElementById('empName').value = '';
@@ -273,185 +305,135 @@ function initEvents() {
             document.getElementById('employeeModal').classList.add('open');
         });
     }
+    document.getElementById('empModalClose')?.addEventListener('click', () => {
+        document.getElementById('employeeModal').classList.remove('open');
+    });
 
-    const empModalClose = document.getElementById('empModalClose');
-    if (empModalClose) {
-        empModalClose.addEventListener('click', () => {
-            document.getElementById('employeeModal').classList.remove('open');
-        });
-    }
-
-    // ── Save Employee (with Auth) ──
-    const empSaveBtn = document.getElementById('empSaveBtn');
-    if (empSaveBtn) {
-        empSaveBtn.addEventListener('click', async () => {
-            if (!window.canManage('employees')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
-            const id = document.getElementById('empEditId').value;
-            const name = document.getElementById('empName').value.trim();
-            const username = document.getElementById('empUsername').value.trim();
-            const password = document.getElementById('empPassword').value.trim();
-
-            if (!name) { showToast('Enter employee name.', 'error'); return; }
-            if (!id && !username) { showToast('Enter username (email) for new employee.', 'error'); return; }
-            if (!id && !password) { showToast('Enter password for new employee.', 'error'); return; }
-            if (!id && password.length < 6) { showToast('Password must be at least 6 characters.', 'error'); return; }
-
-            const data = getAppData();
-            const empData = {
-                name,
-                nic: document.getElementById('empNIC').value.trim(),
-                department: document.getElementById('empDept').value,
-                designation: document.getElementById('empDesignation').value.trim(),
-                contact: document.getElementById('empContact').value.trim(),
-                emergency: document.getElementById('empEmergency').value.trim(),
-                address: document.getElementById('empAddress').value.trim(),
-                joinedDate: document.getElementById('empJoined').value,
-                salary: parseFloat(document.getElementById('empSalary').value) || 0,
-                epf: document.getElementById('empEpf').value.trim(),
-                status: document.getElementById('empStatus').value,
-                updatedAt: nowISO()
-            };
-
-            try {
-                if (id) {
-                    const idx = data.employees.findIndex(e => e.id === id);
-                    if (idx > -1) {
-                        const existing = data.employees[idx];
-                        data.employees[idx] = { ...existing, ...empData };
-                    }
-                } else {
-                    const userCredential = await auth.createUserWithEmailAndPassword(username, password);
-                    const user = userCredential.user;
-                    empData.uid = user.uid;
-                    empData.email = username;
-                    empData.id = generateId();
-                    empData.createdAt = nowISO();
-                    data.employees.push(empData);
-                    if (!data.leaveBalances) data.leaveBalances = {};
-                    data.leaveBalances[empData.id] = { sick: 10, casual: 5, annual: 12 };
-                    showToast(`✅ Employee added! They can login with ${username}`);
-                }
-
-                setAppData(data);
-                await saveAllData();
-                document.getElementById('employeeModal').classList.remove('open');
-                renderEmployees();
-                document.getElementById('empPassword').value = '';
-                if (!id) document.getElementById('empUsername').value = '';
-            } catch (error) {
-                console.error('Error saving employee:', error);
-                showToast('❌ ' + (error.message || 'Failed to save employee.'), 'error');
-            }
-        });
-    }
-
-    // ── Item Modal ──
-    const addItemBtn = document.getElementById('addItemBtn');
-    if (addItemBtn) {
-        addItemBtn.addEventListener('click', () => {
-            if (!window.canManage('inventory')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
-            document.getElementById('itemEditId').value = '';
-            document.getElementById('itemModalTitle').textContent = '📦 Add Item';
-            document.getElementById('itemBarcode').value = '';
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemQty').value = '1';
-            document.getElementById('itemPrice').value = '0';
-            document.getElementById('itemCategory').value = '';
-            document.getElementById('itemBrand').value = '';
-            document.getElementById('itemDesc').value = '';
-            document.getElementById('itemExpiry').value = '';
-            document.getElementById('itemBatch').value = '';
-            document.getElementById('itemStatus').value = 'active';
-            populateItemDropdowns();
-            closeScanner();
-            document.getElementById('itemModal').classList.add('open');
-        });
-    }
-
-    const itemModalClose = document.getElementById('itemModalClose');
-    if (itemModalClose) {
-        itemModalClose.addEventListener('click', () => {
-            closeScanner();
-            document.getElementById('itemModal').classList.remove('open');
-        });
-    }
-
-    const itemSaveBtn = document.getElementById('itemSaveBtn');
-    if (itemSaveBtn) {
-        itemSaveBtn.addEventListener('click', async () => {
-            if (!window.canManage('inventory')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
-            const id = document.getElementById('itemEditId').value;
-            const name = document.getElementById('itemName').value.trim();
-            if (!name) { showToast('Enter item name.', 'error'); return; }
-            const data = getAppData();
-            const itemData = {
-                barcode: document.getElementById('itemBarcode').value.trim(),
-                name,
-                qty: parseInt(document.getElementById('itemQty').value) || 0,
-                price: parseFloat(document.getElementById('itemPrice').value) || 0,
-                category: document.getElementById('itemCategory').value,
-                brand: document.getElementById('itemBrand').value,
-                desc: document.getElementById('itemDesc').value.trim(),
-                expiry: document.getElementById('itemExpiry').value,
-                batch: document.getElementById('itemBatch').value.trim(),
-                status: document.getElementById('itemStatus').value,
-                updatedAt: nowISO()
-            };
+    // ── Save Employee ──
+    document.getElementById('empSaveBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
+        const id = document.getElementById('empEditId').value;
+        const name = document.getElementById('empName').value.trim();
+        const username = document.getElementById('empUsername').value.trim();
+        const password = document.getElementById('empPassword').value.trim();
+        if (!name) { showToast('Enter employee name.', 'error'); return; }
+        if (!id && !username) { showToast('Enter username (email) for new employee.', 'error'); return; }
+        if (!id && !password) { showToast('Enter password for new employee.', 'error'); return; }
+        if (!id && password.length < 6) { showToast('Password must be at least 6 characters.', 'error'); return; }
+        const data = getAppData();
+        const empData = {
+            name, nic: document.getElementById('empNIC').value.trim(),
+            department: document.getElementById('empDept').value,
+            designation: document.getElementById('empDesignation').value.trim(),
+            contact: document.getElementById('empContact').value.trim(),
+            emergency: document.getElementById('empEmergency').value.trim(),
+            address: document.getElementById('empAddress').value.trim(),
+            joinedDate: document.getElementById('empJoined').value,
+            salary: parseFloat(document.getElementById('empSalary').value) || 0,
+            epf: document.getElementById('empEpf').value.trim(),
+            status: document.getElementById('empStatus').value,
+            updatedAt: nowISO()
+        };
+        try {
             if (id) {
-                const idx = data.items.findIndex(i => i.id === id);
-                if (idx > -1) data.items[idx] = { ...data.items[idx], ...itemData };
+                const idx = data.employees.findIndex(e => e.id === id);
+                if (idx > -1) data.employees[idx] = { ...data.employees[idx], ...empData };
             } else {
-                itemData.id = generateId();
-                itemData.createdAt = nowISO();
-                data.items.push(itemData);
+                const userCredential = await auth.createUserWithEmailAndPassword(username, password);
+                const user = userCredential.user;
+                empData.uid = user.uid;
+                empData.email = username;
+                empData.id = generateId();
+                empData.createdAt = nowISO();
+                data.employees.push(empData);
+                if (!data.leaveBalances) data.leaveBalances = {};
+                data.leaveBalances[empData.id] = { sick: 10, casual: 5, annual: 12 };
+                showToast(`✅ Employee added! They can login with ${username}`);
             }
             setAppData(data);
             await saveAllData();
-            closeScanner();
-            document.getElementById('itemModal').classList.remove('open');
-            renderInventory();
-            renderDashboard();
-            showToast(id ? '✅ Item updated!' : '✅ Item added!');
-        });
-    }
+            document.getElementById('employeeModal').classList.remove('open');
+            renderEmployees();
+            document.getElementById('empPassword').value = '';
+            if (!id) document.getElementById('empUsername').value = '';
+        } catch (error) {
+            console.error('Error saving employee:', error);
+            showToast('❌ ' + (error.message || 'Failed to save employee.'), 'error');
+        }
+    });
+
+    // ── Item Modal ──
+    document.getElementById('addItemBtn')?.addEventListener('click', () => {
+        if (!window.canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
+        document.getElementById('itemEditId').value = '';
+        document.getElementById('itemModalTitle').textContent = '📦 Add Item';
+        document.getElementById('itemBarcode').value = '';
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemQty').value = '1';
+        document.getElementById('itemPrice').value = '0';
+        document.getElementById('itemCategory').value = '';
+        document.getElementById('itemBrand').value = '';
+        document.getElementById('itemDesc').value = '';
+        document.getElementById('itemExpiry').value = '';
+        document.getElementById('itemBatch').value = '';
+        document.getElementById('itemStatus').value = 'active';
+        populateItemDropdowns();
+        closeScanner();
+        document.getElementById('itemModal').classList.add('open');
+    });
+    document.getElementById('itemModalClose')?.addEventListener('click', () => {
+        closeScanner();
+        document.getElementById('itemModal').classList.remove('open');
+    });
+    document.getElementById('itemSaveBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
+        const id = document.getElementById('itemEditId').value;
+        const name = document.getElementById('itemName').value.trim();
+        if (!name) { showToast('Enter item name.', 'error'); return; }
+        const data = getAppData();
+        const itemData = {
+            barcode: document.getElementById('itemBarcode').value.trim(),
+            name, qty: parseInt(document.getElementById('itemQty').value) || 0,
+            price: parseFloat(document.getElementById('itemPrice').value) || 0,
+            category: document.getElementById('itemCategory').value,
+            brand: document.getElementById('itemBrand').value,
+            desc: document.getElementById('itemDesc').value.trim(),
+            expiry: document.getElementById('itemExpiry').value,
+            batch: document.getElementById('itemBatch').value.trim(),
+            status: document.getElementById('itemStatus').value,
+            updatedAt: nowISO()
+        };
+        if (id) {
+            const idx = data.items.findIndex(i => i.id === id);
+            if (idx > -1) data.items[idx] = { ...data.items[idx], ...itemData };
+        } else {
+            itemData.id = generateId();
+            itemData.createdAt = nowISO();
+            data.items.push(itemData);
+        }
+        setAppData(data);
+        await saveAllData();
+        closeScanner();
+        document.getElementById('itemModal').classList.remove('open');
+        renderInventory();
+        renderDashboard();
+        showToast(id ? '✅ Item updated!' : '✅ Item added!');
+    });
 
     // ── Barcode Scanner ──
     let html5QrCode = null;
-
     function closeScanner() {
         const container = document.getElementById('scannerContainer');
-        if (html5QrCode) {
-            try {
-                html5QrCode.stop();
-                html5QrCode.clear();
-            } catch(e) {}
-            html5QrCode = null;
-        }
+        if (html5QrCode) { try { html5QrCode.stop(); html5QrCode.clear(); } catch(e) {} html5QrCode = null; }
         if (container) container.style.display = 'none';
     }
     window.closeScanner = closeScanner;
-
     document.getElementById('scanBarcodeBtn')?.addEventListener('click', async () => {
         const container = document.getElementById('scannerContainer');
         const readerElement = document.getElementById('scannerReader');
         const barcodeInput = document.getElementById('itemBarcode');
-        
         if (!container || !readerElement) return;
-
-        if (container.style.display === 'block') {
-            closeScanner();
-            return;
-        }
-
+        if (container.style.display === 'block') { closeScanner(); return; }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             stream.getTracks().forEach(track => track.stop());
@@ -459,222 +441,139 @@ function initEvents() {
             showToast('⚠️ Camera access denied. Please allow camera permission.', 'error');
             return;
         }
-
         container.style.display = 'block';
         readerElement.innerHTML = '';
-
         try {
             html5QrCode = new Html5Qrcode("scannerReader");
             const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
-
-            await html5QrCode.start(
-                { facingMode: "environment" },
-                config,
-                (decodedText) => {
-                    barcodeInput.value = decodedText;
-                    showToast('✅ Barcode scanned: ' + decodedText, 'success');
-                    closeScanner();
-                },
-                (error) => {}
-            );
+            await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                barcodeInput.value = decodedText;
+                showToast('✅ Barcode scanned: ' + decodedText, 'success');
+                closeScanner();
+            }, (error) => {});
         } catch (err) {
             console.error('Scanner error:', err);
             showToast('❌ Failed to start camera. Please try again.', 'error');
             closeScanner();
         }
     });
-
     document.getElementById('closeScannerBtn')?.addEventListener('click', closeScanner);
 
     // ── Customer Modal ──
-    const addCustBtn = document.getElementById('addCustomerBtn');
-    if (addCustBtn) {
-        addCustBtn.addEventListener('click', () => {
-            if (!window.canManage('customers')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
-            document.getElementById('custEditId').value = '';
-            document.getElementById('customerModalTitle').textContent = '👤 Add Customer';
-            document.getElementById('custName').value = '';
-            document.getElementById('custContact').value = '';
-            document.getElementById('custCategory').value = 'Retail';
-            document.getElementById('custAddress').value = '';
-            document.getElementById('custCreditLimit').value = '0';
-            document.getElementById('custBalance').value = '0';
-            document.getElementById('customerModal').classList.add('open');
-        });
-    }
-
-    const custModalClose = document.getElementById('custModalClose');
-    if (custModalClose) {
-        custModalClose.addEventListener('click', () => {
-            document.getElementById('customerModal').classList.remove('open');
-        });
-    }
-
-    const custSaveBtn = document.getElementById('custSaveBtn');
-    if (custSaveBtn) {
-        custSaveBtn.addEventListener('click', async () => {
-            if (!window.canManage('customers')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
-            const id = document.getElementById('custEditId').value;
-            const name = document.getElementById('custName').value.trim();
-            if (!name) { showToast('Enter customer name.', 'error'); return; }
-            const data = getAppData();
-            const custData = {
-                name,
-                contact: document.getElementById('custContact').value.trim(),
-                category: document.getElementById('custCategory').value,
-                address: document.getElementById('custAddress').value.trim(),
-                creditLimit: parseFloat(document.getElementById('custCreditLimit').value) || 0,
-                balance: parseFloat(document.getElementById('custBalance').value) || 0,
-                updatedAt: nowISO()
-            };
-            if (id) {
-                const idx = data.customers.findIndex(c => c.id === id);
-                if (idx > -1) data.customers[idx] = { ...data.customers[idx], ...custData };
-            } else {
-                custData.id = generateId();
-                custData.createdAt = nowISO();
-                data.customers.push(custData);
-            }
-            setAppData(data);
-            await saveAllData();
-            document.getElementById('customerModal').classList.remove('open');
-            renderCustomers();
-            showToast(id ? '✅ Customer updated!' : '✅ Customer added!');
-        });
-    }
+    document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
+        if (!window.canManage('customers')) { showToast('⛔ No permission.', 'error'); return; }
+        document.getElementById('custEditId').value = '';
+        document.getElementById('customerModalTitle').textContent = '👤 Add Customer';
+        document.getElementById('custName').value = '';
+        document.getElementById('custContact').value = '';
+        document.getElementById('custCategory').value = 'Retail';
+        document.getElementById('custAddress').value = '';
+        document.getElementById('custCreditLimit').value = '0';
+        document.getElementById('custBalance').value = '0';
+        document.getElementById('customerModal').classList.add('open');
+    });
+    document.getElementById('custModalClose')?.addEventListener('click', () => {
+        document.getElementById('customerModal').classList.remove('open');
+    });
+    document.getElementById('custSaveBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('customers')) { showToast('⛔ No permission.', 'error'); return; }
+        const id = document.getElementById('custEditId').value;
+        const name = document.getElementById('custName').value.trim();
+        if (!name) { showToast('Enter customer name.', 'error'); return; }
+        const data = getAppData();
+        const custData = {
+            name, contact: document.getElementById('custContact').value.trim(),
+            category: document.getElementById('custCategory').value,
+            address: document.getElementById('custAddress').value.trim(),
+            creditLimit: parseFloat(document.getElementById('custCreditLimit').value) || 0,
+            balance: parseFloat(document.getElementById('custBalance').value) || 0,
+            updatedAt: nowISO()
+        };
+        if (id) {
+            const idx = data.customers.findIndex(c => c.id === id);
+            if (idx > -1) data.customers[idx] = { ...data.customers[idx], ...custData };
+        } else {
+            custData.id = generateId();
+            custData.createdAt = nowISO();
+            data.customers.push(custData);
+        }
+        setAppData(data);
+        await saveAllData();
+        document.getElementById('customerModal').classList.remove('open');
+        renderCustomers();
+        showToast(id ? '✅ Customer updated!' : '✅ Customer added!');
+    });
 
     // ── Quick Actions ──
     document.getElementById('quickAddItem')?.addEventListener('click', () => {
-        if (!window.canManage('inventory')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
         document.getElementById('addItemBtn')?.click();
     });
     document.getElementById('quickNewDelivery')?.addEventListener('click', () => {
-        if (!window.canManage('deliveries') && !window.canView('deliveries')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('deliveries') && !window.canView('deliveries')) { showToast('⛔ No permission.', 'error'); return; }
         switchPanel('deliveries');
     });
     document.getElementById('quickAddEmployee')?.addEventListener('click', () => {
-        if (!window.canManage('employees')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
         document.getElementById('addEmployeeBtn')?.click();
     });
-    document.getElementById('quickPrint')?.addEventListener('click', () => {
-        window.print();
-    });
+    document.getElementById('quickPrint')?.addEventListener('click', () => window.print());
 
-    // ── ENHANCED DELIVERIES ──
-    // Quick Add Customer from deliveries
+    // ── Deliveries ──
     document.getElementById('quickAddCustomerBtn')?.addEventListener('click', () => {
-        if (!window.canManage('customers')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('customers')) { showToast('⛔ No permission.', 'error'); return; }
         document.getElementById('addCustomerBtn')?.click();
     });
-
-    // Submit Delivery
-    const deliverSubmit = document.getElementById('deliverSubmitBtn');
-    if (deliverSubmit) {
-        deliverSubmit.addEventListener('click', async () => {
-            if (!window.canManage('deliveries') && !window.hasPermission('create_deliveries')) {
-                showToast('⛔ No permission.', 'error');
-                return;
-            }
-            const customerId = document.getElementById('delCustomerSelect')?.value;
-            const itemId = document.getElementById('delItemSelect')?.value;
-            const qty = parseInt(document.getElementById('delQty')?.value);
-            const driverId = document.getElementById('delDriverSelect')?.value;
-            const vehicleId = document.getElementById('delVehicleSelect')?.value;
-            const status = document.getElementById('delStatusSelect')?.value || 'pending';
-            const route = document.getElementById('delRoute')?.value.trim() || '';
-            const scheduledDate = document.getElementById('delScheduledDate')?.value || '';
-            const notes = document.getElementById('delNotes')?.value.trim() || '';
-
-            if (!customerId) { showToast('Select a customer.', 'error'); return; }
-            if (!itemId) { showToast('Select an item.', 'error'); return; }
-            if (!qty || qty < 1) { showToast('Enter valid qty.', 'error'); return; }
-
-            const data = getAppData();
-            const customer = data.customers.find(c => c.id === customerId);
-            const item = data.items.find(i => i.id === itemId);
-            const driver = data.employees.find(e => e.id === driverId);
-            const vehicle = data.vehicles.find(v => v.id === vehicleId);
-
-            if (!item) { showToast('Item not found.', 'error'); return; }
-            if ((item.qty || 0) < qty) {
-                showToast(`Insufficient stock! Available: ${item.qty}`, 'error');
-                return;
-            }
-
-            // Deduct stock only if status is 'delivered'
-            if (status === 'delivered') {
-                item.qty = (item.qty || 0) - qty;
-                item.updatedAt = nowISO();
-            }
-
-            const delivery = {
-                id: generateId(),
-                customerId: customerId,
-                customerName: customer ? customer.name : 'Unknown',
-                itemId: item.id,
-                itemName: item.name,
-                qty: qty,
-                driverId: driverId,
-                driverName: driver ? driver.name : (document.getElementById('delDriverSelect')?.options[document.getElementById('delDriverSelect')?.selectedIndex]?.text || '—'),
-                vehicleId: vehicleId,
-                vehicleNo: vehicle ? vehicle.vehicleNo : '—',
-                status: status,
-                route: route,
-                scheduledDate: scheduledDate || nowISO(),
-                notes: notes,
-                date: nowISO(),
-                updatedAt: nowISO()
-            };
-            data.deliveries.push(delivery);
-
-            // Add sales data only if delivered
-            if (status === 'delivered') {
-                data.salesData.push({
-                    id: generateId(),
-                    customer: customer ? customer.name : 'Unknown',
-                    item: item.name,
-                    qty: qty,
-                    total: qty * (item.price || 0),
-                    date: nowISO()
-                });
-            }
-
-            setAppData(data);
-            await saveAllData();
-            renderDeliveries();
-            renderDashboard();
-            renderReports();
-            
-            // Reset form
-            document.getElementById('delQty').value = '';
-            document.getElementById('delRoute').value = '';
-            document.getElementById('delNotes').value = '';
-            document.getElementById('delStatusSelect').value = 'pending';
-            populateDeliveryDropdowns();
-            
-            showToast(`✅ Delivery ${status === 'delivered' ? 'completed' : 'created'} for ${customer ? customer.name : ''}!`);
-        });
-    }
-
-    // Delivery Filters
+    document.getElementById('deliverSubmitBtn')?.addEventListener('click', async () => {
+        if (!window.canManage('deliveries') && !window.hasPermission('create_deliveries')) {
+            showToast('⛔ No permission.', 'error'); return;
+        }
+        const customerId = document.getElementById('delCustomerSelect')?.value;
+        const itemId = document.getElementById('delItemSelect')?.value;
+        const qty = parseInt(document.getElementById('delQty')?.value);
+        const driverId = document.getElementById('delDriverSelect')?.value;
+        const vehicleId = document.getElementById('delVehicleSelect')?.value;
+        const status = document.getElementById('delStatusSelect')?.value || 'pending';
+        const route = document.getElementById('delRoute')?.value.trim() || '';
+        const notes = document.getElementById('delNotes')?.value.trim() || '';
+        if (!customerId) { showToast('Select a customer.', 'error'); return; }
+        if (!itemId) { showToast('Select an item.', 'error'); return; }
+        if (!qty || qty < 1) { showToast('Enter valid qty.', 'error'); return; }
+        const data = getAppData();
+        const customer = data.customers.find(c => c.id === customerId);
+        const item = data.items.find(i => i.id === itemId);
+        const driver = data.employees.find(e => e.id === driverId);
+        const vehicle = data.vehicles.find(v => v.id === vehicleId);
+        if (!item) { showToast('Item not found.', 'error'); return; }
+        if ((item.qty || 0) < qty) { showToast(`Insufficient stock! Available: ${item.qty}`, 'error'); return; }
+        if (status === 'delivered') {
+            item.qty = (item.qty || 0) - qty;
+            item.updatedAt = nowISO();
+        }
+        const delivery = {
+            id: generateId(), customerId, customerName: customer ? customer.name : 'Unknown',
+            itemId: item.id, itemName: item.name, qty,
+            driverId, driverName: driver ? driver.name : '—',
+            vehicleId, vehicleNo: vehicle ? vehicle.vehicleNo : '—',
+            status, route, notes, date: nowISO(), updatedAt: nowISO()
+        };
+        data.deliveries.push(delivery);
+        if (status === 'delivered') {
+            data.salesData.push({ id: generateId(), customer: customer ? customer.name : 'Unknown',
+                item: item.name, qty, total: qty * (item.price || 0), date: nowISO() });
+        }
+        setAppData(data);
+        await saveAllData();
+        renderDeliveries();
+        renderDashboard();
+        renderReports();
+        document.getElementById('delQty').value = '';
+        document.getElementById('delRoute').value = '';
+        document.getElementById('delNotes').value = '';
+        document.getElementById('delStatusSelect').value = 'pending';
+        populateDeliveryDropdowns();
+        showToast(`✅ Delivery ${status === 'delivered' ? 'completed' : 'created'}!`);
+    });
     document.getElementById('delDateFilter')?.addEventListener('change', renderDeliveries);
     document.getElementById('delStatusFilter')?.addEventListener('change', renderDeliveries);
     document.getElementById('clearDelFilter')?.addEventListener('click', () => {
@@ -691,27 +590,15 @@ function initEvents() {
         const today = todayStr();
         const existing = data.attendance.find(a => a.employeeId === user.uid && a.date.slice(0, 10) === today);
         if (existing && existing.checkIn) { showToast('Already checked in today.', 'warning'); return; }
-        const record = {
-            id: generateId(),
-            employeeId: user.uid,
-            employeeName: user.name,
-            date: nowISO(),
-            checkIn: nowISO(),
-            checkOut: null,
-            location: document.getElementById('attendanceLocation').value || 'Colombo'
-        };
-        if (existing) {
-            existing.checkIn = record.checkIn;
-            existing.location = record.location;
-        } else {
-            data.attendance.push(record);
-        }
+        const record = { id: generateId(), employeeId: user.uid, employeeName: user.name, date: nowISO(),
+            checkIn: nowISO(), checkOut: null, location: document.getElementById('attendanceLocation').value || 'Colombo' };
+        if (existing) { existing.checkIn = record.checkIn; existing.location = record.location; }
+        else data.attendance.push(record);
         setAppData(data);
         await saveAllData();
         renderAttendance();
         showToast('✅ Checked in at ' + new Date().toLocaleTimeString());
     });
-
     document.getElementById('checkOutBtn')?.addEventListener('click', async () => {
         const user = window.getCurrentUser();
         if (!user) { showToast('Login first.', 'error'); return; }
@@ -726,34 +613,22 @@ function initEvents() {
         renderAttendance();
         showToast('✅ Checked out at ' + new Date().toLocaleTimeString());
     });
-
-    document.getElementById('attendanceRefreshBtn')?.addEventListener('click', () => {
-        renderAttendance();
-        showToast('🔄 Refreshed.');
-    });
-
+    document.getElementById('attendanceRefreshBtn')?.addEventListener('click', () => { renderAttendance(); showToast('🔄 Refreshed.'); });
     if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(pos => {
-            document.getElementById('attendanceLocation').value =
-                `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
-        }, () => {
-            document.getElementById('attendanceLocation').value = '📍 Location unavailable';
-        });
+            document.getElementById('attendanceLocation').value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+        }, () => { document.getElementById('attendanceLocation').value = '📍 Location unavailable'; });
     }
 
-    // ── Leave (with Balance Management) ──
+    // ── Leave ──
     document.getElementById('applyLeaveBtn')?.addEventListener('click', async () => {
-        if (!window.canView('leave')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('leave')) { showToast('⛔ No permission.', 'error'); return; }
         const user = window.getCurrentUser();
         let empId = document.getElementById('leaveEmployeeSelect').value;
         const type = document.getElementById('leaveType').value;
         const from = document.getElementById('leaveFrom').value;
         const to = document.getElementById('leaveTo').value;
         const reason = document.getElementById('leaveReason').value.trim();
-
         if (user?.role === 'employee') {
             const data = getAppData();
             const emp = data.employees.find(e => e.id === user.uid);
@@ -761,47 +636,25 @@ function initEvents() {
         }
         if (!empId) { showToast('Select employee.', 'error'); return; }
         if (!from || !to) { showToast('Select dates.', 'error'); return; }
-
         const data = getAppData();
         if (!data.leaveBalances) data.leaveBalances = {};
         const empBalance = data.leaveBalances[empId] || { sick: 0, casual: 0, annual: 0 };
-        if (empBalance[type] <= 0) {
-            showToast(`⚠️ No ${type} leave balance left!`, 'error');
-            return;
-        }
+        if (empBalance[type] <= 0) { showToast(`⚠️ No ${type} leave balance left!`, 'error'); return; }
         const days = Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)) + 1;
-        if (empBalance[type] < days) {
-            showToast(`⚠️ Only ${empBalance[type]} ${type} days available.`, 'error');
-            return;
-        }
+        if (empBalance[type] < days) { showToast(`⚠️ Only ${empBalance[type]} ${type} days available.`, 'error'); return; }
         empBalance[type] -= days;
         data.leaveBalances[empId] = empBalance;
-
         const emp = data.employees.find(e => e.id === empId);
-        data.leaves.push({
-            id: generateId(),
-            employeeId: empId,
-            employeeName: emp ? emp.name : (user?.name || 'Unknown'),
-            type,
-            from,
-            to,
-            reason,
-            days,
-            status: 'pending',
-            appliedAt: nowISO()
-        });
+        data.leaves.push({ id: generateId(), employeeId: empId, employeeName: emp ? emp.name : (user?.name || 'Unknown'),
+            type, from, to, reason, days, status: 'pending', appliedAt: nowISO() });
         setAppData(data);
         await saveAllData();
         renderLeave();
         showToast('✅ Leave applied!');
         document.getElementById('leaveReason').value = '';
     });
-
     document.getElementById('approveLeaveBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('leave') && !window.canManage('employees')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('leave') && !window.canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
         const data = getAppData();
         const leaves = data.leaves.filter(l => l.status === 'pending');
         if (leaves.length === 0) { showToast('No pending leaves.', 'warning'); return; }
@@ -811,12 +664,8 @@ function initEvents() {
         renderLeave();
         showToast('✅ Leave approved.');
     });
-
     document.getElementById('rejectLeaveBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('leave') && !window.canManage('employees')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('leave') && !window.canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
         const data = getAppData();
         const leaves = data.leaves.filter(l => l.status === 'pending');
         if (leaves.length === 0) { showToast('No pending leaves.', 'warning'); return; }
@@ -827,95 +676,50 @@ function initEvents() {
         showToast('❌ Leave rejected.');
     });
 
-    // ── Payroll (with EPF/ETF) ──
+    // ── Payroll ──
     document.getElementById('calculatePayrollBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('payroll')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('payroll')) { showToast('⛔ No permission.', 'error'); return; }
         const empId = document.getElementById('payrollEmployeeSelect').value;
         const month = document.getElementById('payrollMonth').value;
         const basic = parseFloat(document.getElementById('payrollBasic').value) || 0;
         const allowances = parseFloat(document.getElementById('payrollAllowances').value) || 0;
         const deductions = parseFloat(document.getElementById('payrollDeductions').value) || 0;
         const ot = parseFloat(document.getElementById('payrollOT').value) || 0;
-
         if (!empId) { showToast('Select employee.', 'error'); return; }
         if (!month) { showToast('Select month.', 'error'); return; }
         const data = getAppData();
         const emp = data.employees.find(e => e.id === empId);
         if (!emp) { showToast('Employee not found.', 'error'); return; }
-
-        const epfRate = 0.08;
-        const etfRate = 0.03;
-        const epf = basic * epfRate;
-        const etf = basic * etfRate;
-        const net = basic + allowances + ot - deductions - epf - etf;
-
+        const epf = basic * 0.08, etf = basic * 0.03, net = basic + allowances + ot - deductions - epf - etf;
         const existing = data.payroll.find(p => p.employeeId === empId && p.month === month);
-        const payData = {
-            employeeId: empId,
-            employeeName: emp.name,
-            month,
-            basic: basic || (emp.salary || 0),
-            allowances,
-            deductions,
-            ot,
-            epf,
-            etf,
-            net,
-            updatedAt: nowISO()
-        };
-        if (existing) {
-            Object.assign(existing, payData);
-        } else {
-            payData.id = generateId();
-            payData.createdAt = nowISO();
-            data.payroll.push(payData);
-        }
+        const payData = { employeeId: empId, employeeName: emp.name, month,
+            basic: basic || (emp.salary || 0), allowances, deductions, ot, epf, etf, net, updatedAt: nowISO() };
+        if (existing) Object.assign(existing, payData);
+        else { payData.id = generateId(); payData.createdAt = nowISO(); data.payroll.push(payData); }
         setAppData(data);
         await saveAllData();
         renderPayroll();
         showToast('✅ Payroll calculated!');
     });
-
     document.getElementById('generatePayslipBtn')?.addEventListener('click', () => {
-        if (!window.canView('payroll')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('payroll')) { showToast('⛔ No permission.', 'error'); return; }
         showToast('📄 Payslip PDF generated (simulated).', 'success');
     });
 
-    // ── Finance (with Category & Budget) ──
+    // ── Finance ──
     document.getElementById('addFinanceBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('finance')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('finance')) { showToast('⛔ No permission.', 'error'); return; }
         const type = document.getElementById('financeType').value;
         const amount = parseFloat(document.getElementById('financeAmount').value);
         const category = document.getElementById('financeCategory').value;
         const desc = document.getElementById('financeDesc').value.trim();
         const budgetInput = document.getElementById('financeBudget').value.trim();
-
         if (!amount || amount <= 0) { showToast('Enter valid amount.', 'error'); return; }
         if (!desc) { showToast('Enter description.', 'error'); return; }
-
         const data = getAppData();
         if (!data.budget) data.budget = { monthly: 0, category: {} };
-        if (budgetInput !== '') {
-            data.budget.category[category] = parseFloat(budgetInput) || 0;
-        }
-
-        data.finance.push({
-            id: generateId(),
-            type,
-            amount,
-            category,
-            desc,
-            date: nowISO()
-        });
+        if (budgetInput !== '') data.budget.category[category] = parseFloat(budgetInput) || 0;
+        data.finance.push({ id: generateId(), type, amount, category, desc, date: nowISO() });
         setAppData(data);
         await saveAllData();
         renderFinance();
@@ -927,34 +731,19 @@ function initEvents() {
 
     // ── Reports ──
     document.getElementById('generateReportBtn')?.addEventListener('click', () => {
-        if (!window.canView('reports')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('reports')) { showToast('⛔ No permission.', 'error'); return; }
         renderReports();
     });
-
     document.getElementById('reportType')?.addEventListener('change', () => {
-        if (!window.canView('reports')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('reports')) { showToast('⛔ No permission.', 'error'); return; }
         renderReports();
     });
-
     document.getElementById('applyReportFilters')?.addEventListener('click', () => {
-        if (!window.canView('reports')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('reports')) { showToast('⛔ No permission.', 'error'); return; }
         renderReports();
     });
-
     document.getElementById('exportReportBtn')?.addEventListener('click', () => {
-        if (!window.canView('reports')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('reports')) { showToast('⛔ No permission.', 'error'); return; }
         const type = document.getElementById('reportType').value;
         const data = getAppData();
         let exportData = [];
@@ -967,33 +756,22 @@ function initEvents() {
         }
         if (!exportData || exportData.length === 0) { showToast('No data to export.', 'error'); return; }
         let csv = Object.keys(exportData[0]).join(',') + '\n';
-        exportData.forEach(row => {
-            csv += Object.values(row).map(v => `"${v}"`).join(',') + '\n';
-        });
+        exportData.forEach(row => { csv += Object.values(row).map(v => `"${v}"`).join(',') + '\n'; });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `${type}_${todayStr()}.csv`;
-        a.click();
+        a.href = url; a.download = `${type}_${todayStr()}.csv`; a.click();
         URL.revokeObjectURL(url);
         showToast('📥 CSV exported!');
     });
-
     document.getElementById('printReportBtn')?.addEventListener('click', () => {
-        if (!window.canView('reports')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canView('reports')) { showToast('⛔ No permission.', 'error'); return; }
         window.print();
     });
 
-    // ── Products (Categories & Brands) ──
+    // ── Products ──
     document.getElementById('addCategoryBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('inventory')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
         const val = document.getElementById('newCategoryInput').value.trim();
         if (!val) { showToast('Enter category name.', 'error'); return; }
         const data = getAppData();
@@ -1005,12 +783,8 @@ function initEvents() {
         document.getElementById('newCategoryInput').value = '';
         showToast(`✅ "${val}" added.`);
     });
-
     document.getElementById('addBrandBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('inventory')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
         const val = document.getElementById('newBrandInput').value.trim();
         if (!val) { showToast('Enter brand name.', 'error'); return; }
         const data = getAppData();
@@ -1025,23 +799,16 @@ function initEvents() {
 
     // ── Vehicles ──
     document.getElementById('addVehicleBtn')?.addEventListener('click', async () => {
-        if (!window.canManage('vehicles')) {
-            showToast('⛔ No permission.', 'error');
-            return;
-        }
+        if (!window.canManage('vehicles')) { showToast('⛔ No permission.', 'error'); return; }
         const editId = document.getElementById('addVehicleBtn').dataset.editId;
         const vehicleNo = document.getElementById('vehicleNo').value.trim();
         const driver = document.getElementById('vehicleDriver').value.trim();
         const fuel = document.getElementById('vehicleFuel').value.trim();
-
         if (!vehicleNo) { showToast('Enter vehicle number.', 'error'); return; }
-
         const data = getAppData();
         if (editId) {
             const idx = data.vehicles.findIndex(v => v.id === editId);
-            if (idx > -1) {
-                data.vehicles[idx] = { ...data.vehicles[idx], vehicleNo, driver, fuel, updatedAt: nowISO() };
-            }
+            if (idx > -1) data.vehicles[idx] = { ...data.vehicles[idx], vehicleNo, driver, fuel, updatedAt: nowISO() };
             document.getElementById('addVehicleBtn').dataset.editId = '';
             document.getElementById('addVehicleBtn').textContent = '🚗 Add Vehicle';
         } else {
@@ -1059,8 +826,7 @@ function initEvents() {
     // ── Settings ──
     document.getElementById('saveSettingsBtn')?.addEventListener('click', async () => {
         if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ No permission.', 'error');
-            return;
+            showToast('⛔ No permission.', 'error'); return;
         }
         const data = getAppData();
         data.settings = {
@@ -1073,27 +839,21 @@ function initEvents() {
         await saveAllData();
         showToast('✅ Settings saved!');
     });
-
     document.getElementById('backupDataBtn')?.addEventListener('click', () => {
         if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ No permission.', 'error');
-            return;
+            showToast('⛔ No permission.', 'error'); return;
         }
         const data = getAppData();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `backup_${todayStr()}.json`;
-        a.click();
+        a.href = url; a.download = `backup_${todayStr()}.json`; a.click();
         URL.revokeObjectURL(url);
         showToast('💾 Backup downloaded!');
     });
-
     document.getElementById('restoreDataBtn')?.addEventListener('click', () => {
         if (!window.canManage('settings') && window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ No permission.', 'error');
-            return;
+            showToast('⛔ No permission.', 'error'); return;
         }
         const input = document.createElement('input');
         input.type = 'file';
@@ -1116,32 +876,19 @@ function initEvents() {
         };
         input.click();
     });
-
     document.getElementById('clearDataBtn')?.addEventListener('click', async () => {
         if (window.getCurrentUser()?.role !== 'admin') {
-            showToast('⛔ Only Admin can clear all data.', 'error');
-            return;
+            showToast('⛔ Only Admin can clear all data.', 'error'); return;
         }
         if (!confirm('⚠️ Delete ALL data? This cannot be undone!')) return;
         if (!confirm('Are you sure?')) return;
         const emptyData = {
-            items: [],
-            categories: ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'],
+            items: [], categories: ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'],
             brands: ['Nike', 'Apple', 'Samsung', 'Adidas', 'Pepsi'],
-            employees: [],
-            deliveries: [],
-            attendance: [],
-            leaves: [],
-            payroll: [],
-            customers: [],
-            finance: [],
-            vehicles: [],
-            notifications: [],
-            salesData: [],
+            employees: [], deliveries: [], attendance: [], leaves: [], payroll: [], customers: [],
+            finance: [], vehicles: [], notifications: [], salesData: [],
             settings: { company: 'Jayasinghe Distributors', address: 'Colombo, Sri Lanka', phone: '+94 77 123 4567', email: 'info@jayasinghe.lk' },
-            leaveBalances: {},
-            budget: { monthly: 0, category: {} },
-            vouchers: []
+            leaveBalances: {}, budget: { monthly: 0, category: {} }, vouchers: []
         };
         setAppData(emptyData);
         await saveAllData();
@@ -1167,7 +914,6 @@ function initEvents() {
         document.getElementById('notifModal').classList.add('open');
         document.getElementById('notifDot').style.display = 'none';
     });
-
     document.getElementById('notifModalClose')?.addEventListener('click', () => {
         document.getElementById('notifModal').classList.remove('open');
     });
@@ -1176,41 +922,29 @@ function initEvents() {
     document.getElementById('empSearch')?.addEventListener('input', renderEmployees);
     document.getElementById('empDeptFilter')?.addEventListener('change', renderEmployees);
     document.getElementById('empStatusFilter')?.addEventListener('change', renderEmployees);
-
     document.getElementById('invSearch')?.addEventListener('input', renderInventory);
     document.getElementById('invCatFilter')?.addEventListener('change', renderInventory);
     document.getElementById('invSort')?.addEventListener('change', renderInventory);
-
     document.getElementById('custSearch')?.addEventListener('input', renderCustomers);
 
     // ── Modal close on overlay click ──
     document.querySelectorAll('.modal-overlay').forEach(m => {
-        m.addEventListener('click', function(e) {
-            if (e.target === this) this.classList.remove('open');
-        });
+        m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
     });
 
     // ── VOUCHER MODULE ──
-    // Set default date
     const voucherDate = document.getElementById('voucherDate');
     if (voucherDate) voucherDate.value = todayStr();
-
-    // Auto-generate Voucher No
     const voucherNoInput = document.getElementById('voucherNo');
     if (voucherNoInput && !voucherNoInput.value) {
         const data = getAppData();
         const vouchers = data.vouchers || [];
-        const nextNo = vouchers.length + 1;
-        voucherNoInput.value = 'JV-' + String(nextNo).padStart(4, '0');
+        voucherNoInput.value = 'JV-' + String(vouchers.length + 1).padStart(4, '0');
     }
-
-    // Add Voucher
     document.getElementById('addVoucherBtn')?.addEventListener('click', async () => {
         if (!window.canManage('voucher') && !window.canManage('finance')) {
-            showToast('⛔ No permission.', 'error');
-            return;
+            showToast('⛔ No permission.', 'error'); return;
         }
-
         const voucherNo = document.getElementById('voucherNo').value.trim();
         const date = document.getElementById('voucherDate').value;
         const paidTo = document.getElementById('voucherPaidTo').value.trim();
@@ -1219,41 +953,29 @@ function initEvents() {
         const approvedBy = document.getElementById('voucherApprovedBy').value.trim();
         const receivedBy = document.getElementById('voucherReceivedBy').value.trim();
         const signature = document.getElementById('voucherSignature').value.trim();
-
-        // Get checked payment types
         const checkboxes = document.querySelectorAll('.voucher-payment-type:checked');
         const paymentTypes = Array.from(checkboxes).map(cb => cb.value);
         const otherText = document.getElementById('voucherOtherText').value.trim();
         if (paymentTypes.includes('Other') && otherText) {
             paymentTypes[paymentTypes.indexOf('Other')] = 'Other: ' + otherText;
         }
-
         if (!paidTo) { showToast('Enter "Paid To" name.', 'error'); return; }
         if (!amount || amount <= 0) { showToast('Enter valid amount.', 'error'); return; }
-
         const data = getAppData();
         if (!data.vouchers) data.vouchers = [];
-
         const voucherData = {
             id: generateId(),
             voucherNo: voucherNo || 'JV-' + String(data.vouchers.length + 1).padStart(4, '0'),
             date: date || nowISO(),
-            paidTo,
-            amount,
-            paymentTypes,
-            description,
+            paidTo, amount, paymentTypes, description,
             approvedBy: approvedBy || '—',
             receivedBy: receivedBy || '—',
             signature: signature || '—',
-            createdAt: nowISO(),
-            updatedAt: nowISO()
+            createdAt: nowISO(), updatedAt: nowISO()
         };
-
         data.vouchers.push(voucherData);
         setAppData(data);
         await saveAllData();
-
-        // Reset form (keep date & voucher no)
         document.getElementById('voucherPaidTo').value = '';
         document.getElementById('voucherAmount').value = '';
         document.getElementById('voucherDescription').value = '';
@@ -1262,33 +984,22 @@ function initEvents() {
         document.getElementById('voucherSignature').value = '';
         document.getElementById('voucherOtherText').value = '';
         document.querySelectorAll('.voucher-payment-type').forEach(cb => cb.checked = false);
-        
-        // Update next voucher no
         const nextNo = data.vouchers.length + 1;
         document.getElementById('voucherNo').value = 'JV-' + String(nextNo).padStart(4, '0');
-
         renderVouchers();
         showToast('✅ Voucher #' + voucherData.voucherNo + ' saved!');
     });
 
-    // ── PRINT VOUCHER ──
+    // ── Print Voucher ──
     document.getElementById('printVoucherBtn')?.addEventListener('click', () => {
         const data = getAppData();
         const vouchers = data.vouchers || [];
-        if (vouchers.length === 0) {
-            showToast('No vouchers to print.', 'error');
-            return;
-        }
-        // Print the latest voucher
+        if (vouchers.length === 0) { showToast('No vouchers to print.', 'error'); return; }
         const latest = vouchers[vouchers.length - 1];
-        printVoucherCard(latest);
-    });
-
-    function printVoucherCard(voucher) {
-        const paymentTypes = voucher.paymentTypes ? voucher.paymentTypes.join(', ') : '—';
+        const paymentTypes = latest.paymentTypes ? latest.paymentTypes.join(', ') : '—';
         const printWindow = window.open('', '_blank', 'width=800,height=600');
         printWindow.document.write(`
-            <html><head><title>Voucher #${voucher.voucherNo}</title>
+            <html><head><title>Voucher #${latest.voucherNo}</title>
             <style>
                 body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #000; }
                 .voucher-card { max-width: 600px; margin: 0 auto; border: 2px solid #000; padding: 30px; border-radius: 8px; }
@@ -1303,46 +1014,39 @@ function initEvents() {
             <div class="voucher-card">
                 <h2>🧾 CASH PAYMENT VOUCHER</h2>
                 <p style="text-align:center; font-size:14px; color:#555;">P.M. Jayasinghe Distributors</p>
-                <div class="row"><span class="label">Voucher No</span><span>${voucher.voucherNo}</span></div>
-                <div class="row"><span class="label">Date</span><span>${formatDate(voucher.date)}</span></div>
-                <div class="row"><span class="label">Paid To</span><span>${voucher.paidTo}</span></div>
-                <div class="row" style="border-bottom: 2px solid #000;"><span class="label">Amount</span><span class="amount">LKR ${formatCurrency(voucher.amount)}</span></div>
+                <div class="row"><span class="label">Voucher No</span><span>${latest.voucherNo}</span></div>
+                <div class="row"><span class="label">Date</span><span>${formatDate(latest.date)}</span></div>
+                <div class="row"><span class="label">Paid To</span><span>${latest.paidTo}</span></div>
+                <div class="row" style="border-bottom: 2px solid #000;"><span class="label">Amount</span><span class="amount">LKR ${formatCurrency(latest.amount)}</span></div>
                 <div class="row"><span class="label">Payment For</span><span>${paymentTypes}</span></div>
-                <div class="row"><span class="label">Description</span><span>${voucher.description || '—'}</span></div>
+                <div class="row"><span class="label">Description</span><span>${latest.description || '—'}</span></div>
                 <div style="margin-top: 20px;">
-                    <div class="row"><span class="label">Approved By</span><span>${voucher.approvedBy}</span></div>
-                    <div class="row"><span class="label">Received By</span><span>${voucher.receivedBy}</span></div>
-                    <div class="row"><span class="label">Signature</span><span>${voucher.signature}</span></div>
+                    <div class="row"><span class="label">Approved By</span><span>${latest.approvedBy}</span></div>
+                    <div class="row"><span class="label">Received By</span><span>${latest.receivedBy}</span></div>
+                    <div class="row"><span class="label">Signature</span><span>${latest.signature}</span></div>
                 </div>
                 <div class="footer">
                     <div><div class="signature-line">Approved Signature</div></div>
                     <div><div class="signature-line">Receiver Signature</div></div>
                 </div>
             </div>
-            <script>
-                window.onload = function() { window.print(); window.close(); }
-            <\/script>
+            <script>window.onload = function() { window.print(); window.close(); }<\/script>
             </body></html>
         `);
         printWindow.document.close();
-    }
+    });
 
-    // ── DOWNLOAD VOUCHER PDF ──
+    // ── Download Voucher PDF ──
     document.getElementById('downloadVoucherBtn')?.addEventListener('click', async () => {
         const data = getAppData();
         const vouchers = data.vouchers || [];
-        if (vouchers.length === 0) {
-            showToast('No vouchers to download.', 'error');
-            return;
-        }
+        if (vouchers.length === 0) { showToast('No vouchers to download.', 'error'); return; }
         const latest = vouchers[vouchers.length - 1];
         await downloadVoucherPDF(latest);
     });
 
     async function downloadVoucherPDF(voucher) {
         const paymentTypes = voucher.paymentTypes ? voucher.paymentTypes.join(', ') : '—';
-        
-        // Create a temporary div to render the voucher card for PDF
         const tempDiv = document.createElement('div');
         tempDiv.style.cssText = 'position:absolute; left:-9999px; top:0; width:600px; background:#fff; padding:30px; font-family:Arial,sans-serif; border:2px solid #000; border-radius:8px;';
         tempDiv.innerHTML = `
@@ -1365,13 +1069,8 @@ function initEvents() {
             </div>
         `;
         document.body.appendChild(tempDiv);
-
         try {
-            const canvas = await html2canvas(tempDiv, {
-                scale: 2,
-                backgroundColor: '#ffffff',
-                logging: false
-            });
+            const canvas = await html2canvas(tempDiv, { scale: 2, backgroundColor: '#ffffff', logging: false });
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
@@ -1397,7 +1096,6 @@ function initEvents() {
 async function createDefaultAdmin() {
     const email = 'admin@example.com';
     const password = 'admin123';
-    
     try {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         console.log('✅ Admin account already exists:', userCredential.user.email);
@@ -1422,13 +1120,10 @@ async function createDefaultAdmin() {
 // ============================================================
 async function init() {
     console.log('🚀 Initializing app...');
-
     try {
         await loadAllData();
         console.log('✅ Data loaded from Firestore');
-
         await createDefaultAdmin();
-
         const payrollMonth = document.getElementById('payrollMonth');
         if (payrollMonth) payrollMonth.value = new Date().toISOString().slice(0, 7);
         const leaveFrom = document.getElementById('leaveFrom');
@@ -1439,25 +1134,17 @@ async function init() {
         if (leaveTo) leaveTo.value = nextWeek.toISOString().slice(0, 10);
         const delDateFilter = document.getElementById('delDateFilter');
         if (delDateFilter) delDateFilter.value = todayStr();
-
         initEvents();
         renderAll();
-
         const data = getAppData();
         if (!data.notifications || data.notifications.length === 0) {
-            data.notifications = [{
-                id: generateId(),
-                title: 'Welcome to ERP System',
-                message: 'Jayasinghe Distributors · All modules ready.',
-                date: nowISO()
-            }];
+            data.notifications = [{ id: generateId(), title: 'Welcome to ERP System',
+                message: 'Jayasinghe Distributors · All modules ready.', date: nowISO() }];
             setAppData(data);
             await saveAllData();
         }
-
         showToast('🔥 Firebase connected! ERP ready.', 'success');
         console.log('✅ App initialized successfully!');
-
     } catch (error) {
         console.error('❌ Init error:', error);
         showToast('❌ Failed to initialize app. Check console.', 'error');
