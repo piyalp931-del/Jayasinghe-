@@ -24,30 +24,30 @@ const ROLES = {
     sales: {
         label: 'Sales Representative',
         icon: '🛒',
-        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher'],
+        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher', 'view_attendance', 'view_leave', 'view_payroll'],
         dashboard: ['stats_inventory', 'stats_customers', 'stats_deliveries', 'sales_chart', 'quick_actions_sales'],
-        nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports', 'attendance', 'payroll', 'voucher']
+        nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports', 'attendance', 'leave', 'payroll', 'voucher'] // Added 'leave'
     },
     delivery: {
         label: 'Delivery Staff',
         icon: '🚚',
-        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_voucher'],
+        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'],
         dashboard: ['stats_deliveries', 'stats_attendance', 'delivery_map', 'quick_actions_delivery'],
-        nav: ['dashboard', 'deliveries', 'attendance', 'vehicles', 'payroll', 'voucher']
+        nav: ['dashboard', 'deliveries', 'attendance', 'vehicles', 'leave', 'payroll', 'voucher'] // Added 'leave'
     },
     store: {
         label: 'Store Keeper',
         icon: '🏪',
-        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_voucher'],
+        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'],
         dashboard: ['stats_inventory', 'stats_low_stock', 'inventory_chart', 'quick_actions_store'],
-        nav: ['dashboard', 'inventory', 'products', 'reports', 'attendance', 'payroll', 'voucher']
+        nav: ['dashboard', 'inventory', 'products', 'reports', 'attendance', 'leave', 'payroll', 'voucher'] // Added 'leave'
     },
     accountant: {
         label: 'Accountant',
         icon: '💰',
-        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher', 'view_voucher'],
+        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher', 'view_voucher', 'view_attendance', 'view_leave'],
         dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
-        nav: ['dashboard', 'finance', 'payroll', 'reports', 'attendance', 'voucher']
+        nav: ['dashboard', 'finance', 'payroll', 'reports', 'attendance', 'leave', 'voucher'] // Added 'leave'
     },
     employee: {
         label: 'Employee',
@@ -179,7 +179,7 @@ async function handleLogin() {
             else if (dept === 'delivery') role = 'delivery';
             else if (dept === 'store') role = 'store';
             else if (dept === 'finance') role = 'accountant';
-            else role = 'employee';
+            else role = 'employee'; // HR, IT, etc. fallback to employee
             console.log('🔍 Role detected from employee record:', role);
         } else {
             console.log('ℹ️ No employee record found, using UI selected role:', role);
