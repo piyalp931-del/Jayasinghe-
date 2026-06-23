@@ -131,7 +131,7 @@
         </header>
 
         <!-- ==========================================================
-        PANEL: DASHBOARD (Dynamic)
+        PANEL: DASHBOARD
         ========================================================== -->
         <section class="panel active" id="panel-dashboard">
             <div id="personalStats" style="display:none; margin-bottom:12px;"></div>
@@ -151,10 +151,11 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: ADMINISTRATION (Company Settings, Users, Logs)
+        PANEL: ADMINISTRATION
         ========================================================== -->
         <section class="panel" id="panel-administration">
-            <div class="card"><div class="card-title">🏢 Administration <span class="sub">System Control</span></div>
+            <div class="card">
+                <div class="card-title">🏢 Administration <span class="sub">System Control</span></div>
                 <div class="form-group"><label>Company Name</label><input type="text" id="settingsCompany" value="Jayasinghe Distributors" /></div>
                 <div class="form-group"><label>Address</label><input type="text" id="settingsAddress" value="Colombo, Sri Lanka" /></div>
                 <div class="form-row"><div class="form-group"><label>Phone</label><input type="text" id="settingsPhone" value="+94 77 123 4567" /></div>
@@ -225,28 +226,56 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: INVENTORY (Store / Warehouse)
+        PANEL: INVENTORY (Store)
         ========================================================== -->
         <section class="panel" id="panel-inventory">
             <div class="card"><div class="card-title">📋 Inventory <span class="sub"><span id="invCount">0</span> items</span></div>
                 <div class="toolbar"><div class="search-bar"><input type="text" id="invSearch" placeholder="🔍 Search..." /><select id="invCatFilter"><option value="all">All Categories</option></select><select id="invSort"><option value="name">Name</option><option value="qty">Qty</option><option value="price">Price</option></select><button class="btn btn-outline btn-sm" id="clearInvFilters"><i class="fas fa-eraser"></i> Clear</button></div><button class="btn btn-primary" id="addItemBtn"><i class="fas fa-plus"></i> Add</button></div>
-                <div class="table-wrap"><table><thead><tr><th>Barcode</th><th>Name</th><th>Category</th><th>Qty</th><th>Price</th><th>Status</th><th class="text-center">Actions</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div>
+                <div class="table-wrap"><table><thead><tr><th>Code</th><th>Barcode</th><th>Name</th><th>Category</th><th>Qty</th><th>Price</th><th>Status</th><th class="text-center">Actions</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div>
             </div>
         </section>
 
         <!-- ==========================================================
-        PANEL: PRODUCTS (Categories & Brands)
+        PANEL: PRODUCTS (Enhanced)
         ========================================================== -->
         <section class="panel" id="panel-products">
-            <div class="card"><div class="card-title">🏷️ Products <span class="sub">Categories & Brands</span></div>
-                <div class="form-row"><div class="form-group"><label>New Category</label><input type="text" id="newCategoryInput" placeholder="e.g. Beverages" /></div><div class="form-group"><label>New Brand</label><input type="text" id="newBrandInput" placeholder="e.g. Nike" /></div></div>
-                <div class="flex gap-2 flex-wrap"><button class="btn btn-primary" id="addCategoryBtn"><i class="fas fa-plus"></i> Add Category</button><button class="btn btn-success" id="addBrandBtn"><i class="fas fa-plus"></i> Add Brand</button></div>
-                <div class="chip-group mt-2"><div><strong>Categories:</strong> <span id="categoryChips"></span></div><div><strong>Brands:</strong> <span id="brandChips"></span></div></div>
+            <div class="card">
+                <div class="card-title">🏷️ Products <span class="sub">Categories & Brands</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>New Category</label><input type="text" id="newCategoryInput" placeholder="e.g. Beverages" /></div>
+                    <div class="form-group"><label>New Brand</label><input type="text" id="newBrandInput" placeholder="e.g. Nike" /></div>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" id="addCategoryBtn"><i class="fas fa-plus"></i> Add Category</button>
+                    <button class="btn btn-success" id="addBrandBtn"><i class="fas fa-plus"></i> Add Brand</button>
+                </div>
+                <div class="chip-group mt-2">
+                    <div><strong>Categories:</strong> <span id="categoryChips"></span></div>
+                    <div><strong>Brands:</strong> <span id="brandChips"></span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📦 Product Details <span class="sub">Extended Attributes</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Product Code</label><input type="text" id="productCode" placeholder="Auto or manual" /></div>
+                    <div class="form-group"><label>Unit</label>
+                        <select id="productUnit"><option value="Pcs">Pcs</option><option value="Box">Box</option><option value="Kg">Kg</option><option value="Ltr">Ltr</option><option value="Mtr">Mtr</option><option value="Dozen">Dozen</option><option value="Pack">Pack</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Cost Price (LKR)</label><input type="number" id="productCostPrice" placeholder="0.00" step="0.01" /></div>
+                    <div class="form-group"><label>Tax Rate (%)</label><input type="number" id="productTaxRate" placeholder="0" min="0" max="100" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Reorder Level</label><input type="number" id="productReorderLevel" placeholder="Min stock" /></div>
+                    <div class="form-group"><label>Stock Alert</label><select id="productStockAlert"><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></div>
+                </div>
+                <button class="btn btn-primary" id="updateProductAttributesBtn"><i class="fas fa-save"></i> Update Product Attributes</button>
             </div>
         </section>
 
         <!-- ==========================================================
-        PANEL: PURCHASING (Suppliers, Purchase Orders)
+        PANEL: PURCHASING
         ========================================================== -->
         <section class="panel" id="panel-purchasing">
             <div class="card"><div class="card-title">📦 Purchasing <span class="sub">Suppliers & Orders</span></div>
@@ -264,38 +293,132 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: SALES (Orders, Customers, Targets)
+        PANEL: SALES (Enhanced - Multi-Item Cart)
         ========================================================== -->
         <section class="panel" id="panel-sales">
-            <div class="card"><div class="card-title">🛒 Sales Management <span class="sub">Orders & Customers</span></div>
-                <div class="form-row"><div class="form-group"><label>Customer</label><select id="salesCustomerSelect"><option value="">Select</option></select></div><div class="form-group"><label>Item</label><select id="salesItemSelect"><option value="">Select</option></select></div></div>
-                <div class="form-row"><div class="form-group"><label>Qty</label><input type="number" id="salesQty" /></div><div class="form-group"><label>Price (LKR)</label><input type="number" id="salesPrice" /></div></div>
-                <button class="btn btn-success" id="addSalesOrderBtn"><i class="fas fa-check"></i> Create Sales Order</button>
-                <div class="table-wrap mt-2"><table><thead><tr><th>Customer</th><th>Item</th><th>Qty</th><th>Total</th><th>Status</th></tr></thead><tbody id="salesOrderTableBody"></tbody></table></div>
+            <div class="card">
+                <div class="card-title">🛒 Sales Management <span class="sub">Multi-Item Orders</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>👤 Customer</label>
+                        <select id="salesCustomerSelect"><option value="">Select Customer</option></select>
+                        <button class="btn btn-sm btn-outline" id="salesAddCustomerBtn" style="margin-top:4px;"><i class="fas fa-plus"></i> New Customer</button>
+                    </div>
+                    <div class="form-group"><label>📅 Order Date</label><input type="date" id="salesOrderDate" /></div>
+                </div>
+
+                <!-- Add Item to Cart -->
+                <div class="form-row">
+                    <div class="form-group"><label>📦 Item</label><select id="salesCartItemSelect"><option value="">Select Item</option></select></div>
+                    <div class="form-group"><label>📤 Qty</label><input type="number" id="salesCartQty" min="1" value="1" /></div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" id="salesAddToCartBtn"><i class="fas fa-plus"></i> Add to Cart</button>
+                    <button class="btn btn-outline" id="salesClearCartBtn"><i class="fas fa-eraser"></i> Clear Cart</button>
+                </div>
+
+                <!-- Cart Table -->
+                <div class="table-wrap mt-2">
+                    <table id="salesCartTable">
+                        <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="salesCartBody"></tbody>
+                        <tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;">Grand Total</td><td id="salesCartTotal" style="font-weight:700;">LKR 0</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+
+                <button class="btn btn-success btn-block" id="createSalesOrderBtn" style="margin-top:12px;"><i class="fas fa-check"></i> Create Sales Order</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📋 Sales Order History</div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+                        <tbody id="salesOrderTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <!-- ==========================================================
-        PANEL: DELIVERIES (Distribution)
+        PANEL: DELIVERIES (Enhanced - Multi-Item + Status)
         ========================================================== -->
         <section class="panel" id="panel-deliveries">
-            <div class="card"><div class="card-title">🚚 Deliveries <span class="sub">Schedule & Track</span></div>
-                <div class="form-row"><div class="form-group"><label>👤 Customer</label><select id="delCustomerSelect" style="flex:1;"><option value="">-- Select --</option></select></div><div class="form-group"><label>📦 Item</label><select id="delItemSelect"><option value="">-- Select --</option></select></div></div>
-                <div class="form-row"><div class="form-group"><label>Qty</label><input type="number" id="delQty" min="1" placeholder="1" /></div><div class="form-group"><label>Driver</label><select id="delDriverSelect"><option value="">-- Select --</option></select></div></div>
-                <div class="form-row"><div class="form-group"><label>Vehicle</label><select id="delVehicleSelect"><option value="">-- Select --</option></select></div><div class="form-group"><label>Status</label><select id="delStatusSelect"><option value="pending">Pending</option><option value="in-progress">In-Progress</option><option value="delivered" selected>Delivered</option><option value="cancelled">Cancelled</option></select></div></div>
-                <div class="form-row"><div class="form-group"><label>Route</label><input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" /></div><div class="form-group"><label>Date</label><input type="datetime-local" id="delScheduledDate" /></div></div>
-                <div class="form-group"><label>Notes</label><textarea id="delNotes" rows="2"></textarea></div>
-                <button class="btn btn-success btn-block" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
-                <div style="margin-top:12px;"><button class="btn btn-outline" id="clearDeliveryForm"><i class="fas fa-eraser"></i> Clear Form</button></div>
+            <div class="card">
+                <div class="card-title">🚚 Deliveries <span class="sub">Multi-Item & Status Tracking</span></div>
+
+                <!-- Customer & Basic Info -->
+                <div class="form-row">
+                    <div class="form-group"><label>👤 Customer</label>
+                        <select id="delCustomerSelect"><option value="">-- Select --</option></select>
+                    </div>
+                    <div class="form-group"><label>📅 Delivery Date</label><input type="datetime-local" id="delScheduledDate" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>🚚 Driver</label><select id="delDriverSelect"><option value="">-- Select --</option></select></div>
+                    <div class="form-group"><label>🚗 Vehicle</label><select id="delVehicleSelect"><option value="">-- Select --</option></select></div>
+                </div>
+
+                <!-- Delivery Items -->
+                <div class="card-title" style="font-size:14px; margin-top:8px;">📦 Delivery Items</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Item</label><select id="delCartItemSelect"><option value="">Select Item</option></select></div>
+                    <div class="form-group"><label>Qty</label><input type="number" id="delCartQty" min="1" value="1" /></div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" id="delAddToCartBtn"><i class="fas fa-plus"></i> Add Item</button>
+                    <button class="btn btn-outline" id="delClearCartBtn"><i class="fas fa-eraser"></i> Clear Items</button>
+                </div>
+
+                <div class="table-wrap mt-2">
+                    <table id="delCartTable">
+                        <thead><tr><th>#</th><th>Item</th><th>Qty</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="delCartBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Status & Notes -->
+                <div class="form-row mt-2">
+                    <div class="form-group"><label>📌 Status</label>
+                        <select id="delStatusSelect">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In-Progress</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>📍 Route</label><input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" /></div>
+                </div>
+                <div class="form-group"><label>📝 Notes</label><textarea id="delNotes" rows="2"></textarea></div>
+
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-success" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
+                    <button class="btn btn-outline" id="clearDeliveryForm"><i class="fas fa-eraser"></i> Clear Form</button>
+                </div>
             </div>
-            <div class="card"><div class="card-title">📋 Delivery History</div>
-                <div class="search-bar"><input type="date" id="delDateFilter" /><select id="delStatusFilter" style="max-width:140px;"><option value="all">All Status</option><option value="pending">Pending</option><option value="in-progress">In-Progress</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select><button class="btn btn-outline" id="clearDelFilter"><i class="fas fa-eraser"></i> Clear</button></div>
-                <div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Item</th><th>Qty</th><th>Driver</th><th>Status</th></tr></thead><tbody id="deliveryTableBody"></tbody></table></div>
+
+            <div class="card">
+                <div class="card-title">📋 Delivery History</div>
+                <div class="search-bar">
+                    <input type="date" id="delDateFilter" />
+                    <select id="delStatusFilter" style="max-width:140px;">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In-Progress</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button class="btn btn-outline" id="clearDelFilter"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="btn btn-outline" id="refreshDeliveriesBtn"><i class="fas fa-sync"></i> Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Driver</th><th>Vehicle</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="deliveryTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <!-- ==========================================================
-        PANEL: CUSTOMERS (CRM)
+        PANEL: CUSTOMERS
         ========================================================== -->
         <section class="panel" id="panel-customers">
             <div class="card"><div class="card-title">👥 Customers <span class="sub"><span id="custCount">0</span> registered</span></div>
@@ -305,22 +428,59 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: FINANCE (Accounts)
+        PANEL: FINANCE (Enhanced - Check Details)
         ========================================================== -->
         <section class="panel" id="panel-finance">
-            <div class="card"><div class="card-title">💰 Finance <span class="sub">Cash Book</span></div>
-                <div class="form-row"><div class="form-group"><label>Type</label><select id="financeType"><option value="income">Income</option><option value="expense">Expense</option></select></div><div class="form-group"><label>Amount</label><input type="number" id="financeAmount" placeholder="0" /></div></div>
-                <div class="form-row"><div class="form-group"><label>Category</label><select id="financeCategory"><option value="operational">Operational</option><option value="capital">Capital</option><option value="administrative">Administrative</option><option value="marketing">Marketing</option><option value="other">Other</option></select></div><div class="form-group"><label>Budget</label><input type="number" id="financeBudget" placeholder="Monthly budget" /></div></div>
+            <div class="card">
+                <div class="card-title">💰 Finance <span class="sub">Cash Book & Check Details</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Type</label><select id="financeType"><option value="income">Income</option><option value="expense">Expense</option></select></div>
+                    <div class="form-group"><label>Amount</label><input type="number" id="financeAmount" placeholder="0" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><select id="financeCategory"><option value="operational">Operational</option><option value="capital">Capital</option><option value="administrative">Administrative</option><option value="marketing">Marketing</option><option value="other">Other</option></select></div>
+                    <div class="form-group"><label>Payment Method</label>
+                        <select id="financePaymentMethod">
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="card">Card</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Check / Cheque Details -->
+                <div id="chequeDetails" style="display:none; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <div class="card-title" style="font-size:13px;">🏦 Cheque Details</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Cheque Number</label><input type="text" id="financeChequeNo" placeholder="CHQ-001" /></div>
+                        <div class="form-group"><label>Bank Name</label><input type="text" id="financeBankName" placeholder="Bank Name" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Cheque Date</label><input type="date" id="financeChequeDate" /></div>
+                        <div class="form-group"><label>Cheque Amount</label><input type="number" id="financeChequeAmount" placeholder="0.00" step="0.01" /></div>
+                    </div>
+                </div>
                 <div class="form-group"><label>Description</label><input type="text" id="financeDesc" placeholder="Description" /></div>
-                <button class="btn btn-primary" id="addFinanceBtn"><i class="fas fa-plus"></i> Add Entry</button>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" id="addFinanceBtn"><i class="fas fa-plus"></i> Add Entry</button>
+                    <button class="btn btn-outline" id="clearFinanceBtn"><i class="fas fa-eraser"></i> Clear</button>
+                </div>
                 <div id="budgetDisplay" style="margin-top:10px;"></div>
-                <div class="table-wrap mt-2"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody id="financeTableBody"></tbody></table></div>
-                <div class="finance-summary"><span>Total Income: <strong id="financeTotalIncome">LKR 0</strong></span><span>Total Expense: <strong id="financeTotalExpense">LKR 0</strong></span><span>Balance: <strong id="financeBalance">LKR 0</strong></span></div>
+                <div class="table-wrap mt-2">
+                    <table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Method</th><th>Description</th><th>Amount</th></tr></thead>
+                        <tbody id="financeTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="finance-summary">
+                    <span>Total Income: <strong id="financeTotalIncome">LKR 0</strong></span>
+                    <span>Total Expense: <strong id="financeTotalExpense">LKR 0</strong></span>
+                    <span>Balance: <strong id="financeBalance">LKR 0</strong></span>
+                </div>
             </div>
         </section>
 
         <!-- ==========================================================
-        PANEL: VOUCHER (Cash Payment)
+        PANEL: VOUCHER
         ========================================================== -->
         <section class="panel" id="panel-voucher">
             <div class="card"><div class="card-title">🧾 Cash Voucher <span class="sub">P.M. Jayasinghe</span></div>
@@ -338,7 +498,7 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: FLEET (Vehicles)
+        PANEL: FLEET
         ========================================================== -->
         <section class="panel" id="panel-fleet">
             <div class="card"><div class="card-title">🚗 Fleet Management</div>
@@ -351,7 +511,7 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: REPORTS (Full Analytics)
+        PANEL: REPORTS
         ========================================================== -->
         <section class="panel" id="panel-reports">
             <div class="card"><div class="card-title">📈 Reports <span class="sub">Analytics</span></div>
@@ -380,6 +540,7 @@
     <!-- ==========================================================
     MODALS
     ========================================================== -->
+
     <!-- Employee Modal -->
     <div class="modal-overlay" id="employeeModal"><div class="modal-content"><div class="modal-header"><h3 id="employeeModalTitle">👤 Add Employee</h3><button class="modal-close" id="empModalClose">✕</button></div><input type="hidden" id="empEditId" />
         <div class="form-row"><div class="form-group"><label>Full Name *</label><input type="text" id="empName" /></div><div class="form-group"><label>NIC</label><input type="text" id="empNIC" /></div></div>
@@ -396,8 +557,11 @@
     <div class="modal-overlay" id="itemModal"><div class="modal-content"><div class="modal-header"><h3 id="itemModalTitle">📦 Add Item</h3><button class="modal-close" id="itemModalClose">✕</button></div><input type="hidden" id="itemEditId" />
         <div class="form-group"><label>🔢 Barcode</label><div style="display:flex; gap:8px;"><input type="text" id="itemBarcode" placeholder="Scan" style="flex:1;" /><button class="btn btn-sm btn-primary" id="scanBarcodeBtn"><i class="fas fa-camera"></i> Scan</button></div><div id="scannerContainer" style="display:none; margin-top:8px;"><div id="scannerReader"></div><button class="btn btn-sm btn-danger" id="closeScannerBtn">Close</button></div></div>
         <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" /></div>
-        <div class="form-row"><div class="form-group"><label>Qty</label><input type="number" id="itemQty" min="0" /></div><div class="form-group"><label>Price</label><input type="number" id="itemPrice" min="0" step="0.01" /></div></div>
+        <div class="form-row"><div class="form-group"><label>Qty</label><input type="number" id="itemQty" min="0" /></div><div class="form-group"><label>Price (LKR)</label><input type="number" id="itemPrice" min="0" step="0.01" /></div></div>
         <div class="form-row"><div class="form-group"><label>Category</label><select id="itemCategory"><option value="">Select...</option></select></div><div class="form-group"><label>Brand</label><select id="itemBrand"><option value="">Select...</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Product Code</label><input type="text" id="itemProductCode" placeholder="Auto" /></div><div class="form-group"><label>Unit</label><select id="itemUnit"><option value="Pcs">Pcs</option><option value="Box">Box</option><option value="Kg">Kg</option><option value="Ltr">Ltr</option><option value="Mtr">Mtr</option><option value="Dozen">Dozen</option><option value="Pack">Pack</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Cost Price</label><input type="number" id="itemCostPrice" min="0" step="0.01" placeholder="0" /></div><div class="form-group"><label>Reorder Level</label><input type="number" id="itemReorderLevel" placeholder="Min stock" /></div></div>
+        <div class="form-row"><div class="form-group"><label>Tax Rate (%)</label><input type="number" id="itemTaxRate" min="0" max="100" placeholder="0" /></div><div class="form-group"><label>Stock Alert</label><select id="itemStockAlert"><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></div></div>
         <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2"></textarea></div>
         <div class="form-row"><div class="form-group"><label>Expiry</label><input type="date" id="itemExpiry" /></div><div class="form-group"><label>Batch</label><input type="text" id="itemBatch" /></div></div>
         <div class="form-group"><label>Status</label><select id="itemStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
@@ -418,10 +582,7 @@
         <div id="profileContent"><div style="text-align:center; padding:12px;"><div style="font-size:56px;">👤</div><h3 id="profileName">Loading...</h3><p class="text-muted" id="profileRole">Loading...</p></div><hr /><div id="profileDetails" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; font-size:13px;"></div><hr /><div id="profileStats" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; font-size:12px;"></div></div>
     </div></div>
 
-    <!-- Report View Modal -->
-    <div class="modal-overlay" id="reportViewModal"><div class="modal-content" style="max-width:80%;"><div class="modal-header"><h3>📄 Report Details</h3><button class="modal-close" id="reportViewModalClose">✕</button></div><div id="reportViewContent"></div></div></div>
-
-    <!-- Notifications Modal -->
+    <!-- Notification Modal -->
     <div class="modal-overlay" id="notifModal"><div class="modal-content"><div class="modal-header"><h3>🔔 Notifications</h3><button class="modal-close" id="notifModalClose">✕</button></div><div id="notifList"></div></div></div>
 
     <!-- ==========================================================
