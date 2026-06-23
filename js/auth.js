@@ -1,5 +1,5 @@
 // ============================================================
-// AUTHENTICATION MODULE (FIXED - auto-login on reload)
+// AUTHENTICATION MODULE (FIXED - auto-login & role from employee record)
 // ============================================================
 
 // Global currentUser variable
@@ -125,7 +125,6 @@ function loadUserFromStorage() {
         const raw = localStorage.getItem(USER_STORAGE_KEY);
         if (raw) {
             const user = JSON.parse(raw);
-            // validate that we have at least uid and role
             if (user && user.uid && user.role) {
                 return user;
             }
@@ -141,12 +140,13 @@ function clearUserStorage() {
 }
 
 // ============================================================
-// LOGIN
+// LOGIN (with role auto-detection from employee record)
 // ============================================================
 async function handleLogin() {
     const email = loginUsername.value.trim();
     const password = loginPassword.value.trim();
-    const selectedRole = document.querySelector('.role-option.active')?.dataset.role || 'admin';
+    // Get selected role from UI (fallback for admin)
+    const selectedRoleFromUI = document.querySelector('.role-option.active')?.dataset.role || 'admin';
 
     if (!email || !password) {
         loginError.textContent = 'Please enter email and password.';
@@ -161,19 +161,43 @@ async function handleLogin() {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        if (!ROLES[selectedRole]) {
-            throw new Error('Invalid role selected.');
+        // Load data to search for employee
+        await loadAllData();
+        const data = getAppData();
+        const employees = data.employees || [];
+        
+        // Find employee with matching email (case insensitive)
+        const employee = employees.find(emp => emp.email && emp.email.toLowerCase() === email.toLowerCase());
+        
+        let role = selectedRoleFromUI;
+        if (employee && employee.department) {
+            // Map department to role (case insensitive)
+            const dept = employee.department.toLowerCase();
+            if (dept === 'admin') role = 'admin';
+            else if (dept === 'manager') role = 'manager';
+            else if (dept === 'sales') role = 'sales';
+            else if (dept === 'delivery') role = 'delivery';
+            else if (dept === 'store') role = 'store';
+            else if (dept === 'finance') role = 'accountant';
+            else role = 'employee';
+            console.log('🔍 Role detected from employee record:', role);
+        } else {
+            console.log('ℹ️ No employee record found, using UI selected role:', role);
+        }
+
+        // Validate role exists
+        if (!ROLES[role]) {
+            role = 'employee';
         }
 
         currentUser = {
             uid: user.uid,
             email: user.email,
             name: user.displayName || email.split('@')[0],
-            role: selectedRole,
-            permissions: ROLES[selectedRole].permissions || []
+            role: role,
+            permissions: ROLES[role].permissions || []
         };
 
-        // Save to storage for auto-login on reload
         saveUserToStorage(currentUser);
 
         console.log('✅ Current User after login:', currentUser);
@@ -181,14 +205,12 @@ async function handleLogin() {
         loginScreen.classList.add('hidden');
         userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
         userName.textContent = currentUser.name;
-        userRole.textContent = ROLES[selectedRole].label || selectedRole;
-
-        await loadAllData();
+        userRole.textContent = ROLES[role].label || role;
 
         renderSidebar();
         switchPanel('dashboard');
 
-        showToast(`👋 Welcome, ${currentUser.name}! (${ROLES[selectedRole].label})`, 'success');
+        showToast(`👋 Welcome, ${currentUser.name}! (${ROLES[role].label})`, 'success');
 
     } catch (error) {
         loginError.textContent = error.message || 'Invalid credentials.';
@@ -278,10 +300,8 @@ resetPasswordBtn.addEventListener('click', handleResetPassword);
 // ============================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // Attempt to load stored user
         const storedUser = loadUserFromStorage();
         if (storedUser && storedUser.uid === user.uid) {
-            // Restore session
             currentUser = storedUser;
             console.log('🔄 Auto-login restored for:', currentUser.name);
 
@@ -290,19 +310,16 @@ auth.onAuthStateChanged((user) => {
             userName.textContent = currentUser.name;
             userRole.textContent = ROLES[currentUser.role]?.label || currentUser.role;
 
-            // Ensure data is loaded and UI rendered
             loadAllData().then(() => {
                 renderSidebar();
                 switchPanel('dashboard');
                 showToast(`👋 Welcome back, ${currentUser.name}!`, 'success');
             });
         } else {
-            // User signed in but no stored role – show login screen
             console.log('User signed in but no stored role. Showing login screen.');
             loginScreen.classList.remove('hidden');
         }
     } else {
-        // No user signed in
         currentUser = null;
         clearUserStorage();
         loginScreen.classList.remove('hidden');
