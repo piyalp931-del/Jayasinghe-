@@ -1,5 +1,5 @@
 // ============================================================
-// AUTHENTICATION MODULE (FIXED - onAuthStateChanged & permissions)
+// AUTHENTICATION MODULE (FIXED - auto-login on reload)
 // ============================================================
 
 // Global currentUser variable
@@ -108,6 +108,39 @@ window.canView = canView;
 window.canManage = canManage;
 
 // ============================================================
+// STORAGE HELPERS (to persist user session)
+// ============================================================
+const USER_STORAGE_KEY = 'jayasinghe_erp_user';
+
+function saveUserToStorage(user) {
+    try {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } catch (e) {
+        console.warn('Could not save user to storage:', e);
+    }
+}
+
+function loadUserFromStorage() {
+    try {
+        const raw = localStorage.getItem(USER_STORAGE_KEY);
+        if (raw) {
+            const user = JSON.parse(raw);
+            // validate that we have at least uid and role
+            if (user && user.uid && user.role) {
+                return user;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load user from storage:', e);
+    }
+    return null;
+}
+
+function clearUserStorage() {
+    localStorage.removeItem(USER_STORAGE_KEY);
+}
+
+// ============================================================
 // LOGIN
 // ============================================================
 async function handleLogin() {
@@ -140,6 +173,9 @@ async function handleLogin() {
             permissions: ROLES[selectedRole].permissions || []
         };
 
+        // Save to storage for auto-login on reload
+        saveUserToStorage(currentUser);
+
         console.log('✅ Current User after login:', currentUser);
 
         loginScreen.classList.add('hidden');
@@ -171,6 +207,7 @@ async function handleLogout() {
     try {
         await auth.signOut();
         currentUser = null;
+        clearUserStorage();
         loginScreen.classList.remove('hidden');
         loginPassword.value = '';
         loginUsername.value = 'admin@example.com';
@@ -237,18 +274,37 @@ forgotModalClose.addEventListener('click', () => {
 resetPasswordBtn.addEventListener('click', handleResetPassword);
 
 // ============================================================
-// ✅ FIXED onAuthStateChanged
+// ✅ FIXED onAuthStateChanged – auto-login from storage
 // ============================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // If we don't have currentUser, keep login screen visible
-        // so user can select role and login again.
-        if (!currentUser) {
-            console.log('User signed in but no currentUser. Showing login screen.');
+        // Attempt to load stored user
+        const storedUser = loadUserFromStorage();
+        if (storedUser && storedUser.uid === user.uid) {
+            // Restore session
+            currentUser = storedUser;
+            console.log('🔄 Auto-login restored for:', currentUser.name);
+
+            loginScreen.classList.add('hidden');
+            userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            userName.textContent = currentUser.name;
+            userRole.textContent = ROLES[currentUser.role]?.label || currentUser.role;
+
+            // Ensure data is loaded and UI rendered
+            loadAllData().then(() => {
+                renderSidebar();
+                switchPanel('dashboard');
+                showToast(`👋 Welcome back, ${currentUser.name}!`, 'success');
+            });
+        } else {
+            // User signed in but no stored role – show login screen
+            console.log('User signed in but no stored role. Showing login screen.');
             loginScreen.classList.remove('hidden');
         }
-        // else: currentUser exists, login screen already hidden.
     } else {
+        // No user signed in
+        currentUser = null;
+        clearUserStorage();
         loginScreen.classList.remove('hidden');
     }
 });
