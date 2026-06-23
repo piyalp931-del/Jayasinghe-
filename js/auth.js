@@ -12,49 +12,49 @@ const ROLES = {
         icon: '👑',
         permissions: ['all'],
         dashboard: ['stats_all', 'sales_chart', 'low_stock', 'quick_actions_all'],
-        nav: ['dashboard', 'employees', 'inventory', 'products', 'deliveries', 'attendance', 'leave', 'payroll', 'customers', 'finance', 'reports', 'vehicles', 'settings']
+        nav: ['dashboard', 'employees', 'inventory', 'products', 'deliveries', 'attendance', 'leave', 'payroll', 'customers', 'finance', 'reports', 'vehicles', 'settings', 'voucher']
     },
     manager: {
         label: 'Manager',
         icon: '📊',
-        permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory'],
+        permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory', 'manage_voucher'],
         dashboard: ['stats_employees', 'stats_deliveries', 'stats_low_stock', 'sales_chart', 'quick_actions_ops'],
-        nav: ['dashboard', 'employees', 'inventory', 'deliveries', 'attendance', 'leave', 'reports']
+        nav: ['dashboard', 'employees', 'inventory', 'deliveries', 'attendance', 'leave', 'payroll', 'reports', 'voucher']
     },
     sales: {
         label: 'Sales Representative',
         icon: '🛒',
-        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports'],
+        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher'],
         dashboard: ['stats_inventory', 'stats_customers', 'stats_deliveries', 'sales_chart', 'quick_actions_sales'],
-        nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports']
+        nav: ['dashboard', 'inventory', 'customers', 'deliveries', 'reports', 'attendance', 'payroll', 'voucher']
     },
     delivery: {
         label: 'Delivery Staff',
         icon: '🚚',
-        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance'],
+        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_voucher'],
         dashboard: ['stats_deliveries', 'stats_attendance', 'delivery_map', 'quick_actions_delivery'],
-        nav: ['dashboard', 'deliveries', 'attendance', 'vehicles']
+        nav: ['dashboard', 'deliveries', 'attendance', 'vehicles', 'payroll', 'voucher']
     },
     store: {
         label: 'Store Keeper',
         icon: '🏪',
-        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports'],
+        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_voucher'],
         dashboard: ['stats_inventory', 'stats_low_stock', 'inventory_chart', 'quick_actions_store'],
-        nav: ['dashboard', 'inventory', 'products', 'reports']
+        nav: ['dashboard', 'inventory', 'products', 'reports', 'attendance', 'payroll', 'voucher']
     },
     accountant: {
         label: 'Accountant',
         icon: '💰',
-        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll'],
+        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher', 'view_voucher'],
         dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
-        nav: ['dashboard', 'finance', 'payroll', 'reports']
+        nav: ['dashboard', 'finance', 'payroll', 'reports', 'attendance', 'voucher']
     },
     employee: {
         label: 'Employee',
         icon: '👤',
-        permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll'],
+        permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'],
         dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
-        nav: ['dashboard', 'attendance', 'leave', 'payroll']
+        nav: ['dashboard', 'attendance', 'leave', 'payroll', 'voucher']
     }
 };
 
@@ -316,6 +316,7 @@ auth.onAuthStateChanged((user) => {
                 showToast(`👋 Welcome back, ${currentUser.name}!`, 'success');
             });
         } else {
+            // User signed in but no stored role – show login screen
             console.log('User signed in but no stored role. Showing login screen.');
             loginScreen.classList.remove('hidden');
         }
