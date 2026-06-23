@@ -62,7 +62,6 @@
                 <i class="fas fa-sign-in-alt"></i> Login
             </button>
 
-            <!-- Clear Button (replaces Forgot Password) -->
             <div class="flex gap-2" style="margin-top: 8px; justify-content: center;">
                 <button class="btn btn-outline" id="clearLoginBtn" style="flex: 1; justify-content: center;">
                     <i class="fas fa-eraser"></i> Clear
@@ -90,7 +89,7 @@
             <button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button>
         </div>
 
-        <div class="user-badge">
+        <div class="user-badge" id="userBadge" style="cursor:pointer;">
             <div class="avatar" id="userAvatar">A</div>
             <div class="info">
                 <div class="name" id="userName">Admin</div>
@@ -134,6 +133,8 @@
         PANEL: DASHBOARD
         ========================================================== -->
         <section class="panel active" id="panel-dashboard">
+            <!-- Personal Stats (shown for non-admin roles) -->
+            <div id="personalStats" style="display:none; margin-bottom:12px;"></div>
             <div class="stat-grid" id="dashStats">
                 <div class="stat-box blue"><div class="num" id="dashTotalItems">0</div><div class="label">Total Items</div></div>
                 <div class="stat-box green"><div class="num" id="dashTotalQty">0</div><div class="label">Total Stock</div></div>
@@ -159,11 +160,8 @@
 
             <div class="card">
                 <div class="card-title">📌 Quick Actions</div>
-                <div class="quick-actions">
-                    <button class="btn btn-primary" id="quickAddItem"><i class="fas fa-plus"></i> Add Item</button>
-                    <button class="btn btn-success" id="quickNewDelivery"><i class="fas fa-truck"></i> New Delivery</button>
-                    <button class="btn btn-warning" id="quickAddEmployee"><i class="fas fa-user-plus"></i> Add Employee</button>
-                    <button class="btn btn-outline" id="quickPrint"><i class="fas fa-print"></i> Print</button>
+                <div class="quick-actions" id="quickActionsContainer">
+                    <!-- Populated by JS -->
                 </div>
             </div>
         </section>
@@ -215,7 +213,7 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: PRODUCTS (Categories & Brands)
+        PANEL: PRODUCTS
         ========================================================== -->
         <section class="panel" id="panel-products">
             <div class="card">
@@ -236,23 +234,17 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: DELIVERIES (ENHANCED)
+        PANEL: DELIVERIES
         ========================================================== -->
         <section class="panel" id="panel-deliveries">
             <div class="card">
                 <div class="card-title">🚚 Deliveries <span class="sub">Manage & track</span></div>
-
-                <!-- Customer + Item Row -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>👤 Customer *</label>
                         <div style="display:flex; gap:6px; align-items:center;">
-                            <select id="delCustomerSelect" style="flex:1;">
-                                <option value="">-- Select Customer --</option>
-                            </select>
-                            <button class="btn btn-sm btn-outline" id="quickAddCustomerBtn" title="Add New Customer">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                            <select id="delCustomerSelect" style="flex:1;"><option value="">-- Select Customer --</option></select>
+                            <button class="btn btn-sm btn-outline" id="quickAddCustomerBtn" title="Add New Customer"><i class="fas fa-plus"></i></button>
                         </div>
                         <div id="customerBalanceDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
                     </div>
@@ -262,89 +254,30 @@
                         <div id="itemStockDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
                     </div>
                 </div>
-
-                <!-- Qty + Driver Row -->
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>📤 Qty *</label>
-                        <input type="number" id="delQty" min="1" placeholder="1" />
-                    </div>
-                    <div class="form-group">
-                        <label>🚚 Driver</label>
-                        <select id="delDriverSelect">
-                            <option value="">-- Select Driver --</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label>📤 Qty *</label><input type="number" id="delQty" min="1" placeholder="1" /></div>
+                    <div class="form-group"><label>🚚 Driver</label><select id="delDriverSelect"><option value="">-- Select Driver --</option></select></div>
                 </div>
-
-                <!-- Vehicle + Status Row -->
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>🚗 Vehicle</label>
-                        <select id="delVehicleSelect">
-                            <option value="">-- Select Vehicle --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>📌 Status</label>
-                        <select id="delStatusSelect">
-                            <option value="pending">Pending</option>
-                            <option value="in-progress">In-Progress</option>
-                            <option value="delivered" selected>Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label>🚗 Vehicle</label><select id="delVehicleSelect"><option value="">-- Select Vehicle --</option></select></div>
+                    <div class="form-group"><label>📌 Status</label><select id="delStatusSelect"><option value="pending">Pending</option><option value="in-progress">In-Progress</option><option value="delivered" selected>Delivered</option><option value="cancelled">Cancelled</option></select></div>
                 </div>
-
-                <!-- Date/Time + Route Row -->
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>📅 Scheduled Date</label>
-                        <input type="datetime-local" id="delScheduledDate" />
-                    </div>
-                    <div class="form-group">
-                        <label>📍 Delivery Route</label>
-                        <input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" />
-                    </div>
+                    <div class="form-group"><label>📅 Scheduled Date</label><input type="datetime-local" id="delScheduledDate" /></div>
+                    <div class="form-group"><label>📍 Delivery Route</label><input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" /></div>
                 </div>
-
-                <!-- Notes -->
-                <div class="form-group">
-                    <label>📝 Notes</label>
-                    <textarea id="delNotes" rows="2" placeholder="Special instructions, delivery notes..."></textarea>
-                </div>
-
+                <div class="form-group"><label>📝 Notes</label><textarea id="delNotes" rows="2" placeholder="Special instructions..."></textarea></div>
                 <button class="btn btn-success btn-block" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
             </div>
-
-            <!-- Delivery History -->
             <div class="card">
                 <div class="card-title">📋 Delivery History</div>
                 <div class="search-bar">
                     <input type="date" id="delDateFilter" />
-                    <select id="delStatusFilter" style="max-width:140px;">
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In-Progress</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
+                    <select id="delStatusFilter" style="max-width:140px;"><option value="all">All Status</option><option value="pending">Pending</option><option value="in-progress">In-Progress</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select>
                     <button class="btn btn-outline" id="clearDelFilter">Clear</button>
                 </div>
                 <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Customer</th>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th>Driver</th>
-                                <th>Vehicle</th>
-                                <th>Status</th>
-                                <th>Route</th>
-                            </tr>
-                        </thead>
+                    <table><thead><tr><th>Date</th><th>Customer</th><th>Item</th><th>Qty</th><th>Driver</th><th>Vehicle</th><th>Status</th><th>Route</th></tr></thead>
                         <tbody id="deliveryTableBody"></tbody>
                     </table>
                 </div>
@@ -375,13 +308,12 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: LEAVE (with Balance Display)
+        PANEL: LEAVE
         ========================================================== -->
         <section class="panel" id="panel-leave">
             <div class="card">
                 <div class="card-title">🏖️ Leave Management</div>
-                <!-- Leave Balance Display -->
-                <div class="leave-balance" id="leaveBalanceDisplay" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; padding:10px; background:var(--bg); border-radius:10px;">
+                <div class="leave-balance">
                     <span><strong>Sick:</strong> <span id="lbSick">0</span> days</span>
                     <span><strong>Casual:</strong> <span id="lbCasual">0</span> days</span>
                     <span><strong>Annual:</strong> <span id="lbAnnual">0</span> days</span>
@@ -409,7 +341,7 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: PAYROLL (with EPF/ETF)
+        PANEL: PAYROLL
         ========================================================== -->
         <section class="panel" id="panel-payroll">
             <div class="card">
@@ -445,9 +377,7 @@
             <div class="card">
                 <div class="card-title">👥 Customers <span class="sub"><span id="custCount">0</span> registered</span></div>
                 <div class="toolbar">
-                    <div class="search-bar">
-                        <input type="text" id="custSearch" placeholder="🔍 Search..." />
-                    </div>
+                    <div class="search-bar"><input type="text" id="custSearch" placeholder="🔍 Search..." /></div>
                     <button class="btn btn-primary" id="addCustomerBtn"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <div class="table-wrap">
@@ -459,7 +389,7 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: FINANCE (with Category & Budget)
+        PANEL: FINANCE
         ========================================================== -->
         <section class="panel" id="panel-finance">
             <div class="card">
@@ -469,15 +399,7 @@
                     <div class="form-group"><label>Amount</label><input type="number" id="financeAmount" placeholder="0" /></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Category</label>
-                        <select id="financeCategory">
-                            <option value="operational">Operational</option>
-                            <option value="capital">Capital</option>
-                            <option value="administrative">Administrative</option>
-                            <option value="marketing">Marketing</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label>Category</label><select id="financeCategory"><option value="operational">Operational</option><option value="capital">Capital</option><option value="administrative">Administrative</option><option value="marketing">Marketing</option><option value="other">Other</option></select></div>
                     <div class="form-group"><label>Budget (LKR)</label><input type="number" id="financeBudget" placeholder="Monthly budget" /></div>
                 </div>
                 <div class="form-group"><label>Description</label><input type="text" id="financeDesc" placeholder="Description" /></div>
@@ -497,12 +419,11 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: REPORTS (with Date Filters)
+        PANEL: REPORTS
         ========================================================== -->
         <section class="panel" id="panel-reports">
             <div class="card">
                 <div class="card-title">📈 Reports & Analytics</div>
-                <!-- Report Type Dropdown -->
                 <div class="form-group" style="margin-bottom:12px;">
                     <select id="reportType" style="max-width:250px;">
                         <option value="stock">📦 Stock Report</option>
@@ -512,35 +433,22 @@
                         <option value="customers">👥 Customer Report</option>
                     </select>
                 </div>
-                <!-- Date Filters + Apply button -->
                 <div class="report-filters">
                     <div class="search-bar" style="flex:1; flex-wrap:nowrap;">
                         <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
-                            From:
-                            <input type="date" id="reportFrom" style="max-width:150px;" />
+                            From: <input type="date" id="reportFrom" style="max-width:150px;" />
                         </label>
                         <label style="font-size:12px; font-weight:500; display:flex; align-items:center; gap:4px; white-space:nowrap;">
-                            To:
-                            <input type="date" id="reportTo" style="max-width:150px;" />
+                            To: <input type="date" id="reportTo" style="max-width:150px;" />
                         </label>
-                        <button class="btn btn-sm btn-primary" id="applyReportFilters">
-                            <i class="fas fa-filter"></i> Apply
-                        </button>
+                        <button class="btn btn-sm btn-primary" id="applyReportFilters"><i class="fas fa-filter"></i> Apply</button>
                     </div>
                 </div>
-                <!-- Action buttons -->
                 <div class="toolbar" style="margin-top:8px;">
-                    <button class="btn btn-primary" id="generateReportBtn">
-                        <i class="fas fa-chart-bar"></i> Generate
-                    </button>
-                    <button class="btn btn-outline" id="exportReportBtn">
-                        <i class="fas fa-file-csv"></i> CSV
-                    </button>
-                    <button class="btn btn-outline" id="printReportBtn">
-                        <i class="fas fa-print"></i> Print
-                    </button>
+                    <button class="btn btn-primary" id="generateReportBtn"><i class="fas fa-chart-bar"></i> Generate</button>
+                    <button class="btn btn-outline" id="exportReportBtn"><i class="fas fa-file-csv"></i> CSV</button>
+                    <button class="btn btn-outline" id="printReportBtn"><i class="fas fa-print"></i> Print</button>
                 </div>
-                <!-- Report Content -->
                 <div id="reportContent" class="table-wrap" style="margin-top:12px;">
                     <div class="text-muted text-center" style="padding:30px;">
                         <span style="font-size:40px; display:block; margin-bottom:8px;">📊</span>
@@ -590,84 +498,38 @@
         </section>
 
         <!-- ==========================================================
-        PANEL: VOUCHER (NEW)
+        PANEL: VOUCHER
         ========================================================== -->
         <section class="panel" id="panel-voucher">
             <div class="card">
                 <div class="card-title">🧾 Cash Payment Voucher <span class="sub">P.M. Jayasinghe Distributors</span></div>
-
-                <!-- Voucher Form -->
-                <div class="voucher-form" id="voucherForm">
+                <div class="voucher-form">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Voucher No</label>
-                            <input type="text" id="voucherNo" placeholder="Auto or manual" />
-                        </div>
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="voucherDate" />
-                        </div>
+                        <div class="form-group"><label>Voucher No</label><input type="text" id="voucherNo" placeholder="Auto or manual" /></div>
+                        <div class="form-group"><label>Date</label><input type="date" id="voucherDate" /></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Paid To</label>
-                            <input type="text" id="voucherPaidTo" placeholder="Recipient name" />
-                        </div>
-                        <div class="form-group">
-                            <label>Amount (LKR)</label>
-                            <input type="number" id="voucherAmount" placeholder="0.00" step="0.01" />
-                        </div>
+                        <div class="form-group"><label>Paid To</label><input type="text" id="voucherPaidTo" placeholder="Recipient name" /></div>
+                        <div class="form-group"><label>Amount (LKR)</label><input type="number" id="voucherAmount" placeholder="0.00" step="0.01" /></div>
                     </div>
-
-                    <!-- Payment For (Checkboxes) -->
                     <div class="form-group">
                         <label>Payment For</label>
                         <div style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 0;">
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Transport" /> Transport
-                            </label>
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Fuel" /> Fuel
-                            </label>
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Salary" /> Salary
-                            </label>
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Office Expenses" /> Office Expenses
-                            </label>
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Purchase" /> Purchase
-                            </label>
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Maintenance" /> Maintenance
-                            </label>
-                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
-                                <input type="checkbox" class="voucher-payment-type" value="Other" /> Other
-                                <input type="text" id="voucherOtherText" placeholder="Specify..." style="max-width:120px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; margin-left:4px;" />
-                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Transport" /> Transport</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Fuel" /> Fuel</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Salary" /> Salary</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Office Expenses" /> Office Expenses</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Purchase" /> Purchase</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Maintenance" /> Maintenance</label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Other" /> Other <input type="text" id="voucherOtherText" placeholder="Specify..." style="max-width:120px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; margin-left:4px;" /></label>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="voucherDescription" rows="2" placeholder="Reason for payment..."></textarea>
-                    </div>
-
+                    <div class="form-group"><label>Description</label><textarea id="voucherDescription" rows="2" placeholder="Reason for payment..."></textarea></div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Approved By</label>
-                            <input type="text" id="voucherApprovedBy" placeholder="Authorized person" />
-                        </div>
-                        <div class="form-group">
-                            <label>Received By</label>
-                            <input type="text" id="voucherReceivedBy" placeholder="Receiver name" />
-                        </div>
+                        <div class="form-group"><label>Approved By</label><input type="text" id="voucherApprovedBy" placeholder="Authorized person" /></div>
+                        <div class="form-group"><label>Received By</label><input type="text" id="voucherReceivedBy" placeholder="Receiver name" /></div>
                     </div>
-                    <div class="form-group">
-                        <label>Signature (Name)</label>
-                        <input type="text" id="voucherSignature" placeholder="Signature" />
-                    </div>
-
+                    <div class="form-group"><label>Signature (Name)</label><input type="text" id="voucherSignature" placeholder="Signature" /></div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
                         <button class="btn btn-primary" id="addVoucherBtn"><i class="fas fa-save"></i> Save Voucher</button>
                         <button class="btn btn-success" id="printVoucherBtn"><i class="fas fa-print"></i> Print</button>
@@ -675,13 +537,10 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Voucher List -->
             <div class="card">
                 <div class="card-title">📋 Voucher History <span class="sub"><span id="voucherCount">0</span> records</span></div>
                 <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>No</th><th>Date</th><th>Paid To</th><th>Amount</th><th>Type</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
+                    <table><thead><tr><th>No</th><th>Date</th><th>Paid To</th><th>Amount</th><th>Type</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
                         <tbody id="voucherTableBody"></tbody>
                     </table>
                 </div>
@@ -694,7 +553,7 @@
     MODALS
     ========================================================== -->
 
-    <!-- Employee Modal (with Username & Password) -->
+    <!-- Employee Modal -->
     <div class="modal-overlay" id="employeeModal">
         <div class="modal-content">
             <div class="modal-header"><h3 id="employeeModalTitle">👤 Add Employee</h3><button class="modal-close" id="empModalClose">✕</button></div>
@@ -704,7 +563,7 @@
                 <div class="form-group"><label>NIC</label><input type="text" id="empNIC" /></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>Department</label><select id="empDept"><option value="Admin">Admin</option><option value="Sales">Sales</option><option value="Delivery">Delivery</option><option value="Store">Store</option><option value="Finance">Finance</option><option value="HR">HR</option></select></div>
+                <div class="form-group"><label>Department</label><select id="empDept"><option value="Admin">Admin</option><option value="Manager">Manager</option><option value="Sales">Sales</option><option value="Delivery">Delivery</option><option value="Store">Store</option><option value="Finance">Finance</option><option value="HR">HR</option></select></div>
                 <div class="form-group"><label>Designation</label><input type="text" id="empDesignation" placeholder="e.g. Manager" /></div>
             </div>
             <div class="form-row">
@@ -716,7 +575,6 @@
                 <div class="form-group"><label>Joined Date</label><input type="date" id="empJoined" /></div>
                 <div class="form-group"><label>Salary</label><input type="number" id="empSalary" placeholder="0" /></div>
             </div>
-            <!-- Username & Password fields -->
             <div class="form-row">
                 <div class="form-group"><label>📧 Username (Email) *</label><input type="email" id="empUsername" placeholder="employee@example.com" /></div>
                 <div class="form-group"><label>🔑 Password *</label><input type="password" id="empPassword" placeholder="Min 6 characters" /></div>
@@ -729,32 +587,22 @@
         </div>
     </div>
 
-    <!-- ==========================================================
-    ITEM MODAL (with Barcode Scanner)
-    ========================================================== -->
+    <!-- Item Modal -->
     <div class="modal-overlay" id="itemModal">
         <div class="modal-content">
             <div class="modal-header"><h3 id="itemModalTitle">📦 Add Item</h3><button class="modal-close" id="itemModalClose">✕</button></div>
             <input type="hidden" id="itemEditId" />
-
-            <!-- Barcode with Scan Button -->
             <div class="form-group" style="position:relative;">
                 <label>🔢 Barcode</label>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <input type="text" id="itemBarcode" placeholder="Scan or enter" style="flex:1;" />
-                    <button type="button" class="btn btn-sm btn-primary" id="scanBarcodeBtn" title="Scan Barcode">
-                        <i class="fas fa-camera"></i> Scan
-                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" id="scanBarcodeBtn" title="Scan Barcode"><i class="fas fa-camera"></i> Scan</button>
                 </div>
-                <!-- Scanner Container (hidden by default) -->
                 <div id="scannerContainer" style="display:none; margin-top:8px; border:1px solid var(--border); border-radius:10px; overflow:hidden; position:relative;">
                     <div id="scannerReader" style="width:100%; max-width:300px; margin:0 auto;"></div>
-                    <button type="button" class="btn btn-sm btn-danger" id="closeScannerBtn" style="position:absolute; top:8px; right:8px; z-index:10; padding:4px 10px;">
-                        <i class="fas fa-times"></i> Close
-                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" id="closeScannerBtn" style="position:absolute; top:8px; right:8px; z-index:10; padding:4px 10px;"><i class="fas fa-times"></i> Close</button>
                 </div>
             </div>
-
             <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" /></div>
             <div class="form-row">
                 <div class="form-group"><label>Qty *</label><input type="number" id="itemQty" min="0" /></div>
@@ -793,7 +641,7 @@
         </div>
     </div>
 
-    <!-- Forgot Password Modal (kept for reference but no link points to it) -->
+    <!-- Forgot Password Modal -->
     <div class="modal-overlay" id="forgotModal">
         <div class="modal-content">
             <div class="modal-header"><h3>🔐 Reset Password</h3><button class="modal-close" id="forgotModalClose">✕</button></div>
@@ -808,6 +656,33 @@
         <div class="modal-content">
             <div class="modal-header"><h3>🔔 Notifications</h3><button class="modal-close" id="notifModalClose">✕</button></div>
             <div id="notifList"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+    PROFILE MODAL (NEW)
+    ========================================================== -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">
+                <h3>👤 My Profile</h3>
+                <button class="modal-close" id="profileModalClose">✕</button>
+            </div>
+            <div id="profileContent">
+                <div style="text-align:center; padding:12px 0;">
+                    <div style="font-size:56px; margin-bottom:4px;">👤</div>
+                    <h3 id="profileName" style="margin:0;">Loading...</h3>
+                    <p class="text-muted" id="profileRole" style="margin:4px 0 0;">Loading...</p>
+                </div>
+                <hr style="border-color:var(--border); margin:8px 0;" />
+                <div id="profileDetails" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; font-size:13px; padding:4px 0;">
+                    <!-- Populated by JS -->
+                </div>
+                <hr style="border-color:var(--border); margin:8px 0;" />
+                <div id="profileStats" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; font-size:12px; padding:4px 0;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
         </div>
     </div>
 
