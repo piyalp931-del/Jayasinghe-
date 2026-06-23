@@ -1,5 +1,5 @@
 // ============================================================
-// UI RENDERING MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES)
+// UI RENDERING MODULE (FULLY INTEGRATED - WITH ENHANCED DELIVERIES & VOUCHER)
 // ============================================================
 
 // Define all nav items with permissions
@@ -16,7 +16,9 @@ const ALL_NAV_ITEMS = [
     { id: 'finance', icon: '💳', label: 'Finance', labelSI: 'මුල්‍ය', perm: 'view_finance' },
     { id: 'reports', icon: '📈', label: 'Reports', labelSI: 'වාර්තා', perm: 'view_reports' },
     { id: 'vehicles', icon: '🚗', label: 'Vehicles', labelSI: 'වාහන', perm: 'view_vehicles' },
-    { id: 'settings', icon: '⚙️', label: 'Settings', labelSI: 'සැකසුම්', perm: 'view_settings' }
+    { id: 'voucher', icon: '🧾', label: 'Cash Voucher', labelSI: 'මුදල් වවුචර්', perm: 'view_voucher' },
+    { id: 'settings', icon: '⚙️', label: 'Settings', labelSI: 'සැකසුම්', perm: 'view_settings' },
+    
 ];
 
 let currentLang = 'en';
@@ -105,6 +107,7 @@ function switchPanel(id) {
         case 'reports': if (window.canView('reports')) renderReports(); else showAccessDenied('reports'); break;
         case 'vehicles': if (window.canView('vehicles')) renderVehicles(); else showAccessDenied('vehicles'); break;
         case 'settings': if (window.canView('settings')) renderSettings(); else showAccessDenied('settings'); break;
+        case 'voucher': if (window.canView('voucher')) renderVouchers(); else showAccessDenied('voucher'); break;
     }
 
     const sidebar = document.getElementById('sidebar');
@@ -970,6 +973,56 @@ function renderSettings() {
 }
 
 // ============================================================
+// VOUCHERS (NEW)
+// ============================================================
+function renderVouchers() {
+    if (!window.canView('voucher')) return;
+
+    const data = getAppData();
+    const vouchers = data.vouchers || [];
+
+    const countEl = document.getElementById('voucherCount');
+    const tbody = document.getElementById('voucherTableBody');
+    if (!tbody) return;
+
+    if (countEl) countEl.textContent = vouchers.length;
+
+    if (vouchers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No vouchers found.</td></tr>`;
+        return;
+    }
+
+    const canEdit = window.canManage('voucher') || window.canManage('finance');
+    tbody.innerHTML = vouchers.slice().reverse().map(v => {
+        const paymentTypes = v.paymentTypes ? v.paymentTypes.join(', ') : '—';
+        return `<tr>
+            <td><strong>${escapeHtml(v.voucherNo || '—')}</strong></td>
+            <td>${formatDate(v.date)}</td>
+            <td>${escapeHtml(v.paidTo || '—')}</td>
+            <td>LKR ${formatCurrency(v.amount || 0)}</td>
+            <td>${escapeHtml(paymentTypes)}</td>
+            <td><span class="badge badge-success">Paid</span></td>
+            <td class="text-center">
+                ${canEdit ? `<button class="btn btn-sm btn-danger" onclick="deleteVoucher('${v.id}')"><i class="fas fa-trash"></i></button>` : '—'}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+window.renderVouchers = renderVouchers;
+
+// Delete Voucher
+window.deleteVoucher = async function(id) {
+    if (!confirm('Delete this voucher?')) return;
+    const data = getAppData();
+    data.vouchers = data.vouchers.filter(v => v.id !== id);
+    setAppData(data);
+    await saveAllData();
+    renderVouchers();
+    showToast('🗑️ Voucher removed.');
+};
+
+// ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
 function escapeHtml(str) {
@@ -1019,6 +1072,7 @@ window.renderFinance = renderFinance;
 window.renderReports = renderReports;
 window.renderVehicles = renderVehicles;
 window.renderSettings = renderSettings;
+window.renderVouchers = renderVouchers;
 window.renderSidebar = renderSidebar;
 
 // Edit/Delete functions (with null checks for safety)
