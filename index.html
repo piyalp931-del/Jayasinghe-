@@ -20,6 +20,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- HTML5-QRCode for Barcode Scanning -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- html2canvas + jsPDF for PDF Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -67,7 +70,6 @@
             </div>
 
             <div class="login-error" id="loginError">Invalid credentials</div>
-            <!-- Forgot Password link removed -->
         </div>
     </div>
 
@@ -233,122 +235,122 @@
             </div>
         </section>
 
-        
-<!-- ==========================================================
-PANEL: DELIVERIES (ENHANCED)
-========================================================== -->
-<section class="panel" id="panel-deliveries">
-    <div class="card">
-        <div class="card-title">🚚 Deliveries <span class="sub">Manage & track</span></div>
+        <!-- ==========================================================
+        PANEL: DELIVERIES (ENHANCED)
+        ========================================================== -->
+        <section class="panel" id="panel-deliveries">
+            <div class="card">
+                <div class="card-title">🚚 Deliveries <span class="sub">Manage & track</span></div>
 
-        <!-- Customer + Item Row -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>👤 Customer *</label>
-                <div style="display:flex; gap:6px; align-items:center;">
-                    <select id="delCustomerSelect" style="flex:1;">
-                        <option value="">-- Select Customer --</option>
-                    </select>
-                    <button class="btn btn-sm btn-outline" id="quickAddCustomerBtn" title="Add New Customer">
-                        <i class="fas fa-plus"></i>
-                    </button>
+                <!-- Customer + Item Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>👤 Customer *</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <select id="delCustomerSelect" style="flex:1;">
+                                <option value="">-- Select Customer --</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline" id="quickAddCustomerBtn" title="Add New Customer">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="customerBalanceDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>📦 Item *</label>
+                        <select id="delItemSelect"><option value="">-- Select --</option></select>
+                        <div id="itemStockDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
+                    </div>
                 </div>
-                <div id="customerBalanceDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
-            </div>
-            <div class="form-group">
-                <label>📦 Item *</label>
-                <select id="delItemSelect"><option value="">-- Select --</option></select>
-                <div id="itemStockDisplay" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
-            </div>
-        </div>
 
-        <!-- Qty + Driver Row -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>📤 Qty *</label>
-                <input type="number" id="delQty" min="1" placeholder="1" />
-            </div>
-            <div class="form-group">
-                <label>🚚 Driver</label>
-                <select id="delDriverSelect">
-                    <option value="">-- Select Driver --</option>
-                </select>
-            </div>
-        </div>
+                <!-- Qty + Driver Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>📤 Qty *</label>
+                        <input type="number" id="delQty" min="1" placeholder="1" />
+                    </div>
+                    <div class="form-group">
+                        <label>🚚 Driver</label>
+                        <select id="delDriverSelect">
+                            <option value="">-- Select Driver --</option>
+                        </select>
+                    </div>
+                </div>
 
-        <!-- Vehicle + Status Row -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>🚗 Vehicle</label>
-                <select id="delVehicleSelect">
-                    <option value="">-- Select Vehicle --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>📌 Status</label>
-                <select id="delStatusSelect">
-                    <option value="pending">Pending</option>
-                    <option value="in-progress">In-Progress</option>
-                    <option value="delivered" selected>Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-        </div>
+                <!-- Vehicle + Status Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>🚗 Vehicle</label>
+                        <select id="delVehicleSelect">
+                            <option value="">-- Select Vehicle --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>📌 Status</label>
+                        <select id="delStatusSelect">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In-Progress</option>
+                            <option value="delivered" selected>Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
 
-        <!-- Date/Time + Route Row -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>📅 Scheduled Date</label>
-                <input type="datetime-local" id="delScheduledDate" />
+                <!-- Date/Time + Route Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>📅 Scheduled Date</label>
+                        <input type="datetime-local" id="delScheduledDate" />
+                    </div>
+                    <div class="form-group">
+                        <label>📍 Delivery Route</label>
+                        <input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" />
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label>📝 Notes</label>
+                    <textarea id="delNotes" rows="2" placeholder="Special instructions, delivery notes..."></textarea>
+                </div>
+
+                <button class="btn btn-success btn-block" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
             </div>
-            <div class="form-group">
-                <label>📍 Delivery Route</label>
-                <input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" />
+
+            <!-- Delivery History -->
+            <div class="card">
+                <div class="card-title">📋 Delivery History</div>
+                <div class="search-bar">
+                    <input type="date" id="delDateFilter" />
+                    <select id="delStatusFilter" style="max-width:140px;">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In-Progress</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button class="btn btn-outline" id="clearDelFilter">Clear</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Driver</th>
+                                <th>Vehicle</th>
+                                <th>Status</th>
+                                <th>Route</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deliveryTableBody"></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Notes -->
-        <div class="form-group">
-            <label>📝 Notes</label>
-            <textarea id="delNotes" rows="2" placeholder="Special instructions, delivery notes..."></textarea>
-        </div>
-
-        <button class="btn btn-success btn-block" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
-    </div>
-
-    <!-- Delivery History -->
-    <div class="card">
-        <div class="card-title">📋 Delivery History</div>
-        <div class="search-bar">
-            <input type="date" id="delDateFilter" />
-            <select id="delStatusFilter" style="max-width:140px;">
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In-Progress</option>
-                <option value="delivered">Delivered</option>
-                <option value="cancelled">Cancelled</option>
-            </select>
-            <button class="btn btn-outline" id="clearDelFilter">Clear</button>
-        </div>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Customer</th>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th>Driver</th>
-                        <th>Vehicle</th>
-                        <th>Status</th>
-                        <th>Route</th>
-                    </tr>
-                </thead>
-                <tbody id="deliveryTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-</section>
         <!-- ==========================================================
         PANEL: ATTENDANCE
         ========================================================== -->
@@ -583,6 +585,105 @@ PANEL: DELIVERIES (ENHANCED)
                     <button class="btn btn-outline" id="backupDataBtn"><i class="fas fa-download"></i> Backup</button>
                     <button class="btn btn-outline" id="restoreDataBtn"><i class="fas fa-upload"></i> Restore</button>
                     <button class="btn btn-danger" id="clearDataBtn"><i class="fas fa-trash"></i> Clear All</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================
+        PANEL: VOUCHER (NEW)
+        ========================================================== -->
+        <section class="panel" id="panel-voucher">
+            <div class="card">
+                <div class="card-title">🧾 Cash Payment Voucher <span class="sub">P.M. Jayasinghe Distributors</span></div>
+
+                <!-- Voucher Form -->
+                <div class="voucher-form" id="voucherForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Voucher No</label>
+                            <input type="text" id="voucherNo" placeholder="Auto or manual" />
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="voucherDate" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Paid To</label>
+                            <input type="text" id="voucherPaidTo" placeholder="Recipient name" />
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (LKR)</label>
+                            <input type="number" id="voucherAmount" placeholder="0.00" step="0.01" />
+                        </div>
+                    </div>
+
+                    <!-- Payment For (Checkboxes) -->
+                    <div class="form-group">
+                        <label>Payment For</label>
+                        <div style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 0;">
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Transport" /> Transport
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Fuel" /> Fuel
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Salary" /> Salary
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Office Expenses" /> Office Expenses
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Purchase" /> Purchase
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Maintenance" /> Maintenance
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;">
+                                <input type="checkbox" class="voucher-payment-type" value="Other" /> Other
+                                <input type="text" id="voucherOtherText" placeholder="Specify..." style="max-width:120px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; margin-left:4px;" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="voucherDescription" rows="2" placeholder="Reason for payment..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Approved By</label>
+                            <input type="text" id="voucherApprovedBy" placeholder="Authorized person" />
+                        </div>
+                        <div class="form-group">
+                            <label>Received By</label>
+                            <input type="text" id="voucherReceivedBy" placeholder="Receiver name" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Signature (Name)</label>
+                        <input type="text" id="voucherSignature" placeholder="Signature" />
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                        <button class="btn btn-primary" id="addVoucherBtn"><i class="fas fa-save"></i> Save Voucher</button>
+                        <button class="btn btn-success" id="printVoucherBtn"><i class="fas fa-print"></i> Print</button>
+                        <button class="btn btn-info" id="downloadVoucherBtn"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voucher List -->
+            <div class="card">
+                <div class="card-title">📋 Voucher History <span class="sub"><span id="voucherCount">0</span> records</span></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>No</th><th>Date</th><th>Paid To</th><th>Amount</th><th>Type</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="voucherTableBody"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
