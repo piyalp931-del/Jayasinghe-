@@ -328,27 +328,323 @@ function renderCustomers() {
     tbody.innerHTML = filtered.map(c => `<tr><td><strong>${escapeHtml(c.name)}</strong></td><td>${escapeHtml(c.contact||'—')}</td><td>LKR ${formatCurrency(c.creditLimit||0)}</td><td>LKR ${formatCurrency(c.balance||0)}</td><td class="text-center">${canEdit ? `<button class="btn btn-sm btn-outline" onclick="editCustomer('${c.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.id}')"><i class="fas fa-trash"></i></button>` : '—'}</td></tr>`).join('');
 }
 
-// ---- FINANCE ----
+// ============================================================
+// UI RENDERING MODULE (Enhanced - Enterprise)
+// ============================================================
+
+// ... (ALL_NAV_ITEMS, renderSidebar, switchPanel, showAccessDenied, renderDashboard ආදිය පෙර පරිදිම)
+
+// ============================================================
+// PRODUCTS (Enhanced with Extended Attributes)
+// ============================================================
+function renderProducts() {
+    if (!window.canView('inventory')) return;
+    const data = getAppData();
+    const categories = data.categories || [];
+    const brands = data.brands || [];
+    const items = data.items || [];
+
+    const canEdit = window.canManage('inventory');
+    document.getElementById('categoryChips').innerHTML = categories.map(c => 
+        `<span class="badge badge-info" style="margin:2px;">${escapeHtml(c)} ${canEdit ? `<span style="cursor:pointer;color:var(--danger);" onclick="removeCategory('${c}')">✕</span>` : ''}</span>`
+    ).join('') || '<span class="text-muted">None</span>';
+    document.getElementById('brandChips').innerHTML = brands.map(b => 
+        `<span class="badge badge-success" style="margin:2px;">${escapeHtml(b)} ${canEdit ? `<span style="cursor:pointer;color:var(--danger);" onclick="removeBrand('${b}')">✕</span>` : ''}</span>`
+    ).join('') || '<span class="text-muted">None</span>';
+
+    // Fill product dropdown for attribute update
+    const productCodeInput = document.getElementById('productCode');
+    const productUnit = document.getElementById('productUnit');
+    const productCostPrice = document.getElementById('productCostPrice');
+    const productTaxRate = document.getElementById('productTaxRate');
+    const productReorderLevel = document.getElementById('productReorderLevel');
+    const productStockAlert = document.getElementById('productStockAlert');
+
+    // Add event listener for product code auto-generation
+    if (productCodeInput && !productCodeInput.value) {
+        const nextCode = items.length + 1;
+        productCodeInput.value = 'PRD-' + String(nextCode).padStart(4, '0');
+    }
+}
+window.renderProducts = renderProducts;
+
+// ============================================================
+// SALES (Enhanced - Multi-Item Cart)
+// ============================================================
+let salesCart = [];
+
+function renderSales() {
+    if (!window.canView('sales')) return;
+    const data = getAppData();
+    const customers = data.customers || [];
+    const items = data.items || [];
+    const salesOrders = data.salesOrders || [];
+
+    // Set default date
+    const orderDate = document.getElementById('salesOrderDate');
+    if (orderDate && !orderDate.value) orderDate.value = todayStr();
+
+    // Populate Customer dropdown
+    const custSelect = document.getElementById('salesCustomerSelect');
+    if (custSelect) {
+        const val = custSelect.value;
+        custSelect.innerHTML = '<option value="">Select Customer</option>' + 
+            customers.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+        if (val && [...custSelect.options].some(o => o.value === val)) custSelect.value = val;
+    }
+
+    // Populate Cart Item dropdown
+    const cartItemSelect = document.getElementById('salesCartItemSelect');
+    if (cartItemSelect) {
+        const val = cartItemSelect.value;
+        cartItemSelect.innerHTML = '<option value="">Select Item</option>' + 
+            items.filter(i => i.status !== 'inactive').map(i => 
+                `<option value="${i.id}">${escapeHtml(i.name)} (${i.qty||0} available) - LKR ${formatCurrency(i.price||0)}</option>`
+            ).join('');
+        if (val && [...cartItemSelect.options].some(o => o.value === val)) cartItemSelect.value = val;
+    }
+
+    // Render Cart
+    renderSalesCart();
+
+    // Render Orders Table
+    const tbody = document.getElementById('salesOrderTableBody');
+    if (tbody) {
+        if (salesOrders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No orders.</td></tr>`;
+        } else {
+            tbody.innerHTML = salesOrders.slice().reverse().map(o => {
+                const itemCount = o.items ? o.items.length : 0;
+                return `<tr>
+                    <td><strong>#${o.orderNo || o.id.slice(0,6)}</strong></td>
+                    <td>${formatDate(o.date)}</td>
+                    <td>${escapeHtml(o.customerName)}</td>
+                    <td>${itemCount} items</td>
+                    <td><strong>LKR ${formatCurrency(o.total)}</strong></td>
+                    <td><span class="badge badge-success">Completed</span></td>
+                </tr>`;
+            }).join('');
+        }
+    }
+}
+window.renderSales = renderSales;
+
+function renderSalesCart() {
+    const tbody = document.getElementById('salesCartBody');
+    const totalEl = document.getElementById('salesCartTotal');
+    if (!tbody) return;
+
+    if (salesCart.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Cart is empty.</td></tr>`;
+        if (totalEl) totalEl.textContent = 'LKR 0';
+        return;
+    }
+
+    let grandTotal = 0;
+    tbody.innerHTML = salesCart.map((item, index) => {
+        const total = item.qty * item.price;
+        grandTotal += total;
+        return `<tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(item.name)}</td>
+            <td>${item.qty}</td>
+            <td>LKR ${formatCurrency(item.price)}</td>
+            <td>LKR ${formatCurrency(total)}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-danger" onclick="removeFromSalesCart(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    if (totalEl) totalEl.textContent = 'LKR ' + formatCurrency(grandTotal);
+}
+
+window.removeFromSalesCart = function(index) {
+    salesCart.splice(index, 1);
+    renderSalesCart();
+};
+
+// ============================================================
+// DELIVERIES (Enhanced - Multi-Item + Status Update)
+// ============================================================
+let deliveryCart = [];
+
+function renderDeliveries() {
+    if (!window.canView('deliveries')) return;
+    const data = getAppData();
+    populateDeliveryDropdowns();
+
+    const dateFilter = document.getElementById('delDateFilter')?.value || '';
+    const statusFilter = document.getElementById('delStatusFilter')?.value || 'all';
+
+    let filtered = data.deliveries || [];
+    if (dateFilter) filtered = filtered.filter(d => d.date && d.date.slice(0, 10) === dateFilter);
+    if (statusFilter !== 'all') filtered = filtered.filter(d => d.status === statusFilter);
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const tbody = document.getElementById('deliveryTableBody');
+    if (!tbody) return;
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No deliveries.</td></tr>`;
+        return;
+    }
+
+    const statusColors = {
+        'pending': 'badge-warning',
+        'in-progress': 'badge-info',
+        'delivered': 'badge-success',
+        'cancelled': 'badge-danger'
+    };
+
+    tbody.innerHTML = filtered.map(d => {
+        const itemsCount = d.items ? d.items.length : 0;
+        const canUpdate = window.canManage('deliveries') || window.hasPermission('update_deliveries');
+        return `<tr>
+            <td>${formatDate(d.date)}</td>
+            <td>${escapeHtml(d.customerName || '—')}</td>
+            <td>${itemsCount} items</td>
+            <td>${escapeHtml(d.driverName || '—')}</td>
+            <td>${escapeHtml(d.vehicleNo || '—')}</td>
+            <td>
+                ${canUpdate ? `
+                <select class="delivery-status-select" data-id="${d.id}" style="padding:4px 8px; border-radius:6px; border:2px solid var(--border); font-size:12px;">
+                    <option value="pending" ${d.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="in-progress" ${d.status === 'in-progress' ? 'selected' : ''}>In-Progress</option>
+                    <option value="delivered" ${d.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                    <option value="cancelled" ${d.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+                ` : `<span class="badge ${statusColors[d.status] || 'badge-warning'}">${d.status || 'pending'}</span>`}
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline" onclick="viewDeliveryDetails('${d.id}')"><i class="fas fa-eye"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Add event listeners for status update
+    document.querySelectorAll('.delivery-status-select').forEach(select => {
+        select.addEventListener('change', async function() {
+            const id = this.dataset.id;
+            const status = this.value;
+            await updateDeliveryStatus(id, status);
+        });
+    });
+
+    // Render Delivery Cart
+    renderDeliveryCart();
+}
+window.renderDeliveries = renderDeliveries;
+
+async function updateDeliveryStatus(id, status) {
+    const data = getAppData();
+    const delivery = data.deliveries.find(d => d.id === id);
+    if (!delivery) { showToast('Delivery not found.', 'error'); return; }
+    delivery.status = status;
+    delivery.updatedAt = nowISO();
+    setAppData(data);
+    await saveAllData();
+    renderDeliveries();
+    showToast(`✅ Status updated to: ${status}`);
+}
+window.updateDeliveryStatus = updateDeliveryStatus;
+
+function renderDeliveryCart() {
+    const tbody = document.getElementById('delCartBody');
+    if (!tbody) return;
+
+    if (deliveryCart.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No items added.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = deliveryCart.map((item, index) => 
+        `<tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(item.name)}</td>
+            <td>${item.qty}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-danger" onclick="removeFromDeliveryCart(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>`
+    ).join('');
+}
+
+window.removeFromDeliveryCart = function(index) {
+    deliveryCart.splice(index, 1);
+    renderDeliveryCart();
+};
+
+window.viewDeliveryDetails = function(id) {
+    const data = getAppData();
+    const delivery = data.deliveries.find(d => d.id === id);
+    if (!delivery) { showToast('Not found.', 'error'); return; }
+    const items = delivery.items ? delivery.items.map(i => `${i.name} x${i.qty}`).join(', ') : '—';
+    showToast(`📦 ${delivery.customerName} | Items: ${items} | Status: ${delivery.status}`, 'info');
+};
+
+// ============================================================
+// FINANCE (Enhanced - Check Details)
+// ============================================================
 function renderFinance() {
-    if(!window.canView('finance')) return;
-    const data = getAppData(); const finance = data.finance || [];
+    if (!window.canView('finance')) return;
+    const data = getAppData();
+    const finance = data.finance || [];
+
     const tbody = document.getElementById('financeTableBody');
-    if(finance.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions.</td></tr>`; }
-    else { finance.sort((a,b) => new Date(b.date)-new Date(a.date)); tbody.innerHTML = finance.map(f => `<tr><td>${formatDate(f.date)}</td><td><span class="badge ${f.type==='income'?'badge-success':'badge-danger'}">${f.type}</span></td><td>${escapeHtml(f.category||'—')}</td><td>${escapeHtml(f.desc||'—')}</td><td>${f.type==='income'?'+':'-'} LKR ${formatCurrency(f.amount||0)}</td></tr>`).join(''); }
-    const totalIncome = finance.filter(f => f.type==='income').reduce((s,f) => s+(f.amount||0),0);
-    const totalExpense = finance.filter(f => f.type==='expense').reduce((s,f) => s+(f.amount||0),0);
-    document.getElementById('financeTotalIncome').textContent = 'LKR '+formatCurrency(totalIncome);
-    document.getElementById('financeTotalExpense').textContent = 'LKR '+formatCurrency(totalExpense);
-    document.getElementById('financeBalance').textContent = 'LKR '+formatCurrency(totalIncome-totalExpense);
+    if (finance.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No transactions.</td></tr>`;
+    } else {
+        finance.sort((a, b) => new Date(b.date) - new Date(a.date));
+        tbody.innerHTML = finance.map(f => {
+            let methodDisplay = f.paymentMethod || 'cash';
+            if (methodDisplay === 'cheque' && f.chequeNo) {
+                methodDisplay = `Cheque #${f.chequeNo}`;
+            }
+            return `<tr>
+                <td>${formatDate(f.date)}</td>
+                <td><span class="badge ${f.type === 'income' ? 'badge-success' : 'badge-danger'}">${f.type}</span></td>
+                <td>${escapeHtml(f.category || '—')}</td>
+                <td>${escapeHtml(methodDisplay)}</td>
+                <td>${escapeHtml(f.desc || '—')}</td>
+                <td>${f.type === 'income' ? '+' : '-'} LKR ${formatCurrency(f.amount || 0)}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    const totalIncome = finance.filter(f => f.type === 'income').reduce((s, f) => s + (f.amount || 0), 0);
+    const totalExpense = finance.filter(f => f.type === 'expense').reduce((s, f) => s + (f.amount || 0), 0);
+    document.getElementById('financeTotalIncome').textContent = 'LKR ' + formatCurrency(totalIncome);
+    document.getElementById('financeTotalExpense').textContent = 'LKR ' + formatCurrency(totalExpense);
+    document.getElementById('financeBalance').textContent = 'LKR ' + formatCurrency(totalIncome - totalExpense);
+
     // Budget
     const budget = data.budget || {};
     const container = document.getElementById('budgetDisplay');
-    if(container) {
-        if(!budget.category || Object.keys(budget.category).length === 0) container.innerHTML = '<div class="text-muted">No budget set.</div>';
-        else { let html = '<strong>📊 Budget vs Actual</strong><br/>'; let totalB=0, totalA=0; for(const [cat, amt] of Object.entries(budget.category)) { const actual = finance.filter(f => f.category===cat && f.type==='expense').reduce((s,f) => s+(f.amount||0),0); totalB+=amt; totalA+=actual; html += `<span>${cat}: Budget ${formatCurrency(amt)} | Actual ${formatCurrency(actual)} | ${amt-actual >= 0 ? '✅' : '⚠️'} ${formatCurrency(Math.abs(amt-actual))}</span><br/>`; } html += `<hr/><strong>Total:</strong> Budget ${formatCurrency(totalB)} | Actual ${formatCurrency(totalA)} | ${totalB-totalA >= 0 ? '✅' : '⚠️'} ${formatCurrency(Math.abs(totalB-totalA))}`; container.innerHTML = html; }
+    if (container) {
+        if (!budget.category || Object.keys(budget.category).length === 0) {
+            container.innerHTML = '<div class="text-muted">No budget set.</div>';
+        } else {
+            let html = '<strong>📊 Budget vs Actual</strong><br/>';
+            let totalB = 0, totalA = 0;
+            for (const [cat, amt] of Object.entries(budget.category)) {
+                const actual = finance.filter(f => f.category === cat && f.type === 'expense').reduce((s, f) => s + (f.amount || 0), 0);
+                totalB += amt;
+                totalA += actual;
+                html += `<span>${cat}: Budget ${formatCurrency(amt)} | Actual ${formatCurrency(actual)} | ${amt - actual >= 0 ? '✅' : '⚠️'} ${formatCurrency(Math.abs(amt - actual))}</span><br/>`;
+            }
+            html += `<hr/><strong>Total:</strong> Budget ${formatCurrency(totalB)} | Actual ${formatCurrency(totalA)} | ${totalB - totalA >= 0 ? '✅' : '⚠️'} ${formatCurrency(Math.abs(totalB - totalA))}`;
+            container.innerHTML = html;
+        }
     }
 }
+window.renderFinance = renderFinance;
 
+// ... (ඉතිරි functions - renderEmployees, renderAttendance, renderLeave, renderPayroll, renderInventory, renderPurchasing, renderCustomers, renderVouchers, renderFleet, renderReports, renderSettings, renderAdministration ආදිය පෙර පරිදිම)
 // ---- VOUCHERS ----
 function renderVouchers() {
     if(!window.canView('voucher')) return;
