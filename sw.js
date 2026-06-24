@@ -16,40 +16,35 @@ const urlsToCache = [
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js'
 ];
 
-// Install Service Worker
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('✅ Opened cache');
-                return cache.addAll(urlsToCache);
+                console.log('✅ Cache opened');
+                return cache.addAll(urlsToCache).catch(err => {
+                    console.warn('⚠️ Some resources failed to cache:', err);
+                });
             })
-            .catch(err => console.warn('⚠️ Cache addAll failed:', err))
     );
 });
 
-// Fetch from cache or network
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                // Return cached version or fetch from network
                 return response || fetch(event.request).catch(() => {
-                    // Optional: fallback page
                     return caches.match('/Jaya/index.html');
                 });
             })
     );
 });
 
-// Activate and clean old caches
 self.addEventListener('activate', event => {
-    const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (!cacheWhitelist.includes(cacheName)) {
+                    if (cacheName !== CACHE_NAME) {
                         console.log('🗑️ Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
