@@ -1,6 +1,10 @@
 // ============================================================
-// UI RENDERING MODULE (FULL ENTERPRISE - COMPLETE FILE - FIXED)
+// UI RENDERING MODULE (FULL ENTERPRISE - COMPLETE FILE)
 // ============================================================
+
+// Global cart arrays (will be exposed at the end)
+let salesCart = [];
+let deliveryCart = [];
 
 const ALL_NAV_ITEMS = [
     { id: 'dashboard', icon: '📊', label: 'Dashboard', group: 'Main' },
@@ -23,8 +27,6 @@ const ALL_NAV_ITEMS = [
 ];
 
 let currentLang = 'en';
-let salesCart = [];
-let deliveryCart = [];
 let salesChartInstance = null;
 
 // ============================================================
@@ -1254,3 +1256,13 @@ window.removeBrand = async function(brand) {
     renderProducts();
     showToast('🗑️ Removed "' + brand + '"');
 };
+
+// ============================================================
+// EXPOSE CART ARRAYS GLOBALLY (for app.js to share)
+// ============================================================
+window.salesCart = salesCart;
+window.deliveryCart = deliveryCart;
+
+// ============================================================
+// END OF FILE
+// ============================================================
