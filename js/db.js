@@ -1,5 +1,5 @@
 // ============================================================
-// DATABASE MODULE (Enterprise)
+// DATABASE MODULE (Fixed)
 // ============================================================
 
 let appData = {
@@ -50,6 +50,7 @@ const COLLECTIONS = {
     logs: 'logs'
 };
 
+// -------------------- LOAD --------------------
 async function loadAllData() {
     try {
         const promises = Object.keys(COLLECTIONS).map(async (key) => {
@@ -75,13 +76,14 @@ async function loadAllData() {
         await migrateLeaveBalancesIfNeeded();
         return true;
     } catch (error) {
-        console.warn('⚠️ Error loading from Firestore, using local cache:', error);
+        console.warn('⚠️ Firestore error, using local cache:', error);
         loadFromLocalStorage();
         await migrateLeaveBalancesIfNeeded();
         return false;
     }
 }
 
+// -------------------- SAVE --------------------
 async function saveAllData() {
     try {
         const promises = Object.keys(COLLECTIONS).map(async (key) => {
@@ -108,12 +110,13 @@ async function saveAllData() {
         saveToLocalStorage();
         return true;
     } catch (error) {
-        console.error('❌ Error saving to Firestore:', error);
+        console.error('❌ Firestore save error:', error);
         saveToLocalStorage();
         return false;
     }
 }
 
+// -------------------- LOCAL STORAGE --------------------
 const STORAGE_KEY = 'jayasinghe_erp_local';
 function loadFromLocalStorage() {
     try {
@@ -122,14 +125,15 @@ function loadFromLocalStorage() {
             const data = JSON.parse(raw);
             appData = { ...appData, ...data };
         }
-    } catch (e) { console.warn('Error loading from localStorage:', e); }
+    } catch (e) { console.warn(e); }
 }
 function saveToLocalStorage() {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-    } catch (e) { console.warn('Error saving to localStorage:', e); }
+    } catch (e) { console.warn(e); }
 }
 
+// -------------------- MIGRATION --------------------
 async function migrateLeaveBalancesIfNeeded() {
     const employees = appData.employees || [];
     if (!appData.leaveBalances) appData.leaveBalances = {};
@@ -143,6 +147,21 @@ async function migrateLeaveBalancesIfNeeded() {
     if (changed) await saveAllData();
 }
 
+// -------------------- HELPERS --------------------
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+window.generateId = generateId;
+
+function getAppData() { return appData; }
+function setAppData(data) { appData = { ...appData, ...data }; }
+
+window.getAppData = getAppData;
+window.setAppData = setAppData;
+window.loadAllData = loadAllData;
+window.saveAllData = saveAllData;
+
+// -------------------- SYNC BUTTON --------------------
 document.getElementById('syncBtn')?.addEventListener('click', async () => {
     showToast('🔄 Syncing...', 'warning');
     await saveAllData();
@@ -150,9 +169,3 @@ document.getElementById('syncBtn')?.addEventListener('click', async () => {
     renderAll();
     showToast('✅ Sync complete!');
 });
-
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-}
-function getAppData() { return appData; }
-function setAppData(data) { appData = { ...appData, ...data }; }
