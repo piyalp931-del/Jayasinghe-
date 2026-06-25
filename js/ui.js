@@ -3,10 +3,10 @@
 // ============================================================
 
 // Global cart arrays (will be exposed at the end)
-let salesCart = [];
-let deliveryCart = [];
+var salesCart = [];
+var deliveryCart = [];
 
-const ALL_NAV_ITEMS = [
+var ALL_NAV_ITEMS = [
     { id: 'dashboard', icon: '📊', label: 'Dashboard', group: 'Main' },
     { id: 'administration', icon: '🏢', label: 'Administration', group: 'Admin' },
     { id: 'employees', icon: '👤', label: 'Employees', group: 'HR' },
@@ -26,8 +26,8 @@ const ALL_NAV_ITEMS = [
     { id: 'settings', icon: '⚙️', label: 'Settings', group: 'Settings' }
 ];
 
-let currentLang = 'en';
-let salesChartInstance = null;
+var currentLang = 'en';
+var salesChartInstance = null;
 
 // ============================================================
 // SIDEBAR
