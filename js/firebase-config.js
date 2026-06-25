@@ -1,4 +1,4 @@
-const firebaseConfig = {
+var firebaseConfig = {
     apiKey: "AIzaSyBEvrm4BoNHpVB6vTAFGIViK_aiu4RFmzA",
     authDomain: "jayasinghe-erp-v2.firebaseapp.com",
     projectId: "jayasinghe-erp-v2",
@@ -8,8 +8,8 @@ const firebaseConfig = {
     measurementId: "G-96V7EZJYN1"
 };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+var auth = firebase.auth();
+var db = firebase.firestore();
 db.enablePersistence()
-    .then(() => console.log('🔥 Firestore offline persistence enabled'))
-    .catch(err => console.warn('⚠️ Firestore persistence error:', err));
+    .then(function() { console.log('🔥 Firestore offline persistence enabled'); })
+    .catch(function(err) { console.warn('⚠️ Firestore persistence error:', err); });
