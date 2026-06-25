@@ -1,5 +1,5 @@
 // ============================================================
-// AUTHENTICATION MODULE
+// AUTHENTICATION MODULE (වැඩිදියුණු කළ)
 // ============================================================
 var currentUser = null;
 
@@ -85,10 +85,17 @@ async function handleLogin() {
     try {
         loginBtn.disabled = true;
         loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging...';
+        loginError.style.display = 'none';
 
         var userCredential = await auth.signInWithEmailAndPassword(email, password);
         var user = userCredential.user;
-        await loadAllData();
+
+        // Load data with timeout
+        var loadPromise = loadAllData();
+        var timeoutPromise = new Promise(function(_, reject) {
+            setTimeout(function() { reject(new Error('Data load timeout')); }, 15000);
+        });
+        await Promise.race([loadPromise, timeoutPromise]);
 
         var data = getAppData();
         var employees = data.employees || [];
@@ -104,14 +111,16 @@ async function handleLogin() {
         var role = selectedRole;
         if (employee && employee.department) {
             var dept = employee.department.toLowerCase();
-            if (dept === 'super admin') role = 'superadmin';
-            else if (dept === 'admin') role = 'admin';
-            else if (dept === 'hr') role = 'hr';
-            else if (dept === 'finance') role = 'finance';
-            else if (dept === 'sales') role = 'sales';
-            else if (dept === 'delivery') role = 'delivery';
-            else if (dept === 'store') role = 'store';
-            else role = 'employee';
+            var roleMap = {
+                'super admin': 'superadmin',
+                'admin': 'admin',
+                'hr': 'hr',
+                'finance': 'finance',
+                'sales': 'sales',
+                'delivery': 'delivery',
+                'store': 'store'
+            };
+            role = roleMap[dept] || 'employee';
         }
 
         if (!ROLES[role]) role = 'employee';
@@ -136,8 +145,9 @@ async function handleLogin() {
         showToast('Welcome, ' + currentUser.name + '! (' + ROLES[role].label + ')', 'success');
 
     } catch (error) {
-        loginError.textContent = error.message;
+        loginError.textContent = error.message || 'Login failed. Please try again.';
         loginError.style.display = 'block';
+        console.error('Login error:', error);
     } finally {
         loginBtn.disabled = false;
         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
