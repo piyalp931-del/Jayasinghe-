@@ -1,8 +1,34 @@
+// ============================================================
+// MAIN APP MODULE (FULL – ENHANCED)
+// ============================================================
 
 // ============================================================
-// MAIN APP MODULE (Conflict-Free Fix)
+// DATA CHANGE LISTENER (NEW)
 // ============================================================
+var _dataChangeListeners = [];
 
+function onDataChanged(callback) {
+    if (typeof callback === 'function') {
+        _dataChangeListeners.push(callback);
+    }
+}
+
+function notifyDataChanged() {
+    for (var i = 0; i < _dataChangeListeners.length; i++) {
+        try {
+            _dataChangeListeners[i]();
+        } catch (e) {
+            console.warn('Data change listener error:', e);
+        }
+    }
+}
+
+window._onDataChanged = notifyDataChanged;
+window.onDataChanged = onDataChanged;
+
+// ============================================================
+// TOAST (kept here for compatibility)
+// ============================================================
 function showToast(message, type) {
     type = type || 'info';
     var toast = document.getElementById('toast');
@@ -16,6 +42,9 @@ function showToast(message, type) {
 }
 window.showToast = showToast;
 
+// ============================================================
+// UTILITY FUNCTIONS (kept for compatibility – also in db.js)
+// ============================================================
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
@@ -27,16 +56,57 @@ window.todayStr = todayStr;
 window.nowISO = nowISO;
 
 // ============================================================
-// DATA RELOAD HELPER (used by patched render functions)
+// RENDER ALL WITH DEBOUNCE (NEW)
+// ============================================================
+var _renderTimeout = null;
+
+function renderAll() {
+    if (_renderTimeout) clearTimeout(_renderTimeout);
+    _renderTimeout = setTimeout(function() {
+        var active = document.querySelector('.panel.active');
+        if (active) {
+            var id = active.id.replace('panel-', '');
+            if (window.switchPanel) window.switchPanel(id);
+        } else {
+            if (window.switchPanel) window.switchPanel('dashboard');
+        }
+        if (window.renderSidebar) window.renderSidebar();
+        _renderTimeout = null;
+    }, 100);
+}
+window.renderAll = renderAll;
+
+// ============================================================
+// DEBOUNCED SEARCH HELPER (NEW)
+// ============================================================
+function createDebouncedSearch(inputId, renderFn, delay) {
+    delay = delay || 300;
+    var el = document.getElementById(inputId);
+    if (!el) return;
+    var timeout = null;
+    el.addEventListener('input', function() {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(function() {
+            if (typeof renderFn === 'function') renderFn();
+            timeout = null;
+        }, delay);
+    });
+    return function() {
+        if (timeout) clearTimeout(timeout);
+        if (typeof renderFn === 'function') renderFn();
+    };
+}
+window.createDebouncedSearch = createDebouncedSearch;
+
+// ============================================================
+// DATA RELOAD HELPER (kept from original)
 // ============================================================
 async function ensureDataLoaded() {
     var data = getAppData();
-    // If any main array is empty, reload from Firestore
     if (data.items.length === 0 && data.employees.length === 0) {
         console.log('Data empty, reloading from Firestore...');
         await loadAllData();
         console.log('Data reloaded:', getAppData());
-        // Also repopulate dropdowns
         populateItemDropdowns();
         populateDeliveryDropdowns();
     }
@@ -45,9 +115,8 @@ async function ensureDataLoaded() {
 window.ensureDataLoaded = ensureDataLoaded;
 
 // ============================================================
-// PATCH RENDER FUNCTIONS TO ENSURE DATA IS LOADED
+// PATCHED RENDER FUNCTIONS (kept from original)
 // ============================================================
-// Save original render functions from ui.js (they are global)
 var origRenderEmployees = window.renderEmployees || function() {};
 var origRenderInventory = window.renderInventory || function() {};
 var origRenderCustomers = window.renderCustomers || function() {};
@@ -63,8 +132,9 @@ var origRenderFleet = window.renderFleet || function() {};
 var origRenderReports = window.renderReports || function() {};
 var origRenderProducts = window.renderProducts || function() {};
 var origRenderAdministration = window.renderAdministration || function() {};
+var origRenderDashboard = window.renderDashboard || function() {};
+var origSwitchPanel = window.switchPanel || function() {};
 
-// Define patched versions
 window.renderEmployees = async function() {
     await ensureDataLoaded();
     if (typeof origRenderEmployees === 'function') origRenderEmployees();
@@ -122,26 +192,19 @@ window.renderProducts = async function() {
     if (typeof origRenderProducts === 'function') origRenderProducts();
 };
 window.renderAdministration = async function() {
-    // No data needed for logs
     if (typeof origRenderAdministration === 'function') origRenderAdministration();
 };
-
-// Also patch renderDashboard (it already shows stats, but we ensure data)
-var origRenderDashboard = window.renderDashboard || function() {};
 window.renderDashboard = async function() {
     await ensureDataLoaded();
     if (typeof origRenderDashboard === 'function') origRenderDashboard();
 };
-
-// Patch switchPanel to ensure data before switching
-var origSwitchPanel = window.switchPanel || function() {};
 window.switchPanel = async function(id) {
     await ensureDataLoaded();
     if (typeof origSwitchPanel === 'function') origSwitchPanel(id);
 };
 
 // ============================================================
-// POPULATE DROPDOWNS (already defined in ui.js, but keep local copy)
+// POPULATE DROPDOWNS (kept from original)
 // ============================================================
 function populateItemDropdowns() {
     var data = getAppData();
@@ -248,23 +311,12 @@ function populateDeliveryDropdowns() {
 window.populateDeliveryDropdowns = populateDeliveryDropdowns;
 
 // ============================================================
-// RENDER ALL (forces reload and re-render)
-// ============================================================
-function renderAll() {
-    var active = document.querySelector('.panel.active');
-    if (active) switchPanel(active.id.replace('panel-', ''));
-    else switchPanel('dashboard');
-    renderSidebar();
-}
-window.renderAll = renderAll;
-
-// ============================================================
 // PROFILE MODAL
 // ============================================================
 function openProfileModal() {
     var modal = document.getElementById('profileModal');
     if (!modal) return;
-    var user = getCurrentUser();
+    var user = window.getCurrentUser();
     if (!user) { showToast('Please login.', 'error'); return; }
     var data = getAppData();
     var emp = null;
@@ -360,10 +412,10 @@ window.openScanner = openScanner;
 window.closeScanner = closeScanner;
 
 // ============================================================
-// INIT – sets up all event listeners
+// INIT – ALL EVENT LISTENERS (FULL – UNCHANGED)
 // ============================================================
 function init() {
-    console.log('Initializing ERP...');
+    console.log('🚀 Initializing ERP...');
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark');
         var icon = document.getElementById('darkModeToggle') ? document.getElementById('darkModeToggle').querySelector('i') : null;
@@ -792,7 +844,7 @@ function init() {
     var checkIn = document.getElementById('checkInBtn');
     if (checkIn) {
         checkIn.addEventListener('click', async function() {
-            var user = getCurrentUser();
+            var user = window.getCurrentUser();
             if (!user) { showToast('Login first.', 'error'); return; }
             var data = getAppData();
             if (!data.attendance) data.attendance = [];
@@ -817,7 +869,7 @@ function init() {
     var checkOut = document.getElementById('checkOutBtn');
     if (checkOut) {
         checkOut.addEventListener('click', async function() {
-            var user = getCurrentUser();
+            var user = window.getCurrentUser();
             if (!user) { showToast('Login first.', 'error'); return; }
             var data = getAppData();
             var today = todayStr();
@@ -1698,7 +1750,7 @@ function init() {
 
     // Load data and initialize
     loadAllData().then(function() {
-        var user = getCurrentUser();
+        var user = window.getCurrentUser();
         if (user) {
             renderSidebar();
             switchPanel('dashboard');
@@ -1707,14 +1759,14 @@ function init() {
         populateDeliveryDropdowns();
     }).catch(function(err) {
         console.warn('Data load error, but continuing:', err);
-        var user = getCurrentUser();
+        var user = window.getCurrentUser();
         if (user) {
             renderSidebar();
             switchPanel('dashboard');
         }
     });
 
-    console.log('ERP initialized.');
+    console.log('✅ ERP initialized.');
 }
 
 // ============================================================
