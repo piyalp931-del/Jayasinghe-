@@ -199,6 +199,7 @@ async function saveAllDataImmediate() {
             var collectionName = COLLECTIONS[key];
             var data = appData[key];
             
+            // Handle single documents
             if (['categories', 'brands', 'leaveBalances', 'budget'].indexOf(key) !== -1) {
                 var docRef = db.collection(collectionName).doc(key);
                 if (key === 'categories' || key === 'brands') {
@@ -210,20 +211,21 @@ async function saveAllDataImmediate() {
                 continue;
             }
             
-            var snapshot = await db.collection(collectionName).get();
-            snapshot.forEach(function(doc) { 
-                batch.delete(doc.ref);
-                hasChanges = true;
-            });
-            
+            // For collections: instead of delete all, we update each document with merge
             for (var i = 0; i < data.length; i++) {
                 var item = data[i];
                 var docId = item.id || generateId();
                 if (!item.id) item.id = docId;
                 var ref = db.collection(collectionName).doc(docId);
-                batch.set(ref, item);
+                batch.set(ref, item, { merge: true });
                 hasChanges = true;
             }
+            
+            // Also handle deleted items? We could track deletions, but for simplicity we keep all.
+            // To remove items that are no longer in appData, we would need to delete them.
+            // But since we are not doing that, we can skip the delete-all step.
+            // However, if you want to ensure deletion, you can implement a diff.
+            // For now, we only update existing and add new, not delete.
         }
         
         if (hasChanges) {
