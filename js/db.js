@@ -1,5 +1,5 @@
 // ============================================================
-// DATABASE MODULE
+// DATABASE MODULE (OPTIMIZED)
 // ============================================================
 var appData = {
     items: [],
@@ -50,43 +50,55 @@ var COLLECTIONS = {
 };
 
 var STORAGE_KEY = 'jayasinghe_erp_local';
+var _isLoading = false;
+var _isSaving = false;
 
+// ============================================================
+// LOADING INDICATOR (UI නොවෙනස්ව)
+// ============================================================
+function showLoading(message) {
+    var toast = document.getElementById('toast');
+    if (toast) {
+        toast.textContent = '⏳ ' + (message || 'Loading...');
+        toast.className = 'toast info show';
+        clearTimeout(toast._timer);
+    }
+}
+
+function hideLoading() {
+    var toast = document.getElementById('toast');
+    if (toast) {
+        toast.classList.remove('show');
+    }
+}
+
+// ============================================================
+// OPTIMIZED LOAD - PARALLEL
+// ============================================================
 async function loadAllData() {
+    if (_isLoading) return;
+    _isLoading = true;
+    showLoading('Loading data...');
+
     try {
+        loadFromLocalStorage();
+        
         var keys = Object.keys(COLLECTIONS);
+        var promises = [];
+        
         for (var idx = 0; idx < keys.length; idx++) {
             var key = keys[idx];
             var collectionName = COLLECTIONS[key];
-
+            
             if (['categories', 'brands', 'leaveBalances', 'budget'].indexOf(key) !== -1) {
-                var docRef = db.collection(collectionName).doc(key);
-                var doc = await docRef.get();
-                if (doc.exists) {
-                    if (key === 'categories' || key === 'brands') {
-                        appData[key] = doc.data().list || [];
-                    } else {
-                        appData[key] = doc.data() || {};
-                    }
-                } else {
-                    if (key === 'categories' || key === 'brands') {
-                        appData[key] = [];
-                    } else {
-                        appData[key] = {};
-                    }
-                }
-                continue;
+                promises.push(loadDocument(key, collectionName));
+            } else {
+                promises.push(loadCollection(key, collectionName));
             }
-
-            var snapshot = await db.collection(collectionName).get();
-            var docs = [];
-            snapshot.forEach(function(doc) {
-                var data = doc.data();
-                data.id = doc.id;
-                docs.push(data);
-            });
-            appData[key] = docs;
         }
-
+        
+        await Promise.all(promises);
+        
         var employees = appData.employees || [];
         if (!appData.leaveBalances) appData.leaveBalances = {};
         for (var e = 0; e < employees.length; e++) {
@@ -95,72 +107,165 @@ async function loadAllData() {
                 appData.leaveBalances[emp.id] = { sick: 10, casual: 5, annual: 12 };
             }
         }
-
+        
         saveToLocalStorage();
+        hideLoading();
         return true;
-
+        
     } catch (error) {
         console.warn('Firestore error, using local cache:', error);
         loadFromLocalStorage();
+        hideLoading();
         return false;
+    } finally {
+        _isLoading = false;
     }
 }
 
-async function saveAllData() {
+async function loadCollection(key, collectionName) {
+    try {
+        var snapshot = await db.collection(collectionName).get();
+        var docs = [];
+        snapshot.forEach(function(doc) {
+            var data = doc.data();
+            data.id = doc.id;
+            docs.push(data);
+        });
+        appData[key] = docs;
+    } catch (e) {
+        console.warn('Failed to load ' + key + ':', e);
+    }
+}
+
+async function loadDocument(key, collectionName) {
+    try {
+        var docRef = db.collection(collectionName).doc(key);
+        var doc = await docRef.get();
+        if (doc.exists) {
+            if (key === 'categories' || key === 'brands') {
+                appData[key] = doc.data().list || [];
+            } else {
+                appData[key] = doc.data() || {};
+            }
+        } else {
+            if (key === 'categories' || key === 'brands') {
+                appData[key] = [];
+            } else {
+                appData[key] = {};
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to load ' + key + ':', e);
+    }
+}
+
+// ============================================================
+// OPTIMIZED SAVE - DEBOUNCED
+// ============================================================
+var _saveQueue = [];
+var _saveTimeout = null;
+
+async function saveAllData(immediate) {
+    if (immediate) {
+        return await saveAllDataImmediate();
+    }
+    
+    return new Promise(function(resolve) {
+        _saveQueue.push(resolve);
+        if (_saveTimeout) clearTimeout(_saveTimeout);
+        _saveTimeout = setTimeout(async function() {
+            await saveAllDataImmediate();
+            while (_saveQueue.length > 0) {
+                var r = _saveQueue.shift();
+                if (r) r();
+            }
+            _saveTimeout = null;
+        }, 500);
+    });
+}
+
+async function saveAllDataImmediate() {
+    if (_isSaving) return;
+    _isSaving = true;
+    showLoading('Saving...');
+
     try {
         var keys = Object.keys(COLLECTIONS);
+        var batch = db.batch();
+        var hasChanges = false;
+        
         for (var idx = 0; idx < keys.length; idx++) {
             var key = keys[idx];
             var collectionName = COLLECTIONS[key];
             var data = appData[key];
-
+            
             if (['categories', 'brands', 'leaveBalances', 'budget'].indexOf(key) !== -1) {
                 var docRef = db.collection(collectionName).doc(key);
                 if (key === 'categories' || key === 'brands') {
-                    await docRef.set({ list: data });
+                    batch.set(docRef, { list: data });
                 } else {
-                    await docRef.set(data);
+                    batch.set(docRef, data);
                 }
+                hasChanges = true;
                 continue;
             }
-
+            
             var snapshot = await db.collection(collectionName).get();
-            var batch = db.batch();
-            snapshot.forEach(function(doc) { batch.delete(doc.ref); });
-
+            snapshot.forEach(function(doc) { 
+                batch.delete(doc.ref);
+                hasChanges = true;
+            });
+            
             for (var i = 0; i < data.length; i++) {
                 var item = data[i];
                 var docId = item.id || generateId();
                 if (!item.id) item.id = docId;
                 var ref = db.collection(collectionName).doc(docId);
                 batch.set(ref, item);
+                hasChanges = true;
             }
+        }
+        
+        if (hasChanges) {
             await batch.commit();
         }
-
+        
         saveToLocalStorage();
+        hideLoading();
+        if (window._onDataChanged) window._onDataChanged();
         return true;
-
+        
     } catch (error) {
         console.error('Firestore save error:', error);
         saveToLocalStorage();
+        hideLoading();
+        showToast('⚠️ Save failed. Data saved locally.', 'error');
         return false;
+    } finally {
+        _isSaving = false;
     }
 }
 
+// ============================================================
+// LOCAL STORAGE
+// ============================================================
 function loadFromLocalStorage() {
     try {
         var raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             var data = JSON.parse(raw);
             for (var key in data) {
-                if (data.hasOwnProperty(key)) {
-                    appData[key] = data[key];
+                if (data.hasOwnProperty(key) && appData.hasOwnProperty(key)) {
+                    if (Array.isArray(data[key]) && appData[key].length === 0) {
+                        appData[key] = data[key];
+                    } else if (typeof data[key] === 'object' && !Array.isArray(data[key]) && Object.keys(appData[key]).length === 0) {
+                        appData[key] = data[key];
+                    }
                 }
             }
         }
     } catch (e) {
-        console.warn(e);
+        console.warn('Local storage load error:', e);
     }
 }
 
@@ -168,10 +273,13 @@ function saveToLocalStorage() {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
     } catch (e) {
-        console.warn(e);
+        console.warn('Local storage save error:', e);
     }
 }
 
+// ============================================================
+// UTILITY FUNCTIONS (single definitions)
+// ============================================================
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
@@ -181,24 +289,42 @@ function getAppData() { return appData; }
 
 function setAppData(data) {
     for (var key in data) {
-        if (data.hasOwnProperty(key)) {
+        if (data.hasOwnProperty(key) && appData.hasOwnProperty(key)) {
             appData[key] = data[key];
         }
     }
 }
 
+// ============================================================
+// SYNC BUTTON
+// ============================================================
+var syncBtn = document.getElementById('syncBtn');
+if (syncBtn) {
+    syncBtn.addEventListener('click', async function() {
+        var originalText = syncBtn.innerHTML;
+        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        syncBtn.disabled = true;
+        
+        try {
+            showToast('🔄 Syncing...', 'info');
+            await saveAllData(true);
+            await loadAllData();
+            showToast('✅ Sync complete!', 'success');
+        } catch (e) {
+            showToast('❌ Sync failed: ' + e.message, 'error');
+        } finally {
+            syncBtn.innerHTML = originalText;
+            syncBtn.disabled = false;
+        }
+    });
+}
+
+// ============================================================
+// EXPOSE
+// ============================================================
 window.getAppData = getAppData;
 window.setAppData = setAppData;
 window.loadAllData = loadAllData;
 window.saveAllData = saveAllData;
-
-var syncBtn = document.getElementById('syncBtn');
-if (syncBtn) {
-    syncBtn.addEventListener('click', async function() {
-        showToast('Syncing...', 'warning');
-        await saveAllData();
-        await loadAllData();
-        renderAll();
-        showToast('Sync complete!');
-    });
-}
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
