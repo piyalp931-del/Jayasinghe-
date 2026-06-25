@@ -1,3 +1,6 @@
+// ============================================================
+// DATABASE MODULE
+// ============================================================
 let appData = {
     items: [],
     categories: ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'],
@@ -68,7 +71,6 @@ async function loadAllData() {
             appData[key] = docs;
         });
         await Promise.all(promises);
-        // Ensure leaveBalances exist for employees
         const employees = appData.employees || [];
         if (!appData.leaveBalances) appData.leaveBalances = {};
         employees.forEach(emp => {
