@@ -1,5 +1,5 @@
 // ============================================================
-// AUTHENTICATION MODULE (Safe syntax)
+// AUTHENTICATION MODULE
 // ============================================================
 var currentUser = null;
 
@@ -17,6 +17,26 @@ var ROLES = {
 window.ROLES = ROLES;
 window.getCurrentUser = function() { return currentUser; };
 
+function hasPermission(p) {
+    if (!currentUser) return false;
+    var perms = currentUser.permissions || [];
+    return perms.indexOf('all') !== -1 || perms.indexOf(p) !== -1;
+}
+
+function canView(module) {
+    if (currentUser && currentUser.role === 'superadmin') return true;
+    return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
+}
+
+function canManage(module) {
+    if (currentUser && currentUser.role === 'superadmin') return true;
+    return hasPermission('manage_' + module) || hasPermission('all');
+}
+
+window.hasPermission = hasPermission;
+window.canView = canView;
+window.canManage = canManage;
+
 var loginScreen = document.getElementById('loginScreen');
 var loginBtn = document.getElementById('loginBtn');
 var loginUsername = document.getElementById('loginUsername');
@@ -28,48 +48,59 @@ var userName = document.getElementById('userName');
 var userRole = document.getElementById('userRole');
 var roleOptions = document.querySelectorAll('.role-option');
 
-function hasPermission(p) {
-    if (!currentUser) return false;
-    var perms = currentUser.permissions || [];
-    return perms.indexOf('all') !== -1 || perms.indexOf(p) !== -1;
-}
-function canView(module) {
-    if (currentUser && currentUser.role === 'superadmin') return true;
-    return hasPermission('view_' + module) || hasPermission('all') || hasPermission('manage_' + module);
-}
-function canManage(module) {
-    if (currentUser && currentUser.role === 'superadmin') return true;
-    return hasPermission('manage_' + module) || hasPermission('all');
-}
-window.hasPermission = hasPermission;
-window.canView = canView;
-window.canManage = canManage;
-
 var USER_STORAGE_KEY = 'jayasinghe_erp_user';
-function saveUserToStorage(u) { try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u)); } catch(e){} }
-function loadUserFromStorage() { try { var raw = localStorage.getItem(USER_STORAGE_KEY); if(raw){ var u = JSON.parse(raw); if(u && u.uid && u.role) return u; } } catch(e){} return null; }
-function clearUserStorage(){ localStorage.removeItem(USER_STORAGE_KEY); }
+
+function saveUserToStorage(u) {
+    try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u)); } catch(e) {}
+}
+
+function loadUserFromStorage() {
+    try {
+        var raw = localStorage.getItem(USER_STORAGE_KEY);
+        if (raw) {
+            var u = JSON.parse(raw);
+            if (u && u.uid && u.role) return u;
+        }
+    } catch(e) {}
+    return null;
+}
+
+function clearUserStorage() {
+    localStorage.removeItem(USER_STORAGE_KEY);
+}
 
 async function handleLogin() {
     var email = loginUsername.value.trim();
     var password = loginPassword.value.trim();
-    var selectedRole = document.querySelector('.role-option.active') ? document.querySelector('.role-option.active').dataset.role : 'superadmin';
-    if (!email || !password) { loginError.textContent = 'Enter credentials.'; loginError.style.display = 'block'; return; }
+    var selectedRole = 'superadmin';
+    var activeRole = document.querySelector('.role-option.active');
+    if (activeRole) selectedRole = activeRole.dataset.role;
+
+    if (!email || !password) {
+        loginError.textContent = 'Enter credentials.';
+        loginError.style.display = 'block';
+        return;
+    }
+
     try {
         loginBtn.disabled = true;
         loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging...';
+
         var userCredential = await auth.signInWithEmailAndPassword(email, password);
         var user = userCredential.user;
         await loadAllData();
+
         var data = getAppData();
         var employees = data.employees || [];
         var employee = null;
+
         for (var i = 0; i < employees.length; i++) {
             if (employees[i].email && employees[i].email.toLowerCase() === email.toLowerCase()) {
                 employee = employees[i];
                 break;
             }
         }
+
         var role = selectedRole;
         if (employee && employee.department) {
             var dept = employee.department.toLowerCase();
@@ -82,16 +113,28 @@ async function handleLogin() {
             else if (dept === 'store') role = 'store';
             else role = 'employee';
         }
+
         if (!ROLES[role]) role = 'employee';
-        currentUser = { uid: user.uid, email: user.email, name: user.displayName || email.split('@')[0], role: role, permissions: ROLES[role].permissions || [] };
+
+        currentUser = {
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || email.split('@')[0],
+            role: role,
+            permissions: ROLES[role].permissions || []
+        };
+
         saveUserToStorage(currentUser);
         loginScreen.classList.add('hidden');
-        userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
-        userName.textContent = currentUser.name;
-        userRole.textContent = ROLES[role].label || role;
+
+        if (userAvatar) userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+        if (userName) userName.textContent = currentUser.name;
+        if (userRole) userRole.textContent = ROLES[role].label || role;
+
         renderSidebar();
         switchPanel('dashboard');
-        showToast('👋 Welcome, ' + currentUser.name + '! (' + ROLES[role].label + ')', 'success');
+        showToast('Welcome, ' + currentUser.name + '! (' + ROLES[role].label + ')', 'success');
+
     } catch (error) {
         loginError.textContent = error.message;
         loginError.style.display = 'block';
@@ -110,23 +153,33 @@ async function handleLogout() {
         loginPassword.value = '';
         loginUsername.value = 'admin@example.com';
         loginError.style.display = 'none';
+
         var opts = document.querySelectorAll('.role-option');
-        for (var i = 0; i < opts.length; i++) opts[i].classList.remove('active');
+        for (var i = 0; i < opts.length; i++) {
+            opts[i].classList.remove('active');
+        }
         var superOpt = document.querySelector('.role-option[data-role="superadmin"]');
         if (superOpt) superOpt.classList.add('active');
-        showToast('👋 Logged out.');
-    } catch (error) { showToast('❌ Logout failed.', 'error'); }
+
+        showToast('Logged out.');
+    } catch (error) {
+        showToast('Logout failed.', 'error');
+    }
 }
 
 loginBtn.addEventListener('click', handleLogin);
-loginPassword.addEventListener('keydown', function(e) { if(e.key === 'Enter') handleLogin(); });
-loginUsername.addEventListener('keydown', function(e) { if(e.key === 'Enter') handleLogin(); });
+loginPassword.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleLogin(); });
+loginUsername.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleLogin(); });
+
 for (var i = 0; i < roleOptions.length; i++) {
     roleOptions[i].addEventListener('click', function() {
-        for (var j = 0; j < roleOptions.length; j++) roleOptions[j].classList.remove('active');
+        for (var j = 0; j < roleOptions.length; j++) {
+            roleOptions[j].classList.remove('active');
+        }
         this.classList.add('active');
     });
 }
+
 logoutBtn.addEventListener('click', handleLogout);
 
 auth.onAuthStateChanged(function(user) {
@@ -135,10 +188,14 @@ auth.onAuthStateChanged(function(user) {
         if (storedUser && storedUser.uid === user.uid) {
             currentUser = storedUser;
             loginScreen.classList.add('hidden');
-            userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
-            userName.textContent = currentUser.name;
-            userRole.textContent = ROLES[currentUser.role] ? ROLES[currentUser.role].label : currentUser.role;
-            loadAllData().then(function() { renderSidebar(); switchPanel('dashboard'); showToast('👋 Welcome back, ' + currentUser.name + '!', 'success'); });
+            if (userAvatar) userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            if (userName) userName.textContent = currentUser.name;
+            if (userRole) userRole.textContent = ROLES[currentUser.role] ? ROLES[currentUser.role].label : currentUser.role;
+            loadAllData().then(function() {
+                renderSidebar();
+                switchPanel('dashboard');
+                showToast('Welcome back, ' + currentUser.name + '!', 'success');
+            });
         } else {
             loginScreen.classList.remove('hidden');
         }
