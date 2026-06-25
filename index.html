@@ -598,13 +598,24 @@
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration (with error handling) -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/Jaya/sw.js')
-                .then(() => console.log('✅ Service Worker registered'))
-                .catch(err => console.warn('⚠️ SW registration failed:', err));
-        }
+        (function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/Jaya/sw.js')
+                    .then(function() { console.log('✅ Service Worker registered'); })
+                    .catch(function(err) { console.warn('⚠️ SW registration failed:', err); });
+            }
+            // Ensure init is called even if something fails
+            setTimeout(function() {
+                if (typeof init === 'function') {
+                    console.log('🔄 Calling init() from inline fallback');
+                    init();
+                } else {
+                    console.warn('⚠️ init() not found, waiting...');
+                }
+            }, 500);
+        })();
     </script>
 
 </body>
