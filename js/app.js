@@ -2,9 +2,6 @@
 // MAIN APP MODULE (Complete - Enterprise)
 // ============================================================
 
-// --------------------------------------------
-// TOAST
-// --------------------------------------------
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     if (!toast) return;
@@ -17,9 +14,6 @@ function showToast(message, type = 'info') {
 }
 window.showToast = showToast;
 
-// --------------------------------------------
-// HELPERS
-// --------------------------------------------
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
@@ -30,9 +24,6 @@ function nowISO() { return new Date().toISOString(); }
 window.todayStr = todayStr;
 window.nowISO = nowISO;
 
-// --------------------------------------------
-// POPULATE DROPDOWNS
-// --------------------------------------------
 function populateItemDropdowns() {
     const data = getAppData();
     const items = data.items || [];
@@ -118,9 +109,6 @@ function populateDeliveryDropdowns() {
 }
 window.populateDeliveryDropdowns = populateDeliveryDropdowns;
 
-// --------------------------------------------
-// RENDER ALL
-// --------------------------------------------
 function renderAll() {
     const active = document.querySelector('.panel.active');
     if (active) switchPanel(active.id.replace('panel-', ''));
@@ -129,9 +117,6 @@ function renderAll() {
 }
 window.renderAll = renderAll;
 
-// --------------------------------------------
-// PROFILE MODAL
-// --------------------------------------------
 function openProfileModal() {
     const modal = document.getElementById('profileModal');
     if (!modal) return;
@@ -139,10 +124,8 @@ function openProfileModal() {
     if (!user) { showToast('Please login.', 'error'); return; }
     const data = getAppData();
     const emp = data.employees.find(e => e.id === user.uid || e.email === user.email);
-
     document.getElementById('profileName').textContent = emp?.name || user.name || user.email;
     document.getElementById('profileRole').textContent = emp?.department || user.role || 'Employee';
-
     const details = document.getElementById('profileDetails');
     if (details) {
         details.innerHTML = `
@@ -155,7 +138,6 @@ function openProfileModal() {
             <div><strong>Status:</strong> ${emp?.status || 'active'}</div>
         `;
     }
-
     const stats = document.getElementById('profileStats');
     if (stats) {
         const att = data.attendance?.filter(a => a.employeeId === user.uid) || [];
@@ -172,9 +154,6 @@ function openProfileModal() {
 }
 window.openProfileModal = openProfileModal;
 
-// --------------------------------------------
-// DARK MODE / LANGUAGE
-// --------------------------------------------
 function toggleDarkMode() {
     document.body.classList.toggle('dark');
     const icon = document.getElementById('darkModeToggle')?.querySelector('i');
@@ -192,9 +171,6 @@ function toggleLanguage() {
     showToast(currentLang === 'en' ? '🌐 English' : '🌐 සිංහල');
 }
 
-// --------------------------------------------
-// BARCODE SCANNER
-// --------------------------------------------
 let html5QrCode = null;
 function openScanner() {
     const container = document.getElementById('scannerContainer');
@@ -223,19 +199,16 @@ window.openScanner = openScanner;
 window.closeScanner = closeScanner;
 
 // ============================================================
-// MAIN INIT
+// INIT
 // ============================================================
 function init() {
     console.log('🚀 Initializing ERP...');
-
-    // Dark mode
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark');
         const icon = document.getElementById('darkModeToggle')?.querySelector('i');
         if (icon) icon.className = 'fas fa-sun';
     }
 
-    // Sidebar toggle
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     const sidebarClose = document.getElementById('sidebarClose');
@@ -253,11 +226,9 @@ function init() {
         }
     });
 
-    // Dark mode toggle
     document.getElementById('darkModeToggle')?.addEventListener('click', toggleDarkMode);
     document.getElementById('langToggle')?.addEventListener('click', toggleLanguage);
 
-    // Clear login
     document.getElementById('clearLoginBtn')?.addEventListener('click', () => {
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
@@ -868,7 +839,6 @@ function init() {
         showToast('🔄 Refreshed.');
     });
 
-    // Delivery filters
     document.getElementById('delDateFilter')?.addEventListener('change', renderDeliveries);
     document.getElementById('delStatusFilter')?.addEventListener('change', renderDeliveries);
     document.getElementById('clearDelFilter')?.addEventListener('click', () => {
@@ -903,7 +873,7 @@ function init() {
         const category = document.getElementById('financeCategory').value;
         const desc = document.getElementById('financeDesc').value.trim();
         const paymentMethod = document.getElementById('financePaymentMethod').value;
-        const budgetInput = document.getElementById('financeBudget').value.trim();
+        const budgetInput = document.getElementById('financeBudget')?.value.trim();
 
         const chequeNo = document.getElementById('financeChequeNo').value.trim();
         const bankName = document.getElementById('financeBankName').value.trim();
@@ -924,7 +894,7 @@ function init() {
         renderFinance();
         document.getElementById('financeAmount').value = '';
         document.getElementById('financeDesc').value = '';
-        document.getElementById('financeBudget').value = '';
+        document.getElementById('financeBudget')?.value = '';
         document.getElementById('financeChequeNo').value = '';
         document.getElementById('financeBankName').value = '';
         document.getElementById('financeChequeDate').value = '';
@@ -937,7 +907,7 @@ function init() {
     document.getElementById('clearFinanceBtn')?.addEventListener('click', () => {
         document.getElementById('financeAmount').value = '';
         document.getElementById('financeDesc').value = '';
-        document.getElementById('financeBudget').value = '';
+        document.getElementById('financeBudget')?.value = '';
         document.getElementById('financeChequeNo').value = '';
         document.getElementById('financeBankName').value = '';
         document.getElementById('financeChequeDate').value = '';
@@ -1127,6 +1097,18 @@ function init() {
         showToast('✅ Settings saved.');
     });
 
+    document.getElementById('saveSettingsBtn2')?.addEventListener('click', async () => {
+        const data = getAppData();
+        if (!data.settings) data.settings = {};
+        data.settings.company = document.getElementById('settingsCompany').value.trim();
+        data.settings.address = document.getElementById('settingsAddress').value.trim();
+        data.settings.phone = document.getElementById('settingsPhone').value.trim();
+        data.settings.email = document.getElementById('settingsEmail').value.trim();
+        setAppData(data);
+        await saveAllData();
+        showToast('✅ Settings saved.');
+    });
+
     document.getElementById('backupDataBtn')?.addEventListener('click', () => {
         const data = getAppData();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1211,7 +1193,4 @@ function init() {
     console.log('✅ ERP initialized.');
 }
 
-// ============================================================
-// START
-// ============================================================
 document.addEventListener('DOMContentLoaded', init);
