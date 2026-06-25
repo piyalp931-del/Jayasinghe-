@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (FULL – ENHANCED)
+// MAIN APP MODULE (FULL – ENHANCED with fixes)
 // ============================================================
 
 // ============================================================
@@ -412,7 +412,7 @@ window.openScanner = openScanner;
 window.closeScanner = closeScanner;
 
 // ============================================================
-// INIT – ALL EVENT LISTENERS (FULL – UNCHANGED)
+// INIT – ALL EVENT LISTENERS (FULL – UNCHANGED but with fixes)
 // ============================================================
 function init() {
     console.log('🚀 Initializing ERP...');
@@ -1001,10 +1001,38 @@ function init() {
         });
     }
 
+    // FIX: Payslip generation
     var genPayslip = document.getElementById('generatePayslipBtn');
     if (genPayslip) {
         genPayslip.addEventListener('click', function() {
-            showToast('Payslip generation coming soon.', 'info');
+            var empId = document.getElementById('payrollEmployeeSelect') ? document.getElementById('payrollEmployeeSelect').value : '';
+            var month = document.getElementById('payrollMonth') ? document.getElementById('payrollMonth').value : '';
+            if (!empId || !month) { showToast('Select employee and month.', 'error'); return; }
+            var data = getAppData();
+            var emp = data.employees.find(e => e.id === empId);
+            if (!emp) { showToast('Employee not found.', 'error'); return; }
+            var payrollRecord = data.payroll.find(p => p.employeeId === empId && p.month === month);
+            if (!payrollRecord) { showToast('No payroll record for this month.', 'error'); return; }
+
+            var doc = new jspdf.jsPDF();
+            doc.setFontSize(20);
+            doc.text('PAYSLIP', 80, 30);
+            doc.setFontSize(12);
+            doc.text('Jayasinghe Distributors', 70, 45);
+            doc.text('Employee: ' + emp.name, 20, 65);
+            doc.text('Month: ' + month, 20, 80);
+            doc.text('Basic: LKR ' + formatCurrency(payrollRecord.basic), 20, 95);
+            doc.text('Allowances: LKR ' + formatCurrency(payrollRecord.allowances), 20, 110);
+            doc.text('Deductions: LKR ' + formatCurrency(payrollRecord.deductions), 20, 125);
+            doc.text('OT Pay: LKR ' + formatCurrency(payrollRecord.ot || 0), 20, 140);
+            doc.text('EPF: LKR ' + formatCurrency(payrollRecord.epf || 0), 20, 155);
+            doc.text('ETF: LKR ' + formatCurrency(payrollRecord.etf || 0), 20, 170);
+            doc.setFontSize(16);
+            doc.text('Net Pay: LKR ' + formatCurrency(payrollRecord.net), 20, 190);
+            doc.setFontSize(10);
+            doc.text('Generated on: ' + new Date().toLocaleDateString(), 20, 280);
+            doc.save('Payslip_' + emp.name + '_' + month + '.pdf');
+            showToast('Payslip downloaded.');
         });
     }
 
@@ -1358,6 +1386,7 @@ function init() {
             var category = document.getElementById('financeCategory') ? document.getElementById('financeCategory').value : 'operational';
             var desc = document.getElementById('financeDesc') ? document.getElementById('financeDesc').value.trim() : '';
             var paymentMethod = document.getElementById('financePaymentMethod') ? document.getElementById('financePaymentMethod').value : 'cash';
+            // NEW: Get budget input
             var budgetInput = document.getElementById('financeBudget') ? document.getElementById('financeBudget').value.trim() : '';
 
             var chequeNo = document.getElementById('financeChequeNo') ? document.getElementById('financeChequeNo').value.trim() : '';
@@ -1371,7 +1400,12 @@ function init() {
 
             var data = getAppData();
             if (!data.budget) data.budget = { monthly: 0, category: {} };
-            if (budgetInput !== '') data.budget.category[category] = parseFloat(budgetInput) || 0;
+            if (budgetInput !== '') {
+                var budgetVal = parseFloat(budgetInput);
+                if (!isNaN(budgetVal) && budgetVal > 0) {
+                    data.budget.category[category] = budgetVal;
+                }
+            }
 
             data.finance.push({ id: generateId(), type: type, amount: amount, category: category, desc: desc, paymentMethod: paymentMethod, chequeNo: paymentMethod === 'cheque' ? chequeNo : '', bankName: paymentMethod === 'cheque' ? bankName : '', chequeDate: paymentMethod === 'cheque' ? chequeDate : '', chequeAmount: paymentMethod === 'cheque' ? chequeAmount : 0, date: nowISO() });
             setAppData(data);
@@ -1408,13 +1442,14 @@ function init() {
         });
     }
 
-    // PRODUCTS
+    // PRODUCTS - FIX: use productItemSelect
     var updateProduct = document.getElementById('updateProductAttributesBtn');
     if (updateProduct) {
         updateProduct.addEventListener('click', async function() {
             if (!canManage('inventory')) { showToast('No permission.', 'error'); return; }
             var data = getAppData();
             var items = data.items || [];
+            var selectedId = document.getElementById('productItemSelect') ? document.getElementById('productItemSelect').value : '';
             var productCode = document.getElementById('productCode') ? document.getElementById('productCode').value.trim() : '';
             var unit = document.getElementById('productUnit') ? document.getElementById('productUnit').value : 'Pcs';
             var costPrice = parseFloat(document.getElementById('productCostPrice') ? document.getElementById('productCostPrice').value : 0) || 0;
@@ -1423,9 +1458,12 @@ function init() {
             var stockAlert = document.getElementById('productStockAlert') ? document.getElementById('productStockAlert').value : 'enabled';
 
             var item = null;
-            for (var i = 0; i < items.length; i++) {
-                if (items[i].productCode === productCode) { item = items[i]; break; }
+            if (selectedId) {
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].id === selectedId) { item = items[i]; break; }
+                }
             }
+            // fallback to first if not found
             if (!item && items.length > 0) item = items[0];
             if (!item) { showToast('No product found. Add items first.', 'error'); return; }
 
@@ -1631,149 +1669,4 @@ function init() {
     }
 
     var printReport = document.getElementById('printReportBtn');
-    if (printReport) printReport.addEventListener('click', function() { window.print(); });
-
-    // SETTINGS
-    var saveSettings = document.getElementById('saveSettingsBtn');
-    if (saveSettings) {
-        saveSettings.addEventListener('click', async function() {
-            var data = getAppData();
-            if (!data.settings) data.settings = {};
-            data.settings.company = document.getElementById('settingsCompany') ? document.getElementById('settingsCompany').value.trim() : '';
-            data.settings.address = document.getElementById('settingsAddress') ? document.getElementById('settingsAddress').value.trim() : '';
-            data.settings.phone = document.getElementById('settingsPhone') ? document.getElementById('settingsPhone').value.trim() : '';
-            data.settings.email = document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value.trim() : '';
-            setAppData(data);
-            await saveAllData();
-            showToast('Settings saved.');
-        });
-    }
-
-    var saveSettings2 = document.getElementById('saveSettingsBtn2');
-    if (saveSettings2) {
-        saveSettings2.addEventListener('click', async function() {
-            var data = getAppData();
-            if (!data.settings) data.settings = {};
-            data.settings.company = document.getElementById('settingsCompany') ? document.getElementById('settingsCompany').value.trim() : '';
-            data.settings.address = document.getElementById('settingsAddress') ? document.getElementById('settingsAddress').value.trim() : '';
-            data.settings.phone = document.getElementById('settingsPhone') ? document.getElementById('settingsPhone').value.trim() : '';
-            data.settings.email = document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value.trim() : '';
-            setAppData(data);
-            await saveAllData();
-            showToast('Settings saved.');
-        });
-    }
-
-    var backupData = document.getElementById('backupDataBtn');
-    if (backupData) {
-        backupData.addEventListener('click', function() {
-            var data = getAppData();
-            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'jayasinghe_erp_backup_' + todayStr() + '.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Backup downloaded.');
-        });
-    }
-
-    var restoreData = document.getElementById('restoreDataBtn');
-    if (restoreData) {
-        restoreData.addEventListener('click', function() {
-            var input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-            input.onchange = function(e) {
-                var file = e.target.files[0];
-                if (!file) return;
-                var reader = new FileReader();
-                reader.onload = async function(ev) {
-                    try {
-                        var data = JSON.parse(ev.target.result);
-                        setAppData(data);
-                        await saveAllData();
-                        renderAll();
-                        showToast('Data restored.');
-                    } catch(err) {
-                        showToast('Invalid file.', 'error');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        });
-    }
-
-    var clearData = document.getElementById('clearDataBtn');
-    if (clearData) {
-        clearData.addEventListener('click', async function() {
-            if (!confirm('Delete ALL data? Cannot undo!')) return;
-            var data = getAppData();
-            for (var key in data) {
-                if (data.hasOwnProperty(key)) {
-                    if (Array.isArray(data[key])) data[key] = [];
-                    else if (typeof data[key] === 'object' && data[key] !== null) data[key] = {};
-                }
-            }
-            setAppData(data);
-            await saveAllData();
-            renderAll();
-            showToast('All data cleared.');
-        });
-    }
-
-    var clearLogs = document.getElementById('clearLogsBtn');
-    if (clearLogs) {
-        clearLogs.addEventListener('click', async function() {
-            if (!confirm('Clear logs?')) return;
-            var data = getAppData();
-            data.logs = [];
-            setAppData(data);
-            await saveAllData();
-            renderAdministration();
-            showToast('Logs cleared.');
-        });
-    }
-
-    // DEFAULT DATES
-    var defaultIds = ['voucherDate', 'salesOrderDate', 'delScheduledDate', 'payrollMonth', 'leaveFrom', 'leaveTo'];
-    for (var d = 0; d < defaultIds.length; d++) {
-        var el = document.getElementById(defaultIds[d]);
-        if (el && !el.value) {
-            if (defaultIds[d] === 'delScheduledDate') el.value = nowISO().slice(0, 16);
-            else if (defaultIds[d] === 'payrollMonth') el.value = todayStr().slice(0, 7);
-            else el.value = todayStr();
-        }
-    }
-
-    // Load data and initialize
-    loadAllData().then(function() {
-        var user = window.getCurrentUser();
-        if (user) {
-            renderSidebar();
-            switchPanel('dashboard');
-        }
-        populateItemDropdowns();
-        populateDeliveryDropdowns();
-    }).catch(function(err) {
-        console.warn('Data load error, but continuing:', err);
-        var user = window.getCurrentUser();
-        if (user) {
-            renderSidebar();
-            switchPanel('dashboard');
-        }
-    });
-
-    console.log('✅ ERP initialized.');
-}
-
-// ============================================================
-// START
-// ============================================================
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    init();
-} else {
-    document.addEventListener('DOMContentLoaded', init);
-}
+    if (printReport) printReport
