@@ -1,13 +1,16 @@
+// ============================================================
+// AUTHENTICATION MODULE
+// ============================================================
 let currentUser = null;
 const ROLES = {
-    superadmin: { label: 'Super Admin', icon: '👑', permissions: ['all'], nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'products', 'purchasing', 'sales', 'deliveries', 'customers', 'finance', 'voucher', 'fleet', 'reports', 'settings'] },
-    admin: { label: 'Administrator', icon: '🏢', permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory'], nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'deliveries', 'reports', 'voucher'] },
-    hr: { label: 'HR Officer', icon: '👤', permissions: ['view_dashboard', 'view_employees', 'view_attendance', 'view_leave', 'view_payroll', 'manage_employees', 'manage_attendance', 'manage_leave'], nav: ['dashboard', 'employees', 'attendance', 'leave', 'payroll', 'reports'] },
-    finance: { label: 'Accountant', icon: '💰', permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher'], nav: ['dashboard', 'finance', 'payroll', 'voucher', 'reports'] },
-    sales: { label: 'Sales Manager', icon: '🛒', permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher'], nav: ['dashboard', 'sales', 'inventory', 'customers', 'deliveries', 'reports', 'voucher'] },
-    delivery: { label: 'Delivery Staff', icon: '🚚', permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_voucher'], nav: ['dashboard', 'deliveries', 'attendance', 'fleet', 'voucher'] },
-    store: { label: 'Store Keeper', icon: '🏪', permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_purchasing'], nav: ['dashboard', 'inventory', 'products', 'purchasing', 'reports'] },
-    employee: { label: 'Employee', icon: '👤', permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'], nav: ['dashboard', 'attendance', 'leave', 'payroll', 'voucher'] }
+    superadmin: { label: 'Super Admin', icon: '👑', permissions: ['all'], nav: ['dashboard','administration','employees','attendance','leave','payroll','inventory','products','purchasing','sales','deliveries','customers','finance','voucher','fleet','reports','settings'] },
+    admin: { label: 'Administrator', icon: '🏢', permissions: ['view_dashboard','view_employees','view_inventory','view_deliveries','view_attendance','view_leave','view_reports','manage_employees','manage_inventory'], nav: ['dashboard','administration','employees','attendance','leave','payroll','inventory','deliveries','reports','voucher'] },
+    hr: { label: 'HR Officer', icon: '👤', permissions: ['view_dashboard','view_employees','view_attendance','view_leave','view_payroll','manage_employees','manage_attendance','manage_leave'], nav: ['dashboard','employees','attendance','leave','payroll','reports'] },
+    finance: { label: 'Accountant', icon: '💰', permissions: ['view_dashboard','view_finance','manage_finance','view_reports','view_payroll','manage_voucher'], nav: ['dashboard','finance','payroll','voucher','reports'] },
+    sales: { label: 'Sales Manager', icon: '🛒', permissions: ['view_dashboard','view_inventory','view_customers','view_deliveries','create_deliveries','view_reports','view_voucher','manage_voucher'], nav: ['dashboard','sales','inventory','customers','deliveries','reports','voucher'] },
+    delivery: { label: 'Delivery Staff', icon: '🚚', permissions: ['view_dashboard','view_deliveries','update_deliveries','view_attendance','view_voucher'], nav: ['dashboard','deliveries','attendance','fleet','voucher'] },
+    store: { label: 'Store Keeper', icon: '🏪', permissions: ['view_dashboard','view_inventory','manage_inventory','view_reports','view_purchasing'], nav: ['dashboard','inventory','products','purchasing','reports'] },
+    employee: { label: 'Employee', icon: '👤', permissions: ['view_dashboard','view_attendance','view_leave','view_payroll','view_voucher'], nav: ['dashboard','attendance','leave','payroll','voucher'] }
 };
 window.ROLES = ROLES;
 window.getCurrentUser = () => currentUser;
@@ -80,7 +83,7 @@ async function handleLogin() {
         userRole.textContent = ROLES[role].label || role;
         renderSidebar();
         switchPanel('dashboard');
-        showToast(`👋 Welcome, ${currentUser.name}! (${ROLES[role].label})`, 'success');
+        showToast('👋 Welcome, ' + currentUser.name + '! (' + ROLES[role].label + ')', 'success');
     } catch (error) {
         loginError.textContent = error.message;
         loginError.style.display = 'block';
@@ -122,7 +125,7 @@ auth.onAuthStateChanged((user) => {
             userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
             userName.textContent = currentUser.name;
             userRole.textContent = ROLES[currentUser.role]?.label || currentUser.role;
-            loadAllData().then(() => { renderSidebar(); switchPanel('dashboard'); showToast(`👋 Welcome back, ${currentUser.name}!`, 'success'); });
+            loadAllData().then(() => { renderSidebar(); switchPanel('dashboard'); showToast('👋 Welcome back, ' + currentUser.name + '!', 'success'); });
         } else {
             loginScreen.classList.remove('hidden');
         }
