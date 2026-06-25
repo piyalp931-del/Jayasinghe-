@@ -1,5 +1,5 @@
 // ============================================================
-// UI RENDERING MODULE (FULL ENTERPRISE - COMPLETE FILE)
+// UI RENDERING MODULE (FULL ENTERPRISE - ENHANCED)
 // ============================================================
 
 // Global cart arrays (will be exposed at the end)
@@ -28,7 +28,69 @@ var ALL_NAV_ITEMS = [
 
 var currentLang = 'en';
 var salesChartInstance = null;
+var _currentPage = {}; // for pagination state
 
+// ============================================================
+// PAGINATION HELPERS (NEW)
+// ============================================================
+function paginateData(data, page, pageSize) {
+    page = page || 1;
+    pageSize = pageSize || 20;
+    var start = (page - 1) * pageSize;
+    var end = start + pageSize;
+    return {
+        items: data.slice(start, end),
+        total: data.length,
+        page: page,
+        pageSize: pageSize,
+        totalPages: Math.ceil(data.length / pageSize)
+    };
+}
+
+function renderPagination(module, paginated) {
+    var container = document.getElementById(module + 'Pagination');
+    if (!container) {
+        var tableWrap = document.querySelector('#panel-' + module + ' .table-wrap');
+        if (tableWrap) {
+            var div = document.createElement('div');
+            div.id = module + 'Pagination';
+            div.className = 'pagination-container';
+            tableWrap.parentNode.insertBefore(div, tableWrap.nextSibling);
+            container = div;
+        }
+    }
+    if (!container) return;
+    
+    if (paginated.totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    var html = '<div class="pagination">';
+    if (paginated.page > 1) {
+        html += '<button class="btn btn-sm btn-outline" onclick="goToPage(\'' + module + '\', ' + (paginated.page - 1) + ')"><i class="fas fa-chevron-left"></i></button>';
+    }
+    html += '<span class="page-info">' + paginated.page + ' / ' + paginated.totalPages + ' (' + paginated.total + ' items)</span>';
+    if (paginated.page < paginated.totalPages) {
+        html += '<button class="btn btn-sm btn-outline" onclick="goToPage(\'' + module + '\', ' + (paginated.page + 1) + ')"><i class="fas fa-chevron-right"></i></button>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function goToPage(module, page) {
+    _currentPage[module] = page;
+    var renderFn = window['render' + capitalize(module)];
+    if (typeof renderFn === 'function') renderFn();
+}
+
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
 function renderSidebar() {
     var container = document.getElementById('sidebarNav');
     if (!container) return;
@@ -76,6 +138,9 @@ function renderSidebar() {
     }
 }
 
+// ============================================================
+// PANEL SWITCHING
+// ============================================================
 function switchPanel(id) {
     var user = window.getCurrentUser();
     if (!user) { showToast('Login first.', 'error'); return; }
@@ -135,6 +200,9 @@ function showAccessDenied(module) {
     }
 }
 
+// ============================================================
+// DASHBOARD
+// ============================================================
 function renderDashboard() {
     var data = getAppData();
     var items = data.items || [];
@@ -345,6 +413,9 @@ function renderQuickActions() {
     }
 }
 
+// ============================================================
+// ADMINISTRATION
+// ============================================================
 function renderAdministration() {
     var data = getAppData();
     var logs = data.logs || [];
@@ -362,6 +433,9 @@ function renderAdministration() {
     tbody.innerHTML = html;
 }
 
+// ============================================================
+// EMPLOYEES (with Pagination)
+// ============================================================
 function renderEmployees() {
     if (!window.canView('employees')) return;
     var data = getAppData();
@@ -385,27 +459,30 @@ function renderEmployees() {
         if (current && deptSelect.querySelector('option[value="' + current + '"]')) deptSelect.value = current;
     }
     
-    var filtered = [];
-    for (var e = 0; e < employees.length; e++) {
-        var emp = employees[e];
+    var filtered = employees.filter(function(emp) {
         var matchName = (emp.name || '').toLowerCase().indexOf(search) !== -1;
         var matchDept = deptFilter === 'all' || emp.department === deptFilter;
         var matchStatus = statusFilter === 'all' || emp.status === statusFilter;
-        if (matchName && matchDept && matchStatus) filtered.push(emp);
-    }
+        return matchName && matchDept && matchStatus;
+    });
+    
+    var page = _currentPage['employees'] || 1;
+    var paginated = paginateData(filtered, page, 20);
+    _currentPage['employees'] = paginated.page;
     
     var countEl = document.getElementById('empCount');
     if (countEl) countEl.textContent = filtered.length;
     var tbody = document.getElementById('employeeTableBody');
     if (!tbody) return;
-    if (filtered.length === 0) {
+    if (paginated.items.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No employees.</td></tr>';
+        renderPagination('employees', paginated);
         return;
     }
     var canEdit = window.canManage('employees');
     var html = '';
-    for (var f = 0; f < filtered.length; f++) {
-        var em = filtered[f];
+    for (var f = 0; f < paginated.items.length; f++) {
+        var em = paginated.items[f];
         var statusBadge = em.status === 'active' ? 'badge-success' : 'badge-danger';
         var actions = '—';
         if (canEdit) {
@@ -414,8 +491,12 @@ function renderEmployees() {
         html += '<tr><td>' + em.id.slice(0, 6) + '</td><td><strong>' + escapeHtml(em.name) + '</strong></td><td>' + escapeHtml(em.department || '—') + '</td><td>' + escapeHtml(em.designation || '—') + '</td><td><span class="badge ' + statusBadge + '">' + (em.status || 'active') + '</span></td><td class="text-center">' + actions + '</td></tr>';
     }
     tbody.innerHTML = html;
+    renderPagination('employees', paginated);
 }
 
+// ============================================================
+// ATTENDANCE
+// ============================================================
 function renderAttendance() {
     if (!window.canView('attendance')) return;
     var data = getAppData();
@@ -444,6 +525,9 @@ function renderAttendance() {
     tbody.innerHTML = html;
 }
 
+// ============================================================
+// LEAVE
+// ============================================================
 function renderLeave() {
     if (!window.canView('leave')) return;
     var data = getAppData();
@@ -507,6 +591,9 @@ function renderLeave() {
     tbody.innerHTML = html;
 }
 
+// ============================================================
+// PAYROLL
+// ============================================================
 function renderPayroll() {
     if (!window.canView('payroll')) return;
     var data = getAppData();
@@ -564,6 +651,9 @@ function renderPayroll() {
     tbody.innerHTML = html;
 }
 
+// ============================================================
+// INVENTORY (with Pagination)
+// ============================================================
 function renderInventory() {
     if (!window.canView('inventory')) return;
     var data = getAppData();
@@ -584,31 +674,35 @@ function renderInventory() {
         }
         if (val && catSelect.querySelector('option[value="' + val + '"]')) catSelect.value = val;
     }
-    var filtered = [];
-    for (var i = 0; i < items.length; i++) {
-        var it = items[i];
+    var filtered = items.filter(function(it) {
         var matchName = (it.name || '').toLowerCase().indexOf(search) !== -1;
         var matchBarcode = it.barcode && it.barcode.indexOf(search) !== -1;
         var matchCat = catFilter === 'all' || it.category === catFilter;
-        if ((matchName || matchBarcode) && matchCat) filtered.push(it);
-    }
+        return (matchName || matchBarcode) && matchCat;
+    });
     filtered.sort(function(a, b) {
         if (sort === 'qty') return (a.qty || 0) - (b.qty || 0);
         if (sort === 'price') return (a.price || 0) - (b.price || 0);
         return (a.name || '').localeCompare(b.name || '');
     });
+    
+    var page = _currentPage['inventory'] || 1;
+    var paginated = paginateData(filtered, page, 20);
+    _currentPage['inventory'] = paginated.page;
+    
     var countEl = document.getElementById('invCount');
     if (countEl) countEl.textContent = filtered.length;
     var tbody = document.getElementById('inventoryTableBody');
     if (!tbody) return;
-    if (filtered.length === 0) {
+    if (paginated.items.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No items.</td></tr>';
+        renderPagination('inventory', paginated);
         return;
     }
     var canEdit = window.canManage('inventory');
     var html = '';
-    for (var inv = 0; inv < filtered.length; inv++) {
-        var itm = filtered[inv];
+    for (var inv = 0; inv < paginated.items.length; inv++) {
+        var itm = paginated.items[inv];
         var qtyClass = (itm.qty || 0) <= 5 ? 'text-danger' : '';
         var statusBadge = itm.status === 'active' ? 'badge-success' : 'badge-danger';
         var actions = '—';
@@ -618,8 +712,12 @@ function renderInventory() {
         html += '<tr><td><code>' + escapeHtml(itm.productCode || '—') + '</code></td><td><code>' + escapeHtml(itm.barcode || '—') + '</code></td><td><strong>' + escapeHtml(itm.name) + '</strong></td><td>' + escapeHtml(itm.category || '—') + '</td><td class="' + qtyClass + '">' + (itm.qty || 0) + '</td><td>LKR ' + formatCurrency(itm.price || 0) + '</td><td><span class="badge ' + statusBadge + '">' + (itm.status || 'active') + '</span></td><td class="text-center">' + actions + '</td></tr>';
     }
     tbody.innerHTML = html;
+    renderPagination('inventory', paginated);
 }
 
+// ============================================================
+// PRODUCTS
+// ============================================================
 function renderProducts() {
     if (!window.canView('inventory')) return;
     var data = getAppData();
@@ -668,6 +766,9 @@ function renderProducts() {
 }
 window.renderProducts = renderProducts;
 
+// ============================================================
+// PURCHASING
+// ============================================================
 function renderPurchasing() {
     if (!window.canView('purchasing') && !window.canView('inventory')) return;
     var data = getAppData();
@@ -718,6 +819,9 @@ function renderPurchasing() {
     }
 }
 
+// ============================================================
+// SALES
+// ============================================================
 function renderSales() {
     if (!window.canView('sales')) return;
     var data = getAppData();
@@ -790,6 +894,9 @@ function renderSalesCart() {
 }
 window.removeFromSalesCart = function(index) { salesCart.splice(index, 1); renderSalesCart(); };
 
+// ============================================================
+// DELIVERIES
+// ============================================================
 function renderDeliveries() {
     if (!window.canView('deliveries')) return;
     var data = getAppData();
@@ -918,29 +1025,35 @@ window.viewDeliveryDetails = function(id) {
     showToast('📦 ' + delivery.customerName + ' | Items: ' + items + ' | Status: ' + delivery.status, 'info');
 };
 
+// ============================================================
+// CUSTOMERS (with Pagination)
+// ============================================================
 function renderCustomers() {
     if (!window.canView('customers')) return;
     var data = getAppData();
     var customers = data.customers || [];
     var search = document.getElementById('custSearch') ? document.getElementById('custSearch').value.toLowerCase().trim() : '';
-    var filtered = [];
-    for (var c = 0; c < customers.length; c++) {
-        if ((customers[c].name || '').toLowerCase().indexOf(search) !== -1) {
-            filtered.push(customers[c]);
-        }
-    }
+    var filtered = customers.filter(function(c) {
+        return (c.name || '').toLowerCase().indexOf(search) !== -1;
+    });
+    
+    var page = _currentPage['customers'] || 1;
+    var paginated = paginateData(filtered, page, 20);
+    _currentPage['customers'] = paginated.page;
+    
     var countEl = document.getElementById('custCount');
     if (countEl) countEl.textContent = filtered.length;
     var tbody = document.getElementById('customerTableBody');
     if (!tbody) return;
-    if (filtered.length === 0) {
+    if (paginated.items.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No customers.</td></tr>';
+        renderPagination('customers', paginated);
         return;
     }
     var canEdit = window.canManage('customers');
     var html = '';
-    for (var f = 0; f < filtered.length; f++) {
-        var c = filtered[f];
+    for (var f = 0; f < paginated.items.length; f++) {
+        var c = paginated.items[f];
         var actions = '—';
         if (canEdit) {
             actions = '<button class="btn btn-sm btn-outline" onclick="editCustomer(\'' + c.id + '\')"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-danger" onclick="deleteCustomer(\'' + c.id + '\')"><i class="fas fa-trash"></i></button>';
@@ -948,8 +1061,12 @@ function renderCustomers() {
         html += '<tr><td><strong>' + escapeHtml(c.name) + '</strong></td><td>' + escapeHtml(c.contact || '—') + '</td><td>LKR ' + formatCurrency(c.creditLimit || 0) + '</td><td>LKR ' + formatCurrency(c.balance || 0) + '</td><td class="text-center">' + actions + '</td></tr>';
     }
     tbody.innerHTML = html;
+    renderPagination('customers', paginated);
 }
 
+// ============================================================
+// FINANCE
+// ============================================================
 function renderFinance() {
     if (!window.canView('finance')) return;
     var data = getAppData();
@@ -1019,6 +1136,9 @@ function renderFinance() {
 }
 window.renderFinance = renderFinance;
 
+// ============================================================
+// VOUCHERS
+// ============================================================
 function renderVouchers() {
     if (!window.canView('voucher')) return;
     var data = getAppData();
@@ -1058,6 +1178,9 @@ window.deleteVoucher = async function(id) {
     showToast('Removed.');
 };
 
+// ============================================================
+// FLEET
+// ============================================================
 function renderFleet() {
     if (!window.canView('fleet') && !window.canView('vehicles')) return;
     var data = getAppData();
@@ -1081,6 +1204,9 @@ function renderFleet() {
     tbody.innerHTML = html;
 }
 
+// ============================================================
+// REPORTS
+// ============================================================
 function renderReports() {
     if (!window.canView('reports')) return;
     var type = document.getElementById('reportType') ? document.getElementById('reportType').value : 'stock';
@@ -1225,6 +1351,9 @@ function renderReports() {
     if (container) container.innerHTML = html;
 }
 
+// ============================================================
+// SETTINGS
+// ============================================================
 function renderSettings() {
     if (!window.canView('settings')) return;
     var data = getAppData();
@@ -1293,9 +1422,16 @@ window.renderFleet = renderFleet;
 window.renderReports = renderReports;
 window.renderSettings = renderSettings;
 window.renderSidebar = renderSidebar;
+window.goToPage = goToPage;
 
 // ============================================================
-// EDIT/DELETE FUNCTIONS
+// EXPOSE CART ARRAYS GLOBALLY
+// ============================================================
+window.salesCart = salesCart;
+window.deliveryCart = deliveryCart;
+
+// ============================================================
+// EDIT/DELETE FUNCTIONS (unchanged)
 // ============================================================
 window.editEmployee = function(id) {
     var data = getAppData();
@@ -1494,12 +1630,6 @@ window.removeBrand = async function(brand) {
     renderProducts();
     showToast('Removed "' + brand + '"');
 };
-
-// ============================================================
-// EXPOSE CART ARRAYS GLOBALLY
-// ============================================================
-window.salesCart = salesCart;
-window.deliveryCart = deliveryCart;
 
 // ============================================================
 // END OF FILE
