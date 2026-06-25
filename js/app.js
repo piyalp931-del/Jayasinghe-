@@ -1669,4 +1669,149 @@ function init() {
     }
 
     var printReport = document.getElementById('printReportBtn');
-    if (printReport) printReport
+    if (printReport) printReport.addEventListener('click', function() { window.print(); });
+
+    // SETTINGS
+    var saveSettings = document.getElementById('saveSettingsBtn');
+    if (saveSettings) {
+        saveSettings.addEventListener('click', async function() {
+            var data = getAppData();
+            if (!data.settings) data.settings = {};
+            data.settings.company = document.getElementById('settingsCompany') ? document.getElementById('settingsCompany').value.trim() : '';
+            data.settings.address = document.getElementById('settingsAddress') ? document.getElementById('settingsAddress').value.trim() : '';
+            data.settings.phone = document.getElementById('settingsPhone') ? document.getElementById('settingsPhone').value.trim() : '';
+            data.settings.email = document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value.trim() : '';
+            setAppData(data);
+            await saveAllData();
+            showToast('Settings saved.');
+        });
+    }
+
+    var saveSettings2 = document.getElementById('saveSettingsBtn2');
+    if (saveSettings2) {
+        saveSettings2.addEventListener('click', async function() {
+            var data = getAppData();
+            if (!data.settings) data.settings = {};
+            data.settings.company = document.getElementById('settingsCompany') ? document.getElementById('settingsCompany').value.trim() : '';
+            data.settings.address = document.getElementById('settingsAddress') ? document.getElementById('settingsAddress').value.trim() : '';
+            data.settings.phone = document.getElementById('settingsPhone') ? document.getElementById('settingsPhone').value.trim() : '';
+            data.settings.email = document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value.trim() : '';
+            setAppData(data);
+            await saveAllData();
+            showToast('Settings saved.');
+        });
+    }
+
+    var backupData = document.getElementById('backupDataBtn');
+    if (backupData) {
+        backupData.addEventListener('click', function() {
+            var data = getAppData();
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'jayasinghe_erp_backup_' + todayStr() + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Backup downloaded.');
+        });
+    }
+
+    var restoreData = document.getElementById('restoreDataBtn');
+    if (restoreData) {
+        restoreData.addEventListener('click', function() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = async function(ev) {
+                    try {
+                        var data = JSON.parse(ev.target.result);
+                        setAppData(data);
+                        await saveAllData();
+                        renderAll();
+                        showToast('Data restored.');
+                    } catch(err) {
+                        showToast('Invalid file.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+    }
+
+    var clearData = document.getElementById('clearDataBtn');
+    if (clearData) {
+        clearData.addEventListener('click', async function() {
+            if (!confirm('Delete ALL data? Cannot undo!')) return;
+            var data = getAppData();
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    if (Array.isArray(data[key])) data[key] = [];
+                    else if (typeof data[key] === 'object' && data[key] !== null) data[key] = {};
+                }
+            }
+            setAppData(data);
+            await saveAllData();
+            renderAll();
+            showToast('All data cleared.');
+        });
+    }
+
+    var clearLogs = document.getElementById('clearLogsBtn');
+    if (clearLogs) {
+        clearLogs.addEventListener('click', async function() {
+            if (!confirm('Clear logs?')) return;
+            var data = getAppData();
+            data.logs = [];
+            setAppData(data);
+            await saveAllData();
+            renderAdministration();
+            showToast('Logs cleared.');
+        });
+    }
+
+    // DEFAULT DATES
+    var defaultIds = ['voucherDate', 'salesOrderDate', 'delScheduledDate', 'payrollMonth', 'leaveFrom', 'leaveTo'];
+    for (var d = 0; d < defaultIds.length; d++) {
+        var el = document.getElementById(defaultIds[d]);
+        if (el && !el.value) {
+            if (defaultIds[d] === 'delScheduledDate') el.value = nowISO().slice(0, 16);
+            else if (defaultIds[d] === 'payrollMonth') el.value = todayStr().slice(0, 7);
+            else el.value = todayStr();
+        }
+    }
+
+    // Load data and initialize
+    loadAllData().then(function() {
+        var user = window.getCurrentUser();
+        if (user) {
+            renderSidebar();
+            switchPanel('dashboard');
+        }
+        populateItemDropdowns();
+        populateDeliveryDropdowns();
+    }).catch(function(err) {
+        console.warn('Data load error, but continuing:', err);
+        var user = window.getCurrentUser();
+        if (user) {
+            renderSidebar();
+            switchPanel('dashboard');
+        }
+    });
+
+    console.log('✅ ERP initialized.');
+}
+
+// ============================================================
+// START
+// ============================================================
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    init();
+} else {
+    document.addEventListener('DOMContentLoaded', init);
+}
