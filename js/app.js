@@ -1,5 +1,5 @@
 // ============================================================
-// MAIN APP MODULE (Complete - Enterprise)
+// MAIN APP MODULE (Complete - Enterprise) - FIXED
 // ============================================================
 
 function showToast(message, type) {
@@ -228,6 +228,20 @@ function closeScanner() {
 }
 window.openScanner = openScanner;
 window.closeScanner = closeScanner;
+
+// ============================================================
+// HELPER: Ensure data is loaded before rendering
+// ============================================================
+async function ensureDataLoaded() {
+    var data = getAppData();
+    // If any main array is empty, reload data
+    if (data.items.length === 0 && data.employees.length === 0) {
+        console.log('Data empty, reloading from Firestore...');
+        await loadAllData();
+        console.log('Data reloaded:', getAppData());
+    }
+    return getAppData();
+}
 
 // ============================================================
 // INIT
@@ -1563,6 +1577,7 @@ function init() {
         }
     }
 
+    // Load data and initialize
     loadAllData().then(function() {
         var user = getCurrentUser();
         if (user) {
@@ -1571,6 +1586,14 @@ function init() {
         }
         populateItemDropdowns();
         populateDeliveryDropdowns();
+    }).catch(function(err) {
+        console.warn('Data load error, but continuing:', err);
+        // Fallback: render anyway with whatever data is in memory
+        var user = getCurrentUser();
+        if (user) {
+            renderSidebar();
+            switchPanel('dashboard');
+        }
     });
 
     console.log('ERP initialized.');
@@ -1584,3 +1607,29 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
     document.addEventListener('DOMContentLoaded', init);
 }
+
+// ============================================================
+// FIX: OVERRIDE switchPanel to ensure data is loaded before rendering
+// ============================================================
+var originalSwitchPanel = window.switchPanel;
+window.switchPanel = function(id) {
+    // Ensure data is loaded before switching
+    ensureDataLoaded().then(function() {
+        // Call the original switchPanel function (which is in ui.js)
+        if (typeof originalSwitchPanel === 'function') {
+            originalSwitchPanel(id);
+        } else {
+            // Fallback: call the global switchPanel (which is already defined in ui.js)
+            if (typeof switchPanel === 'function') {
+                switchPanel(id);
+            }
+        }
+    }).catch(function(err) {
+        console.warn('Data load error, switching anyway:', err);
+        if (typeof originalSwitchPanel === 'function') {
+            originalSwitchPanel(id);
+        } else if (typeof switchPanel === 'function') {
+            switchPanel(id);
+        }
+    });
+};
