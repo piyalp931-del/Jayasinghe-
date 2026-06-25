@@ -1,4 +1,5 @@
-const CACHE_NAME = 'jayasinghe-erp-v1';
+// Dynamic cache name based on date
+const CACHE_NAME = 'jayasinghe-erp-v' + new Date().toISOString().slice(0,10).replace(/-/g, '');
 const urlsToCache = [
     '/Jaya/',
     '/Jaya/index.html',
