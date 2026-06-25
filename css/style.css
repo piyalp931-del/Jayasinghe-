@@ -1497,3 +1497,72 @@ body.dark .badge.badge-cancelled { background: #7f1d1d; color: #fca5a5; }
         background: #f9f9f9 !important;
     }
 }
+
+/* ============================================================
+   NEW ELEMENTS STYLES
+   ============================================================ */
+
+/* For productItemSelect */
+#productItemSelect {
+    max-width: 100%;
+    margin-bottom: 8px;
+}
+
+/* Quick action button hover */
+.quick-action-btn {
+    transition: all 0.2s;
+}
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* Pagination container */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.pagination .page-info {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 0 8px;
+}
+
+/* Delivery status select */
+.delivery-status-select {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    outline: none;
+    transition: 0.2s;
+}
+.delivery-status-select:focus {
+    border-color: var(--primary);
+}
+
+/* Quick Add Customer button in delivery */
+#quickAddCustomerBtn {
+    flex-shrink: 0;
+    padding: 9px 12px;
+    min-width: 38px;
+    justify-content: center;
+}
+#quickAddCustomerBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
