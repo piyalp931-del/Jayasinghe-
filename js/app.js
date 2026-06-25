@@ -199,7 +199,7 @@ window.openScanner = openScanner;
 window.closeScanner = closeScanner;
 
 // ============================================================
-// INIT
+// INIT (with retry if not called)
 // ============================================================
 function init() {
     console.log('🚀 Initializing ERP...');
@@ -209,6 +209,7 @@ function init() {
         if (icon) icon.className = 'fas fa-sun';
     }
 
+    // Sidebar toggle
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     const sidebarClose = document.getElementById('sidebarClose');
@@ -226,13 +227,16 @@ function init() {
         }
     });
 
+    // Dark mode toggle
     document.getElementById('darkModeToggle')?.addEventListener('click', toggleDarkMode);
     document.getElementById('langToggle')?.addEventListener('click', toggleLanguage);
 
+    // Clear login
     document.getElementById('clearLoginBtn')?.addEventListener('click', () => {
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').style.display = 'none';
+        showToast('🧹 Cleared.');
     });
 
     // -------------------- EMPLOYEE MODAL --------------------
@@ -1179,18 +1183,15 @@ function init() {
     };
     ['voucherDate', 'salesOrderDate', 'delScheduledDate', 'payrollMonth', 'leaveFrom', 'leaveTo'].forEach(setDefaultDate);
 
-    // -------------------- FINAL LOAD --------------------
-    loadAllData().then(() => {
-        const user = getCurrentUser();
-        if (user) {
-            renderSidebar();
-            switchPanel('dashboard');
-        }
-        populateItemDropdowns();
-        populateDeliveryDropdowns();
-    });
-
-    console.log('✅ ERP initialized.');
+    console.log('✅ ERP initialized successfully.');
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Ensure init is called even if DOMContentLoaded already fired
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(init, 200);
+} else {
+    document.addEventListener('DOMContentLoaded', init);
+}
+
+// Also export init globally so it can be called from inline fallback
+window.init = init;
