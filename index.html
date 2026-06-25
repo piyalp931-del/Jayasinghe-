@@ -203,6 +203,11 @@
             </div>
             <div class="card">
                 <div class="card-title">📦 Product Details <span class="sub">Extended Attributes</span></div>
+                <!-- NEW: Product selector for updating -->
+                <div class="form-group">
+                    <label>Select Item to Update</label>
+                    <select id="productItemSelect"><option value="">-- Select --</option></select>
+                </div>
                 <div class="form-row">
                     <div class="form-group"><label>Product Code</label><input type="text" id="productCode" placeholder="Auto or manual" /></div>
                     <div class="form-group"><label>Unit</label>
@@ -382,6 +387,11 @@
                     </div>
                 </div>
                 <div class="form-group"><label>Description</label><input type="text" id="financeDesc" placeholder="Description" /></div>
+                <!-- NEW: Budget input -->
+                <div class="form-group">
+                    <label>📊 Budget (Category)</label>
+                    <input type="number" id="financeBudget" placeholder="Set budget for this category (LKR)" step="0.01" />
+                </div>
                 <div class="flex gap-2 flex-wrap">
                     <button class="btn btn-primary" id="addFinanceBtn"><i class="fas fa-plus"></i> Add Entry</button>
                     <button class="btn btn-outline" id="clearFinanceBtn"><i class="fas fa-eraser"></i> Clear</button>
