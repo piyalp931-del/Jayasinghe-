@@ -337,12 +337,14 @@ function renderQuickActions() {
             { label: '👤 Add Employee', panel: 'employees', action: 'addEmployee' },
             { label: '📦 Add Item', panel: 'inventory', action: 'addItem' },
             { label: '👥 Add Customer', panel: 'customers', action: 'addCustomer' },
+            { label: '🚚 New Delivery', panel: 'deliveries', action: 'view' },
             { label: '📈 Reports', panel: 'reports', action: 'view' }
         ],
         admin: [
             { label: '👤 Add Employee', panel: 'employees', action: 'addEmployee' },
             { label: '📦 Add Item', panel: 'inventory', action: 'addItem' },
             { label: '👥 Add Customer', panel: 'customers', action: 'addCustomer' },
+            { label: '🚚 New Delivery', panel: 'deliveries', action: 'view' },
             { label: '📈 Reports', panel: 'reports', action: 'view' }
         ],
         hr: [
@@ -358,7 +360,7 @@ function renderQuickActions() {
         sales: [
             { label: '👥 Add Customer', panel: 'customers', action: 'addCustomer' },
             { label: '🛒 New Sales Order', panel: 'sales', action: 'view' },
-            { label: '🚚 Deliveries', panel: 'deliveries', action: 'view' }
+            { label: '🚚 New Delivery', panel: 'deliveries', action: 'view' }
         ],
         store: [
             { label: '📦 Add Item', panel: 'inventory', action: 'addItem' },
@@ -366,7 +368,7 @@ function renderQuickActions() {
             { label: '📈 Reports', panel: 'reports', action: 'view' }
         ],
         delivery: [
-            { label: '🚚 Deliveries', panel: 'deliveries', action: 'view' },
+            { label: '🚚 New Delivery', panel: 'deliveries', action: 'view' },
             { label: '⏱️ Attendance', panel: 'attendance', action: 'view' }
         ],
         employee: [
@@ -724,6 +726,17 @@ function renderProducts() {
     var categories = data.categories || [];
     var brands = data.brands || [];
     var items = data.items || [];
+
+    // Populate productItemSelect
+    var prodSelect = document.getElementById('productItemSelect');
+    if (prodSelect) {
+        var val = prodSelect.value;
+        prodSelect.innerHTML = '<option value="">-- Select --</option>';
+        for (var p = 0; p < items.length; p++) {
+            prodSelect.innerHTML += '<option value="' + items[p].id + '">' + escapeHtml(items[p].name) + ' (' + (items[p].productCode || 'N/A') + ')</option>';
+        }
+        if (val && prodSelect.querySelector('option[value="' + val + '"]')) prodSelect.value = val;
+    }
 
     var canEdit = window.canManage('inventory');
     var catHtml = '';
