@@ -2,6 +2,7 @@
 // UI RENDERING MODULE (FULL ENTERPRISE - COMPLETE FILE)
 // ============================================================
 
+// Global cart arrays (will be exposed at the end)
 var salesCart = [];
 var deliveryCart = [];
 
