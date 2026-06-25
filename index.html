@@ -19,7 +19,6 @@
 </head>
 <body>
 
-    
     <!-- LOGIN SCREEN -->
     <div class="login-screen" id="loginScreen">
         <div class="login-box">
@@ -112,12 +111,384 @@
             <div class="card"><div class="card-title">📌 Quick Actions</div><div class="quick-actions" id="quickActionsContainer"></div></div>
         </section>
 
-        <!-- ========== OTHER PANELS (keep your existing panels – they are already complete) ========== -->
-        <!-- I'm not repeating all panels here to save space, but you should keep your existing HTML for all panels -->
-        <!-- They are already present in your current index.html – just keep them. -->
+        <!-- ADMINISTRATION -->
+        <section class="panel" id="panel-administration">
+            <div class="card">
+                <div class="card-title">🏢 Administration <span class="sub">System Control</span></div>
+                <div class="form-group"><label>Company Name</label><input type="text" id="settingsCompany" value="Jayasinghe Distributors" /></div>
+                <div class="form-group"><label>Address</label><input type="text" id="settingsAddress" value="Colombo, Sri Lanka" /></div>
+                <div class="form-row"><div class="form-group"><label>Phone</label><input type="text" id="settingsPhone" value="+94 77 123 4567" /></div>
+                <div class="form-group"><label>Email</label><input type="text" id="settingsEmail" value="info@jayasinghe.lk" /></div></div>
+                <button class="btn btn-primary" id="saveSettingsBtn"><i class="fas fa-save"></i> Save Settings</button>
+                <hr style="margin:16px 0; border-color:var(--border);" />
+                <div class="card-title" style="font-size:14px;">📜 System Logs</div>
+                <div class="table-wrap"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody id="logsTableBody"></tbody></table></div>
+                <div style="margin-top:12px;"><button class="btn btn-outline" id="clearLogsBtn"><i class="fas fa-eraser"></i> Clear Logs</button></div>
+            </div>
+        </section>
+
+        <!-- EMPLOYEES -->
+        <section class="panel" id="panel-employees">
+            <div class="card">
+                <div class="card-title">👤 Employee Management <span class="sub"><span id="empCount">0</span> total</span></div>
+                <div class="toolbar">
+                    <div class="search-bar">
+                        <input type="text" id="empSearch" placeholder="🔍 Search..." />
+                        <select id="empDeptFilter"><option value="all">All Depts</option></select>
+                        <select id="empStatusFilter"><option value="all">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+                        <button class="btn btn-outline btn-sm" id="clearEmpFilters"><i class="fas fa-eraser"></i> Clear</button>
+                    </div>
+                    <button class="btn btn-primary" id="addEmployeeBtn"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Designation</th><th>Status</th><th class="text-center">Actions</th></tr></thead><tbody id="employeeTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ATTENDANCE -->
+        <section class="panel" id="panel-attendance">
+            <div class="card"><div class="card-title">⏱️ Attendance</div>
+                <div class="flex gap-2 flex-wrap"><button class="btn btn-success" id="checkInBtn"><i class="fas fa-check-circle"></i> Check In</button><button class="btn btn-danger" id="checkOutBtn"><i class="fas fa-times-circle"></i> Check Out</button><button class="btn btn-outline" id="attendanceRefreshBtn"><i class="fas fa-sync"></i> Refresh</button></div>
+                <div class="form-row mt-2"><div class="form-group"><label>📍 GPS Location</label><input type="text" id="attendanceLocation" readonly placeholder="Fetching..." /></div><div class="form-group"><label>📸 Selfie</label><input type="file" id="attendanceSelfie" accept="image/*" /></div></div>
+                <div class="table-wrap mt-2"><table><thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead><tbody id="attendanceTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- LEAVE -->
+        <section class="panel" id="panel-leave">
+            <div class="card"><div class="card-title">🏖️ Leave Management</div>
+                <div class="leave-balance"><span><strong>Sick:</strong> <span id="lbSick">0</span> days</span><span><strong>Casual:</strong> <span id="lbCasual">0</span> days</span><span><strong>Annual:</strong> <span id="lbAnnual">0</span> days</span></div>
+                <div class="form-row"><div class="form-group"><label>Employee</label><select id="leaveEmployeeSelect"><option value="">-- Select --</option></select></div><div class="form-group"><label>Type</label><select id="leaveType"><option value="sick">Sick</option><option value="casual">Casual</option><option value="annual">Annual</option></select></div></div>
+                <div class="form-row"><div class="form-group"><label>From</label><input type="date" id="leaveFrom" /></div><div class="form-group"><label>To</label><input type="date" id="leaveTo" /></div></div>
+                <div class="form-group"><label>Reason</label><textarea id="leaveReason" rows="2"></textarea></div>
+                <div class="flex gap-2 flex-wrap"><button class="btn btn-primary" id="applyLeaveBtn"><i class="fas fa-paper-plane"></i> Apply</button><button class="btn btn-success" id="approveLeaveBtn"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger" id="rejectLeaveBtn"><i class="fas fa-times"></i> Reject</button></div>
+                <div class="table-wrap mt-2"><table><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Status</th></tr></thead><tbody id="leaveTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- PAYROLL -->
+        <section class="panel" id="panel-payroll">
+            <div class="card"><div class="card-title">💰 Payroll</div>
+                <div class="form-row"><div class="form-group"><label>Employee</label><select id="payrollEmployeeSelect"><option value="">-- Select --</option></select></div><div class="form-group"><label>Month</label><input type="month" id="payrollMonth" /></div></div>
+                <div class="form-row"><div class="form-group"><label>Basic</label><input type="number" id="payrollBasic" placeholder="0" /></div><div class="form-group"><label>Allowances</label><input type="number" id="payrollAllowances" placeholder="0" /></div></div>
+                <div class="form-row"><div class="form-group"><label>Deductions</label><input type="number" id="payrollDeductions" placeholder="0" /></div><div class="form-group"><label>OT Hours</label><input type="number" id="payrollOT" placeholder="0" /></div></div>
+                <div class="flex gap-2 flex-wrap"><button class="btn btn-primary" id="calculatePayrollBtn"><i class="fas fa-calculator"></i> Calculate</button><button class="btn btn-success" id="generatePayslipBtn"><i class="fas fa-file-pdf"></i> Payslip</button></div>
+                <div class="table-wrap mt-2"><table><thead><tr><th>Employee</th><th>Month</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>EPF</th><th>ETF</th><th>Net</th></tr></thead><tbody id="payrollTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- INVENTORY -->
+        <section class="panel" id="panel-inventory">
+            <div class="card"><div class="card-title">📋 Inventory <span class="sub"><span id="invCount">0</span> items</span></div>
+                <div class="toolbar"><div class="search-bar"><input type="text" id="invSearch" placeholder="🔍 Search..." /><select id="invCatFilter"><option value="all">All Categories</option></select><select id="invSort"><option value="name">Name</option><option value="qty">Qty</option><option value="price">Price</option></select><button class="btn btn-outline btn-sm" id="clearInvFilters"><i class="fas fa-eraser"></i> Clear</button></div><button class="btn btn-primary" id="addItemBtn"><i class="fas fa-plus"></i> Add</button></div>
+                <div class="table-wrap"><table><thead><tr><th>Code</th><th>Barcode</th><th>Name</th><th>Category</th><th>Qty</th><th>Price</th><th>Status</th><th class="text-center">Actions</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- PRODUCTS -->
+        <section class="panel" id="panel-products">
+            <div class="card">
+                <div class="card-title">🏷️ Products <span class="sub">Categories & Brands</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>New Category</label><input type="text" id="newCategoryInput" placeholder="e.g. Beverages" /></div>
+                    <div class="form-group"><label>New Brand</label><input type="text" id="newBrandInput" placeholder="e.g. Nike" /></div>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" id="addCategoryBtn"><i class="fas fa-plus"></i> Add Category</button>
+                    <button class="btn btn-success" id="addBrandBtn"><i class="fas fa-plus"></i> Add Brand</button>
+                </div>
+                <div class="chip-group mt-2">
+                    <div><strong>Categories:</strong> <span id="categoryChips"></span></div>
+                    <div><strong>Brands:</strong> <span id="brandChips"></span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📦 Product Details <span class="sub">Extended Attributes</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Product Code</label><input type="text" id="productCode" placeholder="Auto or manual" /></div>
+                    <div class="form-group"><label>Unit</label>
+                        <select id="productUnit"><option value="Pcs">Pcs</option><option value="Box">Box</option><option value="Kg">Kg</option><option value="Ltr">Ltr</option><option value="Mtr">Mtr</option><option value="Dozen">Dozen</option><option value="Pack">Pack</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Cost Price (LKR)</label><input type="number" id="productCostPrice" placeholder="0.00" step="0.01" /></div>
+                    <div class="form-group"><label>Tax Rate (%)</label><input type="number" id="productTaxRate" placeholder="0" min="0" max="100" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Reorder Level</label><input type="number" id="productReorderLevel" placeholder="Min stock" /></div>
+                    <div class="form-group"><label>Stock Alert</label><select id="productStockAlert"><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></div>
+                </div>
+                <button class="btn btn-primary" id="updateProductAttributesBtn"><i class="fas fa-save"></i> Update Product Attributes</button>
+            </div>
+        </section>
+
+        <!-- PURCHASING -->
+        <section class="panel" id="panel-purchasing">
+            <div class="card"><div class="card-title">📦 Purchasing <span class="sub">Suppliers & Orders</span></div>
+                <div class="form-row"><div class="form-group"><label>Supplier Name</label><input type="text" id="supplierName" placeholder="Supplier" /></div><div class="form-group"><label>Contact</label><input type="text" id="supplierContact" placeholder="Phone" /></div></div>
+                <div class="form-group"><label>Address</label><input type="text" id="supplierAddress" placeholder="Address" /></div>
+                <div class="flex gap-2"><button class="btn btn-primary" id="addSupplierBtn"><i class="fas fa-plus"></i> Add Supplier</button><button class="btn btn-outline" id="clearSupplierBtn"><i class="fas fa-eraser"></i> Clear</button></div>
+                <div class="table-wrap mt-2"><table><thead><tr><th>Name</th><th>Contact</th><th>Address</th><th class="text-center">Actions</th></tr></thead><tbody id="supplierTableBody"></tbody></table></div>
+                <hr style="margin:16px 0; border-color:var(--border);" />
+                <div class="card-title" style="font-size:14px;">📋 Purchase Orders</div>
+                <div class="form-row"><div class="form-group"><label>Supplier</label><select id="poSupplierSelect"><option value="">Select</option></select></div><div class="form-group"><label>Item</label><select id="poItemSelect"><option value="">Select</option></select></div></div>
+                <div class="form-row"><div class="form-group"><label>Qty</label><input type="number" id="poQty" /></div><div class="form-group"><label>Price (LKR)</label><input type="number" id="poPrice" /></div></div>
+                <button class="btn btn-success" id="addPurchaseOrderBtn"><i class="fas fa-check"></i> Create PO</button>
+                <div class="table-wrap mt-2"><table><thead><tr><th>Supplier</th><th>Item</th><th>Qty</th><th>Price</th><th>Status</th></tr></thead><tbody id="poTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- SALES -->
+        <section class="panel" id="panel-sales">
+            <div class="card">
+                <div class="card-title">🛒 Sales Management <span class="sub">Multi-Item Orders</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>👤 Customer</label>
+                        <select id="salesCustomerSelect"><option value="">Select Customer</option></select>
+                        <button class="btn btn-sm btn-outline" id="salesAddCustomerBtn" style="margin-top:4px;"><i class="fas fa-plus"></i> New Customer</button>
+                    </div>
+                    <div class="form-group"><label>📅 Order Date</label><input type="date" id="salesOrderDate" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>📦 Item</label><select id="salesCartItemSelect"><option value="">Select Item</option></select></div>
+                    <div class="form-group"><label>📤 Qty</label><input type="number" id="salesCartQty" min="1" value="1" /></div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" id="salesAddToCartBtn"><i class="fas fa-plus"></i> Add to Cart</button>
+                    <button class="btn btn-outline" id="salesClearCartBtn"><i class="fas fa-eraser"></i> Clear Cart</button>
+                </div>
+                <div class="table-wrap mt-2">
+                    <table id="salesCartTable">
+                        <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="salesCartBody"></tbody>
+                        <tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;">Grand Total</td><td id="salesCartTotal" style="font-weight:700;">LKR 0</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <button class="btn btn-success btn-block" id="createSalesOrderBtn" style="margin-top:12px;"><i class="fas fa-check"></i> Create Sales Order</button>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 Sales Order History</div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+                        <tbody id="salesOrderTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- DELIVERIES -->
+        <section class="panel" id="panel-deliveries">
+            <div class="card">
+                <div class="card-title">🚚 Deliveries <span class="sub">Multi-Item & Status Tracking</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>👤 Customer</label>
+                        <select id="delCustomerSelect"><option value="">-- Select --</option></select>
+                    </div>
+                    <div class="form-group"><label>📅 Delivery Date</label><input type="datetime-local" id="delScheduledDate" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>🚚 Driver</label><select id="delDriverSelect"><option value="">-- Select --</option></select></div>
+                    <div class="form-group"><label>🚗 Vehicle</label><select id="delVehicleSelect"><option value="">-- Select --</option></select></div>
+                </div>
+                <div class="card-title" style="font-size:14px; margin-top:8px;">📦 Delivery Items</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Item</label><select id="delCartItemSelect"><option value="">Select Item</option></select></div>
+                    <div class="form-group"><label>Qty</label><input type="number" id="delCartQty" min="1" value="1" /></div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" id="delAddToCartBtn"><i class="fas fa-plus"></i> Add Item</button>
+                    <button class="btn btn-outline" id="delClearCartBtn"><i class="fas fa-eraser"></i> Clear Items</button>
+                </div>
+                <div class="table-wrap mt-2">
+                    <table id="delCartTable">
+                        <thead><tr><th>#</th><th>Item</th><th>Qty</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="delCartBody"></tbody>
+                    </table>
+                </div>
+                <div class="form-row mt-2">
+                    <div class="form-group"><label>📌 Status</label>
+                        <select id="delStatusSelect">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In-Progress</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>📍 Route</label><input type="text" id="delRoute" placeholder="e.g. Colombo - Galle" /></div>
+                </div>
+                <div class="form-group"><label>📝 Notes</label><textarea id="delNotes" rows="2"></textarea></div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-success" id="deliverSubmitBtn"><i class="fas fa-check"></i> Confirm Delivery</button>
+                    <button class="btn btn-outline" id="clearDeliveryForm"><i class="fas fa-eraser"></i> Clear Form</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📋 Delivery History</div>
+                <div class="search-bar">
+                    <input type="date" id="delDateFilter" />
+                    <select id="delStatusFilter" style="max-width:140px;">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In-Progress</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button class="btn btn-outline" id="clearDelFilter"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="btn btn-outline" id="refreshDeliveriesBtn"><i class="fas fa-sync"></i> Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Driver</th><th>Vehicle</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
+                        <tbody id="deliveryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- CUSTOMERS -->
+        <section class="panel" id="panel-customers">
+            <div class="card"><div class="card-title">👥 Customers <span class="sub"><span id="custCount">0</span> registered</span></div>
+                <div class="toolbar"><div class="search-bar"><input type="text" id="custSearch" placeholder="🔍 Search..." /><button class="btn btn-outline btn-sm" id="clearCustSearch"><i class="fas fa-eraser"></i> Clear</button></div><button class="btn btn-primary" id="addCustomerBtn"><i class="fas fa-plus"></i> Add</button></div>
+                <div class="table-wrap"><table><thead><tr><th>Name</th><th>Contact</th><th>Credit Limit</th><th>Balance</th><th class="text-center">Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- FINANCE -->
+        <section class="panel" id="panel-finance">
+            <div class="card">
+                <div class="card-title">💰 Finance <span class="sub">Cash Book & Check Details</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Type</label><select id="financeType"><option value="income">Income</option><option value="expense">Expense</option></select></div>
+                    <div class="form-group"><label>Amount</label><input type="number" id="financeAmount" placeholder="0" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><select id="financeCategory"><option value="operational">Operational</option><option value="capital">Capital</option><option value="administrative">Administrative</option><option value="marketing">Marketing</option><option value="other">Other</option></select></div>
+                    <div class="form-group"><label>Payment Method</label>
+                        <select id="financePaymentMethod">
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="card">Card</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="chequeDetails" style="display:none; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <div class="card-title" style="font-size:13px;">🏦 Cheque Details</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Cheque Number</label><input type="text" id="financeChequeNo" placeholder="CHQ-001" /></div>
+                        <div class="form-group"><label>Bank Name</label><input type="text" id="financeBankName" placeholder="Bank Name" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Cheque Date</label><input type="date" id="financeChequeDate" /></div>
+                        <div class="form-group"><label>Cheque Amount</label><input type="number" id="financeChequeAmount" placeholder="0.00" step="0.01" /></div>
+                    </div>
+                </div>
+                <div class="form-group"><label>Description</label><input type="text" id="financeDesc" placeholder="Description" /></div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" id="addFinanceBtn"><i class="fas fa-plus"></i> Add Entry</button>
+                    <button class="btn btn-outline" id="clearFinanceBtn"><i class="fas fa-eraser"></i> Clear</button>
+                </div>
+                <div id="budgetDisplay" style="margin-top:10px;"></div>
+                <div class="table-wrap mt-2">
+                    <table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Method</th><th>Description</th><th>Amount</th></tr></thead>
+                        <tbody id="financeTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="finance-summary">
+                    <span>Total Income: <strong id="financeTotalIncome">LKR 0</strong></span>
+                    <span>Total Expense: <strong id="financeTotalExpense">LKR 0</strong></span>
+                    <span>Balance: <strong id="financeBalance">LKR 0</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- VOUCHER -->
+        <section class="panel" id="panel-voucher">
+            <div class="card"><div class="card-title">🧾 Cash Voucher <span class="sub">P.M. Jayasinghe</span></div>
+                <div class="form-row"><div class="form-group"><label>Voucher No</label><input type="text" id="voucherNo" placeholder="Auto" /></div><div class="form-group"><label>Date</label><input type="date" id="voucherDate" /></div></div>
+                <div class="form-row"><div class="form-group"><label>Paid To</label><input type="text" id="voucherPaidTo" placeholder="Recipient" /></div><div class="form-group"><label>Amount</label><input type="number" id="voucherAmount" placeholder="0.00" step="0.01" /></div></div>
+                <div class="form-group"><label>Payment For</label><div style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 0;"><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Transport" /> Transport</label><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Fuel" /> Fuel</label><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Salary" /> Salary</label><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Office Expenses" /> Office</label><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Purchase" /> Purchase</label><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Maintenance" /> Maintenance</label><label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:13px;"><input type="checkbox" class="voucher-payment-type" value="Other" /> Other <input type="text" id="voucherOtherText" placeholder="Specify..." style="max-width:120px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; margin-left:4px;" /></label></div></div>
+                <div class="form-group"><label>Description</label><textarea id="voucherDescription" rows="2"></textarea></div>
+                <div class="form-row"><div class="form-group"><label>Approved By</label><input type="text" id="voucherApprovedBy" /></div><div class="form-group"><label>Received By</label><input type="text" id="voucherReceivedBy" /></div></div>
+                <div class="form-group"><label>Signature</label><input type="text" id="voucherSignature" /></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;"><button class="btn btn-primary" id="addVoucherBtn"><i class="fas fa-save"></i> Save</button><button class="btn btn-success" id="printVoucherBtn"><i class="fas fa-print"></i> Print</button><button class="btn btn-info" id="downloadVoucherBtn"><i class="fas fa-file-pdf"></i> PDF</button><button class="btn btn-outline" id="clearVoucherForm"><i class="fas fa-eraser"></i> Clear</button></div>
+            </div>
+            <div class="card"><div class="card-title">📋 Voucher History <span class="sub"><span id="voucherCount">0</span></span></div>
+                <div class="table-wrap"><table><thead><tr><th>No</th><th>Date</th><th>Paid To</th><th>Amount</th><th>Type</th><th>Status</th><th class="text-center">Actions</th></tr></thead><tbody id="voucherTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- FLEET -->
+        <section class="panel" id="panel-fleet">
+            <div class="card"><div class="card-title">🚗 Fleet Management</div>
+                <div class="form-row"><div class="form-group"><label>Vehicle No</label><input type="text" id="vehicleNo" placeholder="ABC-1234" /></div><div class="form-group"><label>Driver</label><input type="text" id="vehicleDriver" placeholder="Driver" /></div></div>
+                <div class="form-row"><div class="form-group"><label>Fuel (L/km)</label><input type="text" id="vehicleFuel" placeholder="Fuel" /></div><div class="form-group"><label>Insurance</label><input type="text" id="vehicleInsurance" placeholder="Insurance No" /></div></div>
+                <div class="form-group"><label>Service Schedule</label><input type="date" id="vehicleService" /></div>
+                <button class="btn btn-primary" id="addVehicleBtn"><i class="fas fa-plus"></i> Add Vehicle</button>
+                <div class="table-wrap mt-2"><table><thead><tr><th>Vehicle No</th><th>Driver</th><th>Fuel</th><th>Insurance</th><th>Service</th><th>Status</th><th class="text-center">Actions</th></tr></thead><tbody id="vehicleTableBody"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- REPORTS -->
+        <section class="panel" id="panel-reports">
+            <div class="card"><div class="card-title">📈 Reports <span class="sub">Analytics</span></div>
+                <div class="form-group"><select id="reportType" style="max-width:250px;"><option value="stock">📦 Stock</option><option value="sales">💰 Sales</option><option value="attendance">⏱️ Attendance</option><option value="payroll">🧾 Payroll</option><option value="customers">👥 Customers</option><option value="purchasing">📦 Purchasing</option><option value="finance">💳 Finance</option></select></div>
+                <div class="report-filters"><div class="search-bar"><label>From: <input type="date" id="reportFrom" /></label><label>To: <input type="date" id="reportTo" /></label><button class="btn btn-sm btn-primary" id="applyReportFilters"><i class="fas fa-filter"></i> Apply</button><button class="btn btn-outline btn-sm" id="clearReportFilters"><i class="fas fa-eraser"></i> Clear</button></div></div>
+                <div class="toolbar"><button class="btn btn-primary" id="generateReportBtn"><i class="fas fa-chart-bar"></i> Generate</button><button class="btn btn-outline" id="exportReportBtn"><i class="fas fa-file-csv"></i> CSV</button><button class="btn btn-outline" id="printReportBtn"><i class="fas fa-print"></i> Print</button></div>
+                <div id="reportContent" class="table-wrap" style="margin-top:12px;"><div class="text-muted text-center" style="padding:30px;"><span style="font-size:40px; display:block; margin-bottom:8px;">📊</span>Select a report and click Generate</div></div>
+            </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="panel" id="panel-settings">
+            <div class="card"><div class="card-title">⚙️ Settings</div>
+                <div class="form-group"><label>Company Name</label><input type="text" id="settingsCompany" value="Jayasinghe Distributors" /></div>
+                <div class="form-group"><label>Address</label><input type="text" id="settingsAddress" value="Colombo, Sri Lanka" /></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="settingsPhone" value="+94 77 123 4567" /></div>
+                <div class="form-group"><label>Email</label><input type="text" id="settingsEmail" value="info@jayasinghe.lk" /></div>
+                <div class="flex gap-2 flex-wrap"><button class="btn btn-primary" id="saveSettingsBtn2"><i class="fas fa-save"></i> Save</button><button class="btn btn-outline" id="backupDataBtn"><i class="fas fa-download"></i> Backup</button><button class="btn btn-outline" id="restoreDataBtn"><i class="fas fa-upload"></i> Restore</button><button class="btn btn-danger" id="clearDataBtn"><i class="fas fa-trash"></i> Clear All</button></div>
+            </div>
+        </section>
+
     </div>
 
-    <!-- MODALS – keep your existing modals -->
+    <!-- MODALS -->
+    <div class="modal-overlay" id="employeeModal"><div class="modal-content"><div class="modal-header"><h3 id="employeeModalTitle">👤 Add Employee</h3><button class="modal-close" id="empModalClose">✕</button></div><input type="hidden" id="empEditId" />
+        <div class="form-row"><div class="form-group"><label>Full Name *</label><input type="text" id="empName" /></div><div class="form-group"><label>NIC</label><input type="text" id="empNIC" /></div></div>
+        <div class="form-row"><div class="form-group"><label>Department</label><select id="empDept"><option value="Super Admin">Super Admin</option><option value="Admin">Admin</option><option value="HR">HR</option><option value="Finance">Finance</option><option value="Sales">Sales</option><option value="Delivery">Delivery</option><option value="Store">Store</option><option value="Employee">Employee</option></select></div><div class="form-group"><label>Designation</label><input type="text" id="empDesignation" placeholder="e.g. Manager" /></div></div>
+        <div class="form-row"><div class="form-group"><label>Contact</label><input type="text" id="empContact" /></div><div class="form-group"><label>Emergency</label><input type="text" id="empEmergency" /></div></div>
+        <div class="form-group"><label>Address</label><textarea id="empAddress" rows="2"></textarea></div>
+        <div class="form-row"><div class="form-group"><label>Joined Date</label><input type="date" id="empJoined" /></div><div class="form-group"><label>Salary</label><input type="number" id="empSalary" placeholder="0" /></div></div>
+        <div class="form-row"><div class="form-group"><label>📧 Username</label><input type="email" id="empUsername" placeholder="employee@example.com" /></div><div class="form-group"><label>🔑 Password</label><input type="password" id="empPassword" placeholder="Min 6" /></div></div>
+        <div class="form-row"><div class="form-group"><label>EPF/ETF</label><input type="text" id="empEpf" placeholder="EPF" /></div><div class="form-group"><label>Status</label><select id="empStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+        <button class="btn btn-primary btn-block" id="empSaveBtn"><i class="fas fa-save"></i> Save Employee</button>
+    </div></div>
+
+    <div class="modal-overlay" id="itemModal"><div class="modal-content"><div class="modal-header"><h3 id="itemModalTitle">📦 Add Item</h3><button class="modal-close" id="itemModalClose">✕</button></div><input type="hidden" id="itemEditId" />
+        <div class="form-group"><label>🔢 Barcode</label><div style="display:flex; gap:8px;"><input type="text" id="itemBarcode" placeholder="Scan" style="flex:1;" /><button class="btn btn-sm btn-primary" id="scanBarcodeBtn"><i class="fas fa-camera"></i> Scan</button></div><div id="scannerContainer" style="display:none; margin-top:8px;"><div id="scannerReader"></div><button class="btn btn-sm btn-danger" id="closeScannerBtn">Close</button></div></div>
+        <div class="form-group"><label>Item Name *</label><input type="text" id="itemName" /></div>
+        <div class="form-row"><div class="form-group"><label>Qty</label><input type="number" id="itemQty" min="0" /></div><div class="form-group"><label>Price (LKR)</label><input type="number" id="itemPrice" min="0" step="0.01" /></div></div>
+        <div class="form-row"><div class="form-group"><label>Category</label><select id="itemCategory"><option value="">Select...</option></select></div><div class="form-group"><label>Brand</label><select id="itemBrand"><option value="">Select...</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Product Code</label><input type="text" id="itemProductCode" placeholder="Auto" /></div><div class="form-group"><label>Unit</label><select id="itemUnit"><option value="Pcs">Pcs</option><option value="Box">Box</option><option value="Kg">Kg</option><option value="Ltr">Ltr</option><option value="Mtr">Mtr</option><option value="Dozen">Dozen</option><option value="Pack">Pack</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Cost Price</label><input type="number" id="itemCostPrice" min="0" step="0.01" placeholder="0" /></div><div class="form-group"><label>Reorder Level</label><input type="number" id="itemReorderLevel" placeholder="Min stock" /></div></div>
+        <div class="form-row"><div class="form-group"><label>Tax Rate (%)</label><input type="number" id="itemTaxRate" min="0" max="100" placeholder="0" /></div><div class="form-group"><label>Stock Alert</label><select id="itemStockAlert"><option value="enabled">Enabled</option><option value="disabled">Disabled</option></select></div></div>
+        <div class="form-group"><label>Description</label><textarea id="itemDesc" rows="2"></textarea></div>
+        <div class="form-row"><div class="form-group"><label>Expiry</label><input type="date" id="itemExpiry" /></div><div class="form-group"><label>Batch</label><input type="text" id="itemBatch" /></div></div>
+        <div class="form-group"><label>Status</label><select id="itemStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+        <button class="btn btn-primary btn-block" id="itemSaveBtn"><i class="fas fa-save"></i> Save Item</button>
+    </div></div>
+
+    <div class="modal-overlay" id="customerModal"><div class="modal-content"><div class="modal-header"><h3 id="customerModalTitle">👤 Add Customer</h3><button class="modal-close" id="custModalClose">✕</button></div><input type="hidden" id="custEditId" />
+        <div class="form-group"><label>Name *</label><input type="text" id="custName" /></div>
+        <div class="form-row"><div class="form-group"><label>Contact</label><input type="text" id="custContact" /></div><div class="form-group"><label>Category</label><select id="custCategory"><option value="Retail">Retail</option><option value="Wholesale">Wholesale</option><option value="Corporate">Corporate</option></select></div></div>
+        <div class="form-group"><label>Address</label><textarea id="custAddress" rows="2"></textarea></div>
+        <div class="form-row"><div class="form-group"><label>Credit Limit</label><input type="number" id="custCreditLimit" placeholder="0" /></div><div class="form-group"><label>Balance</label><input type="number" id="custBalance" placeholder="0" /></div></div>
+        <button class="btn btn-primary btn-block" id="custSaveBtn"><i class="fas fa-save"></i> Save Customer</button>
+    </div></div>
+
+    <div class="modal-overlay" id="profileModal"><div class="modal-content" style="max-width:600px;"><div class="modal-header"><h3>👤 My Profile</h3><button class="modal-close" id="profileModalClose">✕</button></div>
+        <div id="profileContent"><div style="text-align:center; padding:12px;"><div style="font-size:56px;">👤</div><h3 id="profileName">Loading...</h3><p class="text-muted" id="profileRole">Loading...</p></div><hr /><div id="profileDetails" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; font-size:13px;"></div><hr /><div id="profileStats" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; font-size:12px;"></div></div>
+    </div></div>
+
+    <div class="modal-overlay" id="notifModal"><div class="modal-content"><div class="modal-header"><h3>🔔 Notifications</h3><button class="modal-close" id="notifModalClose">✕</button></div><div id="notifList"></div></div></div>
 
     <!-- SCRIPTS -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -130,12 +501,11 @@
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 
-    <!-- Service Worker (non-blocking) -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/Jaya/sw.js')
-                .then(function() { console.log('✅ Service Worker registered'); })
-                .catch(function(err) { console.warn('⚠️ SW registration failed:', err); });
+                .then(function() { console.log('Service Worker registered'); })
+                .catch(function(err) { console.warn('SW registration failed:', err); });
         }
     </script>
 
