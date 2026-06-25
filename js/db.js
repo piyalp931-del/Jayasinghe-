@@ -1,7 +1,7 @@
 // ============================================================
-// DATABASE MODULE
+// DATABASE MODULE (Safe syntax)
 // ============================================================
-let appData = {
+var appData = {
     items: [],
     categories: ['Cosmetics', 'Electronics', 'Food', 'Beverages', 'Clothing'],
     brands: ['Nike', 'Apple', 'Samsung', 'Adidas', 'Pepsi'],
@@ -25,7 +25,7 @@ let appData = {
     logs: []
 };
 
-const COLLECTIONS = {
+var COLLECTIONS = {
     items: 'items',
     categories: 'categories',
     brands: 'brands',
@@ -51,11 +51,13 @@ const COLLECTIONS = {
 
 async function loadAllData() {
     try {
-        const promises = Object.keys(COLLECTIONS).map(async (key) => {
-            const collectionName = COLLECTIONS[key];
-            if (['categories', 'brands', 'leaveBalances', 'budget'].includes(key)) {
-                const docRef = db.collection(collectionName).doc(key);
-                const doc = await docRef.get();
+        var keys = Object.keys(COLLECTIONS);
+        for (var idx = 0; idx < keys.length; idx++) {
+            var key = keys[idx];
+            var collectionName = COLLECTIONS[key];
+            if (['categories', 'brands', 'leaveBalances', 'budget'].indexOf(key) !== -1) {
+                var docRef = db.collection(collectionName).doc(key);
+                var doc = await docRef.get();
                 if (doc.exists) {
                     if (key === 'categories' || key === 'brands') appData[key] = doc.data().list || [];
                     else appData[key] = doc.data() || {};
@@ -63,21 +65,28 @@ async function loadAllData() {
                     if (key === 'categories' || key === 'brands') appData[key] = [];
                     else appData[key] = {};
                 }
-                return;
+                continue;
             }
-            const snapshot = await db.collection(collectionName).get();
-            const docs = [];
-            snapshot.forEach(doc => { docs.push({ id: doc.id, ...doc.data() }); });
-            appData[key] = docs;
-        });
-        await Promise.all(promises);
-        const employees = appData.employees || [];
+            var snapshot = await db.collection(collectionName).get();
+            var docs = [];
+            snapshot.forEach(function(doc) { docs.push({ id: doc.id, data: doc.data() }); });
+            var items = [];
+            for (var i = 0; i < docs.length; i++) {
+                var d = docs[i];
+                var obj = d.data;
+                obj.id = d.id;
+                items.push(obj);
+            }
+            appData[key] = items;
+        }
+        var employees = appData.employees || [];
         if (!appData.leaveBalances) appData.leaveBalances = {};
-        employees.forEach(emp => {
+        for (var e = 0; e < employees.length; e++) {
+            var emp = employees[e];
             if (!appData.leaveBalances[emp.id]) {
                 appData.leaveBalances[emp.id] = { sick: 10, casual: 5, annual: 12 };
             }
-        });
+        }
         saveToLocalStorage();
         return true;
     } catch (error) {
@@ -89,27 +98,29 @@ async function loadAllData() {
 
 async function saveAllData() {
     try {
-        const promises = Object.keys(COLLECTIONS).map(async (key) => {
-            const collectionName = COLLECTIONS[key];
-            const data = appData[key];
-            if (['categories', 'brands', 'leaveBalances', 'budget'].includes(key)) {
-                const docRef = db.collection(collectionName).doc(key);
+        var keys = Object.keys(COLLECTIONS);
+        for (var idx = 0; idx < keys.length; idx++) {
+            var key = keys[idx];
+            var collectionName = COLLECTIONS[key];
+            var data = appData[key];
+            if (['categories', 'brands', 'leaveBalances', 'budget'].indexOf(key) !== -1) {
+                var docRef = db.collection(collectionName).doc(key);
                 if (key === 'categories' || key === 'brands') await docRef.set({ list: data });
                 else await docRef.set(data);
-                return;
+                continue;
             }
-            const snapshot = await db.collection(collectionName).get();
-            const batch = db.batch();
-            snapshot.forEach(doc => { batch.delete(doc.ref); });
-            data.forEach(item => {
-                const docId = item.id || generateId();
+            var snapshot = await db.collection(collectionName).get();
+            var batch = db.batch();
+            snapshot.forEach(function(doc) { batch.delete(doc.ref); });
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var docId = item.id || generateId();
                 if (!item.id) item.id = docId;
-                const docRef = db.collection(collectionName).doc(docId);
-                batch.set(docRef, item);
-            });
+                var ref = db.collection(collectionName).doc(docId);
+                batch.set(ref, item);
+            }
             await batch.commit();
-        });
-        await Promise.all(promises);
+        }
         saveToLocalStorage();
         return true;
     } catch (error) {
@@ -119,13 +130,17 @@ async function saveAllData() {
     }
 }
 
-const STORAGE_KEY = 'jayasinghe_erp_local';
+var STORAGE_KEY = 'jayasinghe_erp_local';
 function loadFromLocalStorage() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        var raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
-            const data = JSON.parse(raw);
-            appData = { ...appData, ...data };
+            var data = JSON.parse(raw);
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    appData[key] = data[key];
+                }
+            }
         }
     } catch (e) { console.warn(e); }
 }
@@ -141,14 +156,20 @@ function generateId() {
 window.generateId = generateId;
 
 function getAppData() { return appData; }
-function setAppData(data) { appData = { ...appData, ...data }; }
+function setAppData(data) {
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            appData[key] = data[key];
+        }
+    }
+}
 
 window.getAppData = getAppData;
 window.setAppData = setAppData;
 window.loadAllData = loadAllData;
 window.saveAllData = saveAllData;
 
-document.getElementById('syncBtn')?.addEventListener('click', async () => {
+document.getElementById('syncBtn')?.addEventListener('click', async function() {
     showToast('🔄 Syncing...', 'warning');
     await saveAllData();
     await loadAllData();
