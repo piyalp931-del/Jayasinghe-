@@ -387,7 +387,7 @@
                     </div>
                 </div>
                 <div class="form-group"><label>Description</label><input type="text" id="financeDesc" placeholder="Description" /></div>
-                <!-- NEW: Budget input -->
+                <!-- Budget input -->
                 <div class="form-group">
                     <label>📊 Budget (Category)</label>
                     <input type="number" id="financeBudget" placeholder="Set budget for this category (LKR)" step="0.01" />
@@ -513,7 +513,8 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/Jaya/sw.js')
+            // ✅ FIXED: SW path එක හරියට දාන්න
+            navigator.serviceWorker.register('/laya/sw.js')
                 .then(function() { console.log('Service Worker registered'); })
                 .catch(function(err) { console.warn('SW registration failed:', err); });
         }
