@@ -1,69 +1,17 @@
-// ============================================================
-// AUTHENTICATION MODULE (Enterprise Roles)
-// ============================================================
-
 let currentUser = null;
-
 const ROLES = {
-    superadmin: {
-        label: 'Super Admin',
-        icon: '👑',
-        permissions: ['all'],
-        dashboard: ['stats_all', 'sales_chart', 'low_stock', 'quick_actions_all'],
-        nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'products', 'purchasing', 'sales', 'deliveries', 'customers', 'finance', 'voucher', 'fleet', 'reports', 'settings']
-    },
-    admin: {
-        label: 'Administrator',
-        icon: '🏢',
-        permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory', 'manage_voucher'],
-        dashboard: ['stats_employees', 'stats_deliveries', 'stats_low_stock', 'sales_chart', 'quick_actions_ops'],
-        nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'deliveries', 'reports', 'voucher']
-    },
-    hr: {
-        label: 'HR Officer',
-        icon: '👤',
-        permissions: ['view_dashboard', 'view_employees', 'view_attendance', 'view_leave', 'view_payroll', 'manage_employees', 'manage_attendance', 'manage_leave'],
-        dashboard: ['stats_employees', 'stats_attendance', 'stats_leave', 'quick_actions_employee'],
-        nav: ['dashboard', 'employees', 'attendance', 'leave', 'payroll', 'reports']
-    },
-    finance: {
-        label: 'Accountant',
-        icon: '💰',
-        permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher'],
-        dashboard: ['stats_finance', 'stats_payroll', 'finance_chart', 'quick_actions_finance'],
-        nav: ['dashboard', 'finance', 'payroll', 'voucher', 'reports']
-    },
-    sales: {
-        label: 'Sales Manager',
-        icon: '🛒',
-        permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher'],
-        dashboard: ['stats_inventory', 'stats_customers', 'stats_deliveries', 'sales_chart', 'quick_actions_sales'],
-        nav: ['dashboard', 'sales', 'inventory', 'customers', 'deliveries', 'reports', 'voucher']
-    },
-    delivery: {
-        label: 'Delivery Staff',
-        icon: '🚚',
-        permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_voucher'],
-        dashboard: ['stats_deliveries', 'stats_attendance', 'quick_actions_delivery'],
-        nav: ['dashboard', 'deliveries', 'attendance', 'fleet', 'voucher']
-    },
-    store: {
-        label: 'Store Keeper',
-        icon: '🏪',
-        permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_purchasing'],
-        dashboard: ['stats_inventory', 'stats_low_stock', 'inventory_chart', 'quick_actions_store'],
-        nav: ['dashboard', 'inventory', 'products', 'purchasing', 'reports']
-    },
-    employee: {
-        label: 'Employee',
-        icon: '👤',
-        permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'],
-        dashboard: ['stats_attendance', 'stats_leave', 'stats_payroll', 'quick_actions_employee'],
-        nav: ['dashboard', 'attendance', 'leave', 'payroll', 'voucher']
-    }
+    superadmin: { label: 'Super Admin', icon: '👑', permissions: ['all'], nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'products', 'purchasing', 'sales', 'deliveries', 'customers', 'finance', 'voucher', 'fleet', 'reports', 'settings'] },
+    admin: { label: 'Administrator', icon: '🏢', permissions: ['view_dashboard', 'view_employees', 'view_inventory', 'view_deliveries', 'view_attendance', 'view_leave', 'view_reports', 'manage_employees', 'manage_inventory'], nav: ['dashboard', 'administration', 'employees', 'attendance', 'leave', 'payroll', 'inventory', 'deliveries', 'reports', 'voucher'] },
+    hr: { label: 'HR Officer', icon: '👤', permissions: ['view_dashboard', 'view_employees', 'view_attendance', 'view_leave', 'view_payroll', 'manage_employees', 'manage_attendance', 'manage_leave'], nav: ['dashboard', 'employees', 'attendance', 'leave', 'payroll', 'reports'] },
+    finance: { label: 'Accountant', icon: '💰', permissions: ['view_dashboard', 'view_finance', 'manage_finance', 'view_reports', 'view_payroll', 'manage_voucher'], nav: ['dashboard', 'finance', 'payroll', 'voucher', 'reports'] },
+    sales: { label: 'Sales Manager', icon: '🛒', permissions: ['view_dashboard', 'view_inventory', 'view_customers', 'view_deliveries', 'create_deliveries', 'view_reports', 'view_voucher', 'manage_voucher'], nav: ['dashboard', 'sales', 'inventory', 'customers', 'deliveries', 'reports', 'voucher'] },
+    delivery: { label: 'Delivery Staff', icon: '🚚', permissions: ['view_dashboard', 'view_deliveries', 'update_deliveries', 'view_attendance', 'view_voucher'], nav: ['dashboard', 'deliveries', 'attendance', 'fleet', 'voucher'] },
+    store: { label: 'Store Keeper', icon: '🏪', permissions: ['view_dashboard', 'view_inventory', 'manage_inventory', 'view_reports', 'view_purchasing'], nav: ['dashboard', 'inventory', 'products', 'purchasing', 'reports'] },
+    employee: { label: 'Employee', icon: '👤', permissions: ['view_dashboard', 'view_attendance', 'view_leave', 'view_payroll', 'view_voucher'], nav: ['dashboard', 'attendance', 'leave', 'payroll', 'voucher'] }
 };
+window.ROLES = ROLES;
+window.getCurrentUser = () => currentUser;
 
-// DOM refs
 const loginScreen = document.getElementById('loginScreen');
 const loginBtn = document.getElementById('loginBtn');
 const loginUsername = document.getElementById('loginUsername');
@@ -74,9 +22,6 @@ const userAvatar = document.getElementById('userAvatar');
 const userName = document.getElementById('userName');
 const userRole = document.getElementById('userRole');
 const roleOptions = document.querySelectorAll('.role-option');
-
-window.getCurrentUser = () => currentUser;
-window.ROLES = ROLES;
 
 function hasPermission(p) {
     if (!currentUser) return false;
@@ -103,7 +48,7 @@ function clearUserStorage(){ localStorage.removeItem(USER_STORAGE_KEY); }
 async function handleLogin() {
     const email = loginUsername.value.trim();
     const password = loginPassword.value.trim();
-    const selectedRoleFromUI = document.querySelector('.role-option.active')?.dataset.role || 'superadmin';
+    const selectedRole = document.querySelector('.role-option.active')?.dataset.role || 'superadmin';
     if (!email || !password) { loginError.textContent = 'Enter credentials.'; loginError.style.display='block'; return; }
     try {
         loginBtn.disabled = true;
@@ -114,7 +59,7 @@ async function handleLogin() {
         const data = getAppData();
         const employees = data.employees || [];
         const employee = employees.find(e => e.email && e.email.toLowerCase() === email.toLowerCase());
-        let role = selectedRoleFromUI;
+        let role = selectedRole;
         if (employee && employee.department) {
             const dept = employee.department.toLowerCase();
             if (dept === 'super admin') role = 'superadmin';
