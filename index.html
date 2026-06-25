@@ -598,5 +598,14 @@
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/Jaya/sw.js')
+                .then(() => console.log('✅ Service Worker registered'))
+                .catch(err => console.warn('⚠️ SW registration failed:', err));
+        }
+    </script>
+
 </body>
 </html>
