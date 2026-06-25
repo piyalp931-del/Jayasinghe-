@@ -1,6 +1,7 @@
 // ============================================================
-// MAIN APP MODULE (Safe syntax - no optional chaining)
+// MAIN APP MODULE (Complete - Enterprise)
 // ============================================================
+
 function showToast(message, type) {
     type = type || 'info';
     var toast = document.getElementById('toast');
@@ -55,9 +56,8 @@ function populateItemDropdowns() {
         var val3 = cartSelect.value;
         cartSelect.innerHTML = '<option value="">Select Item</option>';
         for (var k = 0; k < items.length; k++) {
-            var item = items[k];
-            if (item.status === 'inactive') continue;
-            cartSelect.innerHTML += '<option value="' + item.id + '">' + escapeHtml(item.name) + ' (' + (item.qty||0) + ' avail) - LKR ' + formatCurrency(item.price||0) + '</option>';
+            if (items[k].status === 'inactive') continue;
+            cartSelect.innerHTML += '<option value="' + items[k].id + '">' + escapeHtml(items[k].name) + ' (' + (items[k].qty||0) + ' avail) - LKR ' + formatCurrency(items[k].price||0) + '</option>';
         }
         if (val3 && cartSelect.querySelector('option[value="' + val3 + '"]')) cartSelect.value = val3;
     }
@@ -67,9 +67,8 @@ function populateItemDropdowns() {
         var val4 = delSelect.value;
         delSelect.innerHTML = '<option value="">Select Item</option>';
         for (var m = 0; m < items.length; m++) {
-            var it = items[m];
-            if (it.status === 'inactive') continue;
-            delSelect.innerHTML += '<option value="' + it.id + '">' + escapeHtml(it.name) + ' (' + (it.qty||0) + ' avail)</option>';
+            if (items[m].status === 'inactive') continue;
+            delSelect.innerHTML += '<option value="' + items[m].id + '">' + escapeHtml(items[m].name) + ' (' + (items[m].qty||0) + ' avail)</option>';
         }
         if (val4 && delSelect.querySelector('option[value="' + val4 + '"]')) delSelect.value = val4;
     }
@@ -108,9 +107,8 @@ function populateDeliveryDropdowns() {
         driverSelect.innerHTML = '<option value="">-- Select --</option>';
         var drivers = [];
         for (var j = 0; j < employees.length; j++) {
-            var e = employees[j];
-            if (e.department === 'Delivery' || (e.designation && e.designation.toLowerCase().indexOf('driver') !== -1)) {
-                drivers.push(e);
+            if (employees[j].department === 'Delivery' || (employees[j].designation && employees[j].designation.toLowerCase().indexOf('driver') !== -1)) {
+                drivers.push(employees[j]);
             }
         }
         for (var k = 0; k < drivers.length; k++) {
@@ -217,11 +215,11 @@ function openScanner() {
         { fps: 10, qrbox: { width: 200, height: 150 } },
         function(decodedText) {
             document.getElementById('itemBarcode').value = decodedText;
-            showToast('✅ Scanned: ' + decodedText);
+            showToast('Scanned: ' + decodedText);
             closeScanner();
         },
         function() {}
-    ).catch(function(err) { showToast('⚠️ Camera error: ' + err.message, 'error'); });
+    ).catch(function(err) { showToast('Camera error: ' + err.message, 'error'); });
 }
 function closeScanner() {
     var container = document.getElementById('scannerContainer');
@@ -235,14 +233,13 @@ window.closeScanner = closeScanner;
 // INIT
 // ============================================================
 function init() {
-    console.log('🚀 Initializing ERP...');
+    console.log('Initializing ERP...');
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark');
         var icon = document.getElementById('darkModeToggle') ? document.getElementById('darkModeToggle').querySelector('i') : null;
         if (icon) icon.className = 'fas fa-sun';
     }
 
-    // Sidebar toggle
     var menuToggle = document.getElementById('menuToggle');
     var sidebar = document.getElementById('sidebar');
     var sidebarClose = document.getElementById('sidebarClose');
@@ -271,15 +268,15 @@ function init() {
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginError').style.display = 'none';
-            showToast('🧹 Cleared.');
+            showToast('Cleared.');
         });
     }
 
-    // -------------------- EMPLOYEE MODAL --------------------
+    // Add Employee Button
     var addEmployeeBtn = document.getElementById('addEmployeeBtn');
     if (addEmployeeBtn) {
         addEmployeeBtn.addEventListener('click', function() {
-            if (!canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('employees')) { showToast('No permission.', 'error'); return; }
             document.getElementById('empEditId').value = '';
             document.getElementById('empName').value = '';
             document.getElementById('empNIC').value = '';
@@ -315,7 +312,7 @@ function init() {
     var empSaveBtn = document.getElementById('empSaveBtn');
     if (empSaveBtn) {
         empSaveBtn.addEventListener('click', async function() {
-            if (!canManage('employees')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('employees')) { showToast('No permission.', 'error'); return; }
             var id = document.getElementById('empEditId').value;
             var name = document.getElementById('empName').value.trim();
             var nic = document.getElementById('empNIC').value.trim();
@@ -370,7 +367,7 @@ function init() {
                     try {
                         var cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
                         newEmp.uid = cred.user.uid;
-                    } catch(e) { showToast('⚠️ Auth creation failed: ' + e.message, 'warning'); }
+                    } catch(e) { showToast('Auth creation failed: ' + e.message, 'warning'); }
                 }
                 data.employees.push(newEmp);
             }
@@ -378,15 +375,15 @@ function init() {
             await saveAllData();
             document.getElementById('employeeModal').classList.remove('open');
             renderEmployees();
-            showToast('✅ Employee saved.');
+            showToast('Employee saved.');
         });
     }
 
-    // -------------------- ITEM MODAL --------------------
+    // Add Item Button
     var addItemBtn = document.getElementById('addItemBtn');
     if (addItemBtn) {
         addItemBtn.addEventListener('click', function() {
-            if (!canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('inventory')) { showToast('No permission.', 'error'); return; }
             document.getElementById('itemEditId').value = '';
             document.getElementById('itemBarcode').value = '';
             document.getElementById('itemName').value = '';
@@ -430,7 +427,7 @@ function init() {
     var itemSaveBtn = document.getElementById('itemSaveBtn');
     if (itemSaveBtn) {
         itemSaveBtn.addEventListener('click', async function() {
-            if (!canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('inventory')) { showToast('No permission.', 'error'); return; }
             var id = document.getElementById('itemEditId').value;
             var barcode = document.getElementById('itemBarcode').value.trim() || generateId().slice(0, 8);
             var name = document.getElementById('itemName').value.trim();
@@ -486,15 +483,15 @@ function init() {
             document.getElementById('itemModal').classList.remove('open');
             renderInventory();
             renderDashboard();
-            showToast('✅ Item saved.');
+            showToast('Item saved.');
         });
     }
 
-    // -------------------- CUSTOMER MODAL --------------------
+    // Add Customer Button
     var addCustomerBtn = document.getElementById('addCustomerBtn');
     if (addCustomerBtn) {
         addCustomerBtn.addEventListener('click', function() {
-            if (!canManage('customers')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('customers')) { showToast('No permission.', 'error'); return; }
             document.getElementById('custEditId').value = '';
             document.getElementById('custName').value = '';
             document.getElementById('custContact').value = '';
@@ -523,7 +520,7 @@ function init() {
     var custSaveBtn = document.getElementById('custSaveBtn');
     if (custSaveBtn) {
         custSaveBtn.addEventListener('click', async function() {
-            if (!canManage('customers')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('customers')) { showToast('No permission.', 'error'); return; }
             var id = document.getElementById('custEditId').value;
             var name = document.getElementById('custName').value.trim();
             var contact = document.getElementById('custContact').value.trim();
@@ -558,11 +555,11 @@ function init() {
             await saveAllData();
             document.getElementById('customerModal').classList.remove('open');
             renderCustomers();
-            showToast('✅ Customer saved.');
+            showToast('Customer saved.');
         });
     }
 
-    // -------------------- PROFILE --------------------
+    // Profile
     var userBadge = document.getElementById('userBadge');
     if (userBadge) userBadge.addEventListener('click', openProfileModal);
     var profileClose = document.getElementById('profileModalClose');
@@ -578,7 +575,7 @@ function init() {
         });
     }
 
-    // -------------------- NOTIFICATIONS --------------------
+    // Notifications
     var notifBell = document.getElementById('notifBell');
     if (notifBell) {
         notifBell.addEventListener('click', function() {
@@ -613,7 +610,7 @@ function init() {
         });
     }
 
-    // -------------------- FILTERS --------------------
+    // EMPLOYEE FILTERS
     var empSearch = document.getElementById('empSearch');
     if (empSearch) empSearch.addEventListener('input', renderEmployees);
     var empDept = document.getElementById('empDeptFilter');
@@ -630,6 +627,7 @@ function init() {
         });
     }
 
+    // INVENTORY FILTERS
     var invSearch = document.getElementById('invSearch');
     if (invSearch) invSearch.addEventListener('input', renderInventory);
     var invCat = document.getElementById('invCatFilter');
@@ -646,6 +644,7 @@ function init() {
         });
     }
 
+    // CUSTOMER FILTERS
     var custSearch = document.getElementById('custSearch');
     if (custSearch) custSearch.addEventListener('input', renderCustomers);
     var clearCust = document.getElementById('clearCustSearch');
@@ -656,7 +655,7 @@ function init() {
         });
     }
 
-    // -------------------- ATTENDANCE --------------------
+    // ATTENDANCE
     var checkIn = document.getElementById('checkInBtn');
     if (checkIn) {
         checkIn.addEventListener('click', async function() {
@@ -667,9 +666,8 @@ function init() {
             var today = todayStr();
             var existing = null;
             for (var i = 0; i < data.attendance.length; i++) {
-                var a = data.attendance[i];
-                if (a.employeeId === user.uid && a.date && a.date.slice(0,10) === today) {
-                    existing = a;
+                if (data.attendance[i].employeeId === user.uid && data.attendance[i].date && data.attendance[i].date.slice(0,10) === today) {
+                    existing = data.attendance[i];
                     break;
                 }
             }
@@ -679,7 +677,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderAttendance();
-            showToast('✅ Checked in.');
+            showToast('Checked in.');
         });
     }
 
@@ -692,9 +690,8 @@ function init() {
             var today = todayStr();
             var record = null;
             for (var i = 0; i < data.attendance.length; i++) {
-                var a = data.attendance[i];
-                if (a.employeeId === user.uid && a.date && a.date.slice(0,10) === today && a.checkIn && !a.checkOut) {
-                    record = a;
+                if (data.attendance[i].employeeId === user.uid && data.attendance[i].date && data.attendance[i].date.slice(0,10) === today && data.attendance[i].checkIn && !data.attendance[i].checkOut) {
+                    record = data.attendance[i];
                     break;
                 }
             }
@@ -703,7 +700,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderAttendance();
-            showToast('✅ Checked out.');
+            showToast('Checked out.');
         });
     }
 
@@ -726,7 +723,7 @@ function init() {
         });
     }
 
-    // -------------------- LEAVE --------------------
+    // LEAVE
     var applyLeave = document.getElementById('applyLeaveBtn');
     if (applyLeave) {
         applyLeave.addEventListener('click', async function() {
@@ -748,7 +745,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderLeave();
-            showToast('✅ Leave applied.');
+            showToast('Leave applied.');
             if (document.getElementById('leaveReason')) document.getElementById('leaveReason').value = '';
         });
     }
@@ -766,7 +763,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderLeave();
-            showToast('✅ Approved.');
+            showToast('Approved.');
         });
     }
 
@@ -783,15 +780,15 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderLeave();
-            showToast('❌ Rejected.');
+            showToast('Rejected.');
         });
     }
 
-    // -------------------- PAYROLL --------------------
+    // PAYROLL
     var calcPayroll = document.getElementById('calculatePayrollBtn');
     if (calcPayroll) {
         calcPayroll.addEventListener('click', async function() {
-            if (!canManage('payroll')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('payroll')) { showToast('No permission.', 'error'); return; }
             var empId = document.getElementById('payrollEmployeeSelect') ? document.getElementById('payrollEmployeeSelect').value : '';
             var month = document.getElementById('payrollMonth') ? document.getElementById('payrollMonth').value : '';
             var basic = parseFloat(document.getElementById('payrollBasic') ? document.getElementById('payrollBasic').value : 0) || 0;
@@ -815,18 +812,18 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderPayroll();
-            showToast('✅ Payroll for ' + emp.name + ': LKR ' + formatCurrency(net));
+            showToast('Payroll for ' + emp.name + ': LKR ' + formatCurrency(net));
         });
     }
 
     var genPayslip = document.getElementById('generatePayslipBtn');
     if (genPayslip) {
         genPayslip.addEventListener('click', function() {
-            showToast('📄 Payslip generation coming soon.', 'info');
+            showToast('Payslip generation coming soon.', 'info');
         });
     }
 
-    // -------------------- PURCHASING --------------------
+    // PURCHASING
     var addSupplier = document.getElementById('addSupplierBtn');
     if (addSupplier) {
         addSupplier.addEventListener('click', async function() {
@@ -840,7 +837,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderPurchasing();
-            showToast('✅ Supplier added.');
+            showToast('Supplier added.');
             if (document.getElementById('supplierName')) document.getElementById('supplierName').value = '';
             if (document.getElementById('supplierContact')) document.getElementById('supplierContact').value = '';
             if (document.getElementById('supplierAddress')) document.getElementById('supplierAddress').value = '';
@@ -882,13 +879,13 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderPurchasing();
-            showToast('✅ PO created.');
+            showToast('PO created.');
             if (document.getElementById('poQty')) document.getElementById('poQty').value = '';
             if (document.getElementById('poPrice')) document.getElementById('poPrice').value = '';
         });
     }
 
-    // -------------------- SALES (Cart) --------------------
+    // SALES CART
     var salesCart = [];
     window.salesCart = salesCart;
 
@@ -912,7 +909,7 @@ function init() {
             if (existing) existing.qty += qty;
             else salesCart.push({ id: itemId, name: item.name, qty: qty, price: item.price || 0 });
             renderSalesCart();
-            showToast('✅ Added ' + qty + ' x ' + item.name);
+            showToast('Added ' + qty + ' x ' + item.name);
             if (document.getElementById('salesCartQty')) document.getElementById('salesCartQty').value = '1';
         });
     }
@@ -924,7 +921,7 @@ function init() {
             if (!confirm('Clear cart?')) return;
             salesCart = [];
             renderSalesCart();
-            showToast('🧹 Cleared.');
+            showToast('Cleared.');
         });
     }
 
@@ -932,7 +929,7 @@ function init() {
     if (createOrder) {
         createOrder.addEventListener('click', async function() {
             if (!canManage('sales') && !canView('sales')) {
-                showToast('⛔ No permission.', 'error');
+                showToast('No permission.', 'error');
                 return;
             }
             if (salesCart.length === 0) { showToast('Cart is empty.', 'error'); return; }
@@ -954,7 +951,6 @@ function init() {
                 orderItems.push({ id: citem.id, name: citem.name, qty: citem.qty, price: citem.price });
             }
 
-            // Deduct stock
             var stockError = false;
             for (var m = 0; m < salesCart.length; m++) {
                 var cartItem = salesCart[m];
@@ -970,7 +966,7 @@ function init() {
                 }
             }
             if (stockError) {
-                showToast('⚠️ Stock insufficient. Please reload.', 'error');
+                showToast('Stock insufficient. Please reload.', 'error');
                 await loadAllData();
                 return;
             }
@@ -991,7 +987,7 @@ function init() {
             renderSalesCart();
             renderSales();
             renderDashboard();
-            showToast('✅ Order #' + order.orderNo + ' created! Total: LKR ' + formatCurrency(total));
+            showToast('Order #' + order.orderNo + ' created! Total: LKR ' + formatCurrency(total));
         });
     }
 
@@ -1001,11 +997,11 @@ function init() {
             if (canManage('customers')) {
                 var addCust = document.getElementById('addCustomerBtn');
                 if (addCust) addCust.click();
-            } else showToast('⛔ No permission.', 'error');
+            } else showToast('No permission.', 'error');
         });
     }
 
-    // -------------------- DELIVERIES (Cart + Status) --------------------
+    // DELIVERY CART
     var deliveryCart = [];
     window.deliveryCart = deliveryCart;
 
@@ -1029,7 +1025,7 @@ function init() {
             if (existing) existing.qty += qty;
             else deliveryCart.push({ id: itemId, name: item.name, qty: qty });
             renderDeliveryCart();
-            showToast('✅ Added ' + qty + ' x ' + item.name);
+            showToast('Added ' + qty + ' x ' + item.name);
             if (document.getElementById('delCartQty')) document.getElementById('delCartQty').value = '1';
         });
     }
@@ -1041,7 +1037,7 @@ function init() {
             if (!confirm('Clear items?')) return;
             deliveryCart = [];
             renderDeliveryCart();
-            showToast('🧹 Cleared.');
+            showToast('Cleared.');
         });
     }
 
@@ -1049,7 +1045,7 @@ function init() {
     if (confirmDelivery) {
         confirmDelivery.addEventListener('click', async function() {
             if (!canManage('deliveries') && !hasPermission('create_deliveries')) {
-                showToast('⛔ No permission.', 'error');
+                showToast('No permission.', 'error');
                 return;
             }
             var customerId = document.getElementById('delCustomerSelect') ? document.getElementById('delCustomerSelect').value : '';
@@ -1078,7 +1074,6 @@ function init() {
             }
             if (!customer) { showToast('Customer not found.', 'error'); return; }
 
-            // Deduct stock
             var stockError = false;
             for (var m = 0; m < deliveryCart.length; m++) {
                 var dcItem = deliveryCart[m];
@@ -1094,12 +1089,16 @@ function init() {
                 }
             }
             if (stockError) {
-                showToast('⚠️ Stock insufficient. Reload.', 'error');
+                showToast('Stock insufficient. Reload.', 'error');
                 await loadAllData();
                 return;
             }
 
-            var delivery = { id: generateId(), customerId: customerId, customerName: customer.name, items: deliveryCart.map(function(i) { return { id: i.id, name: i.name, qty: i.qty }; }), driverId: driverId, driverName: driver ? driver.name : '—', vehicleId: vehicleId, vehicleNo: vehicle ? vehicle.vehicleNo : '—', status: status, route: route, notes: notes, date: scheduledDate, updatedAt: nowISO() };
+            var deliveryItems = [];
+            for (var di = 0; di < deliveryCart.length; di++) {
+                deliveryItems.push({ id: deliveryCart[di].id, name: deliveryCart[di].name, qty: deliveryCart[di].qty });
+            }
+            var delivery = { id: generateId(), customerId: customerId, customerName: customer.name, items: deliveryItems, driverId: driverId, driverName: driver ? driver.name : '—', vehicleId: vehicleId, vehicleNo: vehicle ? vehicle.vehicleNo : '—', status: status, route: route, notes: notes, date: scheduledDate, updatedAt: nowISO() };
             data.deliveries.push(delivery);
             if (!data.logs) data.logs = [];
             data.logs.push({ id: generateId(), user: getCurrentUser() ? getCurrentUser().name : 'System', action: 'Delivery Created', details: customer.name + ' - ' + delivery.items.length + ' items - ' + status, date: nowISO() });
@@ -1114,7 +1113,7 @@ function init() {
             populateDeliveryDropdowns();
             renderDeliveries();
             renderDashboard();
-            showToast('✅ Delivery for ' + customer.name + ' created.');
+            showToast('Delivery for ' + customer.name + ' created.');
         });
     }
 
@@ -1122,7 +1121,7 @@ function init() {
     if (refreshDeliveries) {
         refreshDeliveries.addEventListener('click', function() {
             renderDeliveries();
-            showToast('🔄 Refreshed.');
+            showToast('Refreshed.');
         });
     }
 
@@ -1152,11 +1151,11 @@ function init() {
             deliveryCart = [];
             renderDeliveryCart();
             populateDeliveryDropdowns();
-            showToast('🧹 Form cleared.');
+            showToast('Form cleared.');
         });
     }
 
-    // -------------------- FINANCE (Cheque details toggle) --------------------
+    // FINANCE
     var financePaymentMethod = document.getElementById('financePaymentMethod');
     if (financePaymentMethod) {
         financePaymentMethod.addEventListener('change', function() {
@@ -1168,7 +1167,7 @@ function init() {
     var addFinance = document.getElementById('addFinanceBtn');
     if (addFinance) {
         addFinance.addEventListener('click', async function() {
-            if (!canManage('finance')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('finance')) { showToast('No permission.', 'error'); return; }
             var type = document.getElementById('financeType') ? document.getElementById('financeType').value : 'income';
             var amount = parseFloat(document.getElementById('financeAmount') ? document.getElementById('financeAmount').value : 0);
             var category = document.getElementById('financeCategory') ? document.getElementById('financeCategory').value : 'operational';
@@ -1203,7 +1202,7 @@ function init() {
             if (document.getElementById('financePaymentMethod')) document.getElementById('financePaymentMethod').value = 'cash';
             var chqDiv = document.getElementById('chequeDetails');
             if (chqDiv) chqDiv.style.display = 'none';
-            showToast('✅ ' + type + ' recorded.');
+            showToast(type + ' recorded.');
         });
     }
 
@@ -1220,15 +1219,15 @@ function init() {
             if (document.getElementById('financePaymentMethod')) document.getElementById('financePaymentMethod').value = 'cash';
             var chqDiv = document.getElementById('chequeDetails');
             if (chqDiv) chqDiv.style.display = 'none';
-            showToast('🧹 Finance form cleared.');
+            showToast('Finance form cleared.');
         });
     }
 
-    // -------------------- PRODUCTS (Update Attributes) --------------------
+    // PRODUCTS
     var updateProduct = document.getElementById('updateProductAttributesBtn');
     if (updateProduct) {
         updateProduct.addEventListener('click', async function() {
-            if (!canManage('inventory')) { showToast('⛔ No permission.', 'error'); return; }
+            if (!canManage('inventory')) { showToast('No permission.', 'error'); return; }
             var data = getAppData();
             var items = data.items || [];
             var productCode = document.getElementById('productCode') ? document.getElementById('productCode').value.trim() : '';
@@ -1261,17 +1260,17 @@ function init() {
                 await saveAllData();
                 renderProducts();
                 renderInventory();
-                showToast('✅ Product attributes updated.');
+                showToast('Product attributes updated.');
             }
         });
     }
 
-    // -------------------- VOUCHER --------------------
+    // VOUCHER
     var addVoucher = document.getElementById('addVoucherBtn');
     if (addVoucher) {
         addVoucher.addEventListener('click', async function() {
             if (!canManage('voucher') && !canManage('finance')) {
-                showToast('⛔ No permission.', 'error');
+                showToast('No permission.', 'error');
                 return;
             }
             var voucherNo = document.getElementById('voucherNo') ? document.getElementById('voucherNo').value.trim() : '';
@@ -1301,7 +1300,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderVouchers();
-            showToast('✅ Voucher #' + voucherNo + ' saved.');
+            showToast('Voucher #' + voucherNo + ' saved.');
             if (document.getElementById('voucherNo')) document.getElementById('voucherNo').value = '';
             if (document.getElementById('voucherDate')) document.getElementById('voucherDate').value = '';
             if (document.getElementById('voucherPaidTo')) document.getElementById('voucherPaidTo').value = '';
@@ -1319,13 +1318,13 @@ function init() {
     var printVoucher = document.getElementById('printVoucherBtn');
     if (printVoucher) {
         printVoucher.addEventListener('click', function() {
-            showToast('🖨️ Print coming soon.', 'info');
+            showToast('Print coming soon.', 'info');
         });
     }
     var downloadVoucher = document.getElementById('downloadVoucherBtn');
     if (downloadVoucher) {
         downloadVoucher.addEventListener('click', function() {
-            showToast('📄 PDF coming soon.', 'info');
+            showToast('PDF coming soon.', 'info');
         });
     }
     var clearVoucherForm = document.getElementById('clearVoucherForm');
@@ -1342,16 +1341,16 @@ function init() {
             var cbs = document.querySelectorAll('.voucher-payment-type');
             for (var i = 0; i < cbs.length; i++) cbs[i].checked = false;
             if (document.getElementById('voucherOtherText')) document.getElementById('voucherOtherText').value = '';
-            showToast('🧹 Form cleared.');
+            showToast('Form cleared.');
         });
     }
 
-    // -------------------- FLEET --------------------
+    // FLEET
     var addVehicle = document.getElementById('addVehicleBtn');
     if (addVehicle) {
         addVehicle.addEventListener('click', async function() {
             if (!canManage('vehicles') && !canView('fleet')) {
-                showToast('⛔ No permission.', 'error');
+                showToast('No permission.', 'error');
                 return;
             }
             var vehicleNo = document.getElementById('vehicleNo') ? document.getElementById('vehicleNo').value.trim() : '';
@@ -1387,7 +1386,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderFleet();
-            showToast('✅ Vehicle saved.');
+            showToast('Vehicle saved.');
             if (document.getElementById('vehicleNo')) document.getElementById('vehicleNo').value = '';
             if (document.getElementById('vehicleDriver')) document.getElementById('vehicleDriver').value = '';
             if (document.getElementById('vehicleFuel')) document.getElementById('vehicleFuel').value = '';
@@ -1398,7 +1397,7 @@ function init() {
         });
     }
 
-    // -------------------- REPORTS --------------------
+    // REPORTS
     var genReport = document.getElementById('generateReportBtn');
     if (genReport) genReport.addEventListener('click', renderReports);
     var reportType = document.getElementById('reportType');
@@ -1442,14 +1441,14 @@ function init() {
             a.download = 'report_' + todayStr() + '.csv';
             a.click();
             URL.revokeObjectURL(url);
-            showToast('📥 CSV exported.');
+            showToast('CSV exported.');
         });
     }
 
     var printReport = document.getElementById('printReportBtn');
     if (printReport) printReport.addEventListener('click', function() { window.print(); });
 
-    // -------------------- SETTINGS --------------------
+    // SETTINGS
     var saveSettings = document.getElementById('saveSettingsBtn');
     if (saveSettings) {
         saveSettings.addEventListener('click', async function() {
@@ -1461,7 +1460,7 @@ function init() {
             data.settings.email = document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value.trim() : '';
             setAppData(data);
             await saveAllData();
-            showToast('✅ Settings saved.');
+            showToast('Settings saved.');
         });
     }
 
@@ -1476,7 +1475,7 @@ function init() {
             data.settings.email = document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value.trim() : '';
             setAppData(data);
             await saveAllData();
-            showToast('✅ Settings saved.');
+            showToast('Settings saved.');
         });
     }
 
@@ -1491,7 +1490,7 @@ function init() {
             a.download = 'jayasinghe_erp_backup_' + todayStr() + '.json';
             a.click();
             URL.revokeObjectURL(url);
-            showToast('📥 Backup downloaded.');
+            showToast('Backup downloaded.');
         });
     }
 
@@ -1511,9 +1510,9 @@ function init() {
                         setAppData(data);
                         await saveAllData();
                         renderAll();
-                        showToast('✅ Data restored.');
+                        showToast('Data restored.');
                     } catch(err) {
-                        showToast('❌ Invalid file.', 'error');
+                        showToast('Invalid file.', 'error');
                     }
                 };
                 reader.readAsText(file);
@@ -1525,7 +1524,7 @@ function init() {
     var clearData = document.getElementById('clearDataBtn');
     if (clearData) {
         clearData.addEventListener('click', async function() {
-            if (!confirm('⚠️ Delete ALL data? Cannot undo!')) return;
+            if (!confirm('Delete ALL data? Cannot undo!')) return;
             var data = getAppData();
             for (var key in data) {
                 if (data.hasOwnProperty(key)) {
@@ -1536,7 +1535,7 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderAll();
-            showToast('🗑️ All data cleared.');
+            showToast('All data cleared.');
         });
     }
 
@@ -1549,11 +1548,11 @@ function init() {
             setAppData(data);
             await saveAllData();
             renderAdministration();
-            showToast('🧹 Logs cleared.');
+            showToast('Logs cleared.');
         });
     }
 
-    // -------------------- SET DEFAULTS --------------------
+    // DEFAULT DATES
     var defaultIds = ['voucherDate', 'salesOrderDate', 'delScheduledDate', 'payrollMonth', 'leaveFrom', 'leaveTo'];
     for (var d = 0; d < defaultIds.length; d++) {
         var el = document.getElementById(defaultIds[d]);
@@ -1564,7 +1563,6 @@ function init() {
         }
     }
 
-    // Load data and initialize
     loadAllData().then(function() {
         var user = getCurrentUser();
         if (user) {
@@ -1575,11 +1573,11 @@ function init() {
         populateDeliveryDropdowns();
     });
 
-    console.log('✅ ERP initialized.');
+    console.log('ERP initialized.');
 }
 
 // ============================================================
-// START – ensure init runs
+// START
 // ============================================================
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     init();
