@@ -197,6 +197,94 @@ function renderDashboard() {
             } 
         });
     }
+
+    // Quick Actions - Role-based
+    renderQuickActions();
+}
+
+function renderQuickActions() {
+    var container = document.getElementById('quickActionsContainer');
+    if (!container) return;
+    var user = window.getCurrentUser();
+    if (!user) {
+        container.innerHTML = '<p class="text-muted" style="font-size:13px;">Login to see quick actions.</p>';
+        return;
+    }
+    var role = user.role || 'employee';
+    var actions = [];
+    var actionMap = {
+        superadmin: [
+            { label: '👤 Add Employee', panel: 'employees', action: 'addEmployee' },
+            { label: '📦 Add Item', panel: 'inventory', action: 'addItem' },
+            { label: '👥 Add Customer', panel: 'customers', action: 'addCustomer' },
+            { label: '📈 Reports', panel: 'reports', action: 'view' }
+        ],
+        admin: [
+            { label: '👤 Add Employee', panel: 'employees', action: 'addEmployee' },
+            { label: '📦 Add Item', panel: 'inventory', action: 'addItem' },
+            { label: '👥 Add Customer', panel: 'customers', action: 'addCustomer' },
+            { label: '📈 Reports', panel: 'reports', action: 'view' }
+        ],
+        hr: [
+            { label: '👤 Add Employee', panel: 'employees', action: 'addEmployee' },
+            { label: '⏱️ Attendance', panel: 'attendance', action: 'view' },
+            { label: '🏖️ Leave', panel: 'leave', action: 'view' }
+        ],
+        finance: [
+            { label: '💰 Add Finance Entry', panel: 'finance', action: 'addFinance' },
+            { label: '🧾 Payroll', panel: 'payroll', action: 'view' },
+            { label: '🧾 Voucher', panel: 'voucher', action: 'view' }
+        ],
+        sales: [
+            { label: '👥 Add Customer', panel: 'customers', action: 'addCustomer' },
+            { label: '🛒 New Sales Order', panel: 'sales', action: 'view' },
+            { label: '🚚 Deliveries', panel: 'deliveries', action: 'view' }
+        ],
+        store: [
+            { label: '📦 Add Item', panel: 'inventory', action: 'addItem' },
+            { label: '📦 Purchasing', panel: 'purchasing', action: 'view' },
+            { label: '📈 Reports', panel: 'reports', action: 'view' }
+        ],
+        delivery: [
+            { label: '🚚 Deliveries', panel: 'deliveries', action: 'view' },
+            { label: '⏱️ Attendance', panel: 'attendance', action: 'view' }
+        ],
+        employee: [
+            { label: '⏱️ Attendance', panel: 'attendance', action: 'view' },
+            { label: '🏖️ Leave', panel: 'leave', action: 'view' },
+            { label: '🧾 Payroll', panel: 'payroll', action: 'view' }
+        ]
+    };
+    actions = actionMap[role] || actionMap.employee || [];
+    if (actions.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="font-size:13px;">No quick actions available.</p>';
+        return;
+    }
+    var html = '';
+    actions.forEach(function(a) {
+        html += '<button class="btn btn-outline btn-sm quick-action-btn" data-panel="' + a.panel + '" data-action="' + (a.action || 'view') + '">' + a.label + '</button>';
+    });
+    container.innerHTML = html;
+    container.querySelectorAll('.quick-action-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var panel = this.dataset.panel;
+            var action = this.dataset.action;
+            if (action === 'addEmployee') {
+                document.getElementById('addEmployeeBtn')?.click();
+            } else if (action === 'addItem') {
+                document.getElementById('addItemBtn')?.click();
+            } else if (action === 'addCustomer') {
+                document.getElementById('addCustomerBtn')?.click();
+            } else if (action === 'addFinance') {
+                switchPanel('finance');
+                setTimeout(function() {
+                    document.getElementById('financeAmount')?.focus();
+                }, 300);
+            } else {
+                switchPanel(panel);
+            }
+        });
+    });
 }
 
 // ============================================================
